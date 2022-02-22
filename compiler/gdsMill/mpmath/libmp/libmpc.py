@@ -2,9 +2,9 @@
 Low-level functions for complex arithmetic.
 """
 
-from backend import MPZ, MPZ_ZERO, MPZ_ONE, MPZ_TWO
+from .backend import MPZ, MPZ_ZERO, MPZ_ONE, MPZ_TWO
 
-from libmpf import (\
+from .libmpf import (\
     round_floor, round_ceiling, round_down, round_up,
     round_nearest, round_fast, bitcount,
     bctable, normalize, normalize1, reciprocal_rnd, rshift, lshift, giant_steps,
@@ -18,7 +18,7 @@ from libmpf import (\
     ComplexResult
 )
 
-from libelefun import (\
+from .libelefun import (\
     mpf_pi, mpf_exp, mpf_log, mpf_cos_sin, mpf_cosh_sinh, mpf_tan, mpf_pow_int,
     mpf_log_hypot,
     mpf_cos_sin_pi, mpf_phi,
@@ -389,13 +389,14 @@ def mpc_nthroot(z, n, prec, rnd=round_fast):
     im = normalize(im[0], im[1], im[2], im[3], prec, rnd)
     return re, im
 
-def mpc_cbrt((a, b), prec, rnd=round_fast):
+def mpc_cbrt(xxx_todo_changeme, prec, rnd=round_fast):
     """
     Complex cubic root.
     """
+    (a, b) = xxx_todo_changeme
     return mpc_nthroot((a, b), 3, prec, rnd)
 
-def mpc_exp((a, b), prec, rnd=round_fast):
+def mpc_exp(xxx_todo_changeme1, prec, rnd=round_fast):
     """
     Complex exponential function.
 
@@ -411,6 +412,7 @@ def mpc_exp((a, b), prec, rnd=round_fast):
     exp/cos/sin are accurate and efficient for all real numbers, then
     so is this function for all complex numbers.
     """
+    (a, b) = xxx_todo_changeme1
     if a == fzero:
         return mpf_cos_sin(b, prec, rnd)
     mag = mpf_exp(a, prec+4, rnd)
@@ -424,7 +426,7 @@ def mpc_log(z, prec, rnd=round_fast):
     im = mpc_arg(z, prec, rnd)
     return re, im
 
-def mpc_cos((a, b), prec, rnd=round_fast):
+def mpc_cos(xxx_todo_changeme2, prec, rnd=round_fast):
     """Complex cosine. The formula used is cos(a+bi) = cos(a)*cosh(b) -
     sin(a)*sinh(b)*i.
 
@@ -432,6 +434,7 @@ def mpc_cos((a, b), prec, rnd=round_fast):
     multiplications are pewrormed, so no cancellation errors are
     possible. The formula is also efficient since we can compute both
     pairs (cos, sin) and (cosh, sinh) in single stwps."""
+    (a, b) = xxx_todo_changeme2
     if a == fzero:
         return mpf_cosh(b, prec, rnd), fzero
     wp = prec + 6
@@ -441,10 +444,11 @@ def mpc_cos((a, b), prec, rnd=round_fast):
     im = mpf_mul(s, sh, prec, rnd)
     return re, mpf_neg(im)
 
-def mpc_sin((a, b), prec, rnd=round_fast):
+def mpc_sin(xxx_todo_changeme3, prec, rnd=round_fast):
     """Complex sine. We have sin(a+bi) = sin(a)*cosh(b) +
     cos(a)*sinh(b)*i. See the docstring for mpc_cos for additional
     comments."""
+    (a, b) = xxx_todo_changeme3
     if a == fzero:
         return fzero, mpf_sinh(b, prec, rnd)
     wp = prec + 6
@@ -473,7 +477,8 @@ def mpc_tan(z, prec, rnd=round_fast):
     im = mpf_div(sh, mag, prec, rnd)
     return re, im
 
-def mpc_cos_pi((a, b), prec, rnd=round_fast):
+def mpc_cos_pi(xxx_todo_changeme4, prec, rnd=round_fast):
+    (a, b) = xxx_todo_changeme4
     b = mpf_mul(b, mpf_pi(prec+5), prec+5)
     if a == fzero:
         return mpf_cosh(b, prec, rnd), fzero
@@ -484,7 +489,8 @@ def mpc_cos_pi((a, b), prec, rnd=round_fast):
     im = mpf_mul(s, sh, prec, rnd)
     return re, mpf_neg(im)
 
-def mpc_sin_pi((a, b), prec, rnd=round_fast):
+def mpc_sin_pi(xxx_todo_changeme5, prec, rnd=round_fast):
+    (a, b) = xxx_todo_changeme5
     b = mpf_mul(b, mpf_pi(prec+5), prec+5)
     if a == fzero:
         return fzero, mpf_sinh(b, prec, rnd)
@@ -495,17 +501,20 @@ def mpc_sin_pi((a, b), prec, rnd=round_fast):
     im = mpf_mul(c, sh, prec, rnd)
     return re, im
 
-def mpc_cosh((a, b), prec, rnd=round_fast):
+def mpc_cosh(xxx_todo_changeme6, prec, rnd=round_fast):
     """Complex hyperbolic cosine. Computed as cosh(z) = cos(z*i)."""
+    (a, b) = xxx_todo_changeme6
     return mpc_cos((b, mpf_neg(a)), prec, rnd)
 
-def mpc_sinh((a, b), prec, rnd=round_fast):
+def mpc_sinh(xxx_todo_changeme7, prec, rnd=round_fast):
     """Complex hyperbolic sine. Computed as sinh(z) = -i*sin(z*i)."""
+    (a, b) = xxx_todo_changeme7
     b, a = mpc_sin((b, a), prec, rnd)
     return a, b
 
-def mpc_tanh((a, b), prec, rnd=round_fast):
+def mpc_tanh(xxx_todo_changeme8, prec, rnd=round_fast):
     """Complex hyperbolic tangent. Computed as tanh(z) = -i*tan(z*i)."""
+    (a, b) = xxx_todo_changeme8
     b, a = mpc_tan((b, a), prec, rnd)
     return a, b
 

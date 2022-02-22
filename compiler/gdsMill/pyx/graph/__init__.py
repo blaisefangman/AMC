@@ -24,7 +24,7 @@ __allmodules__ = ["data", "key", "style", "axis"]
 for module in __allmodules__:
     __import__(module, globals(), locals(), [])
 
-import graph
+from . import graph
 __allgraph__ = ["graphxy", "graphxyz"]
 for importfromgraph in __allgraph__:
     locals()[importfromgraph] = getattr(graph, importfromgraph)

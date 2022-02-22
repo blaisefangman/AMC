@@ -1,4 +1,4 @@
-from calculus import defun
+from .calculus import defun
 
 #----------------------------------------------------------------------------#
 #                              Approximation methods                         #
@@ -120,7 +120,7 @@ def chebyfit(ctx, f, interval, N, error=False):
         h = ctx.mpf(0.5)
         T = chebT(ctx, ctx.mpf(2)/(b-a), ctx.mpf(-1)*(b+a)/(b-a))
         for k in range(N):
-            Tk = T.next()
+            Tk = next(T)
             for i in range(len(Tk)):
                 d[i] += c[k]*Tk[i]
         d = d[::-1]
@@ -213,7 +213,7 @@ def fourier(ctx, f, interval, N):
     cos_series = []
     sin_series = []
     cutoff = ctx.eps*10
-    for n in xrange(N+1):
+    for n in range(N+1):
         m = 2*n*ctx.pi/L
         an = 2*ctx.quadgl(lambda t: f(t)*ctx.cos(m*t), interval)/L
         bn = 2*ctx.quadgl(lambda t: f(t)*ctx.sin(m*t), interval)/L
@@ -241,6 +241,6 @@ def fourierval(ctx, series, interval, x):
     b = interval[-1]
     m = 2*ctx.pi/(ab[-1]-ab[0])
     s = ctx.zero
-    s += ctx.fsum(cs[n]*ctx.cos(m*n*x) for n in xrange(len(cs)) if cs[n])
-    s += ctx.fsum(ss[n]*ctx.sin(m*n*x) for n in xrange(len(ss)) if ss[n])
+    s += ctx.fsum(cs[n]*ctx.cos(m*n*x) for n in range(len(cs)) if cs[n])
+    s += ctx.fsum(ss[n]*ctx.sin(m*n*x) for n in range(len(ss)) if ss[n])
     return s

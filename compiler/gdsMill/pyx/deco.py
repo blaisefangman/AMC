@@ -25,10 +25,10 @@
 # - should we improve on the arc length -> arg parametrization routine or
 #   should we at least factor it out?
 
-from __future__ import nested_scopes
+
 
 import sys, math
-import attr, canvas, color, path, normpath, style, trafo, unit
+from . import attr, canvas, color, path, normpath, style, trafo, unit
 
 try:
     from math import radians
@@ -533,7 +533,7 @@ class text(deco, attr.attr):
     def decorate(self, dp, texrunner):
         if self.texrunner:
             texrunner = self.texrunner
-        import text as textmodule
+        from . import text as textmodule
         textattrs = attr.mergeattrs([textmodule.halign.center, textmodule.vshift.mathaxis] + self.textattrs)
 
         dp.ensurenormpath()

@@ -1,4 +1,4 @@
-from libmpf import (prec_to_dps, dps_to_prec, repr_dps,
+from .libmpf import (prec_to_dps, dps_to_prec, repr_dps,
   round_down, round_up, round_floor, round_ceiling, round_nearest,
   to_pickable, from_pickable, ComplexResult,
   fzero, fnzero, fone, fnone, ftwo, ften, fhalf, fnan, finf, fninf,
@@ -13,7 +13,7 @@ from libmpf import (prec_to_dps, dps_to_prec, repr_dps,
   to_digits_exp, to_str, str_to_man_exp, from_str, from_bstr, to_bstr,
   mpf_sqrt, mpf_hypot)
 
-from libmpc import (mpc_one, mpc_zero, mpc_two, mpc_half,
+from .libmpc import (mpc_one, mpc_zero, mpc_two, mpc_half,
   mpc_is_inf, mpc_is_infnan, mpc_to_str, mpc_to_complex, mpc_hash,
   mpc_conjugate, mpc_is_nonzero, mpc_add, mpc_add_mpf,
   mpc_sub, mpc_sub_mpf, mpc_pos, mpc_neg, mpc_shift, mpc_abs,
@@ -26,7 +26,7 @@ from libmpc import (mpc_one, mpc_zero, mpc_two, mpc_half,
   mpc_atan, mpc_acos, mpc_asin, mpc_asinh, mpc_acosh, mpc_atanh,
   mpc_fibonacci, mpf_expj, mpf_expjpi, mpc_expj, mpc_expjpi)
 
-from libelefun import (ln2_fixed, mpf_ln2, ln10_fixed, mpf_ln10,
+from .libelefun import (ln2_fixed, mpf_ln2, ln10_fixed, mpf_ln10,
   pi_fixed, mpf_pi, e_fixed, mpf_e, phi_fixed, mpf_phi,
   degree_fixed, mpf_degree,
   mpf_pow, mpf_nthroot, mpf_cbrt, log_int_fixed, agm_fixed,
@@ -35,13 +35,13 @@ from libelefun import (ln2_fixed, mpf_ln2, ln10_fixed, mpf_ln10,
   mpf_cosh, mpf_sinh, mpf_tanh, mpf_atan, mpf_atan2, mpf_asin,
   mpf_acos, mpf_asinh, mpf_acosh, mpf_atanh, mpf_fibonacci)
 
-from libhyper import (NoConvergence, make_hyp_summator,
+from .libhyper import (NoConvergence, make_hyp_summator,
   mpf_erf, mpf_erfc, mpf_ei, mpc_ei, mpf_e1, mpc_e1, mpf_expint,
   mpf_ci_si, mpf_ci, mpf_si, mpc_ci, mpc_si, mpf_besseljn,
   mpc_besseljn, mpf_agm, mpf_agm1, mpc_agm, mpc_agm1,
   mpf_ellipk, mpc_ellipk, mpf_ellipe, mpc_ellipe)
 
-from gammazeta import (catalan_fixed, mpf_catalan,
+from .gammazeta import (catalan_fixed, mpf_catalan,
   khinchin_fixed, mpf_khinchin, glaisher_fixed, mpf_glaisher,
   apery_fixed, mpf_apery, euler_fixed, mpf_euler, mertens_fixed,
   mpf_mertens, twinprime_fixed, mpf_twinprime,
@@ -51,14 +51,14 @@ from gammazeta import (catalan_fixed, mpf_catalan,
   mpf_psi, mpc_psi, mpf_zeta_int, mpf_zeta, mpc_zeta,
   mpf_altzeta, mpc_altzeta, mpf_zetasum, mpc_zetasum)
 
-from libmpi import (mpi_str, mpi_add, mpi_sub, mpi_delta, mpi_mid,
+from .libmpi import (mpi_str, mpi_add, mpi_sub, mpi_delta, mpi_mid,
   mpi_pos, mpi_neg, mpi_abs, mpi_mul, mpi_div, mpi_exp,
   mpi_log, mpi_sqrt, mpi_pow_int, mpi_pow, mpi_cos_sin,
   mpi_cos, mpi_sin, mpi_tan, mpi_cot)
 
-from libintmath import (trailing, bitcount, numeral, bin_to_radix,
+from .libintmath import (trailing, bitcount, numeral, bin_to_radix,
   isqrt, isqrt_small, isqrt_fast, sqrt_fixed, sqrtrem, ifib, ifac,
   list_primes, moebius, gcd, eulernum)
 
-from backend import (gmpy, sage, BACKEND, STRICT, MPZ, MPZ_TYPE,
+from .backend import (gmpy, sage, BACKEND, STRICT, MPZ, MPZ_TYPE,
   MPZ_ZERO, MPZ_ONE, MPZ_TWO, MPZ_THREE, MPZ_FIVE, int_types)

@@ -1,6 +1,6 @@
 #from ctx_base import StandardBaseContext
 
-from libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
+from .libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
     round_floor, round_ceiling, dps_to_prec, round_nearest, prec_to_dps,
     ComplexResult, to_pickable, from_pickable, normalize,
     from_int, from_float, from_str, to_int, to_float, to_str,
@@ -26,8 +26,8 @@ from libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
     mpf_glaisher, mpf_twinprime, mpf_mertens,
     int_types)
 
-import rational
-import function_docs
+from . import rational
+from . import function_docs
 
 new = object.__new__
 
@@ -82,7 +82,7 @@ class _mpf(mpnumeric):
     def mpf_convert_arg(cls, x, prec, rounding):
         if isinstance(x, int_types): return from_int(x)
         if isinstance(x, float): return from_float(x)
-        if isinstance(x, basestring): return from_str(x, prec, rounding)
+        if isinstance(x, str): return from_str(x, prec, rounding)
         if isinstance(x, cls.context.constant): return x.func(prec, rounding)
         if hasattr(x, '_mpf_'): return x._mpf_
         if hasattr(x, '_mpmath_'):
@@ -135,10 +135,10 @@ class _mpf(mpnumeric):
     def __str__(s): return to_str(s._mpf_, s.context._str_digits)
     def __hash__(s): return mpf_hash(s._mpf_)
     def __int__(s): return int(to_int(s._mpf_))
-    def __long__(s): return long(to_int(s._mpf_))
+    def __long__(s): return int(to_int(s._mpf_))
     def __float__(s): return to_float(s._mpf_)
     def __complex__(s): return complex(float(s))
-    def __nonzero__(s): return s._mpf_ != fzero
+    def __bool__(s): return s._mpf_ != fzero
 
     def __abs__(s):
         cls, new, (prec, rounding) = s._ctxdata
@@ -273,7 +273,7 @@ def binary_op(name, with_mpf='', with_int='', with_mpc=''):
     code = code.replace("%WITH_MPF%", with_mpf)
     code = code.replace("%NAME%", name)
     np = {}
-    exec code in globals(), np
+    exec(code, globals(), np)
     return np[name]
 
 _mpf.__eq__ = binary_op('__eq__',
@@ -413,7 +413,7 @@ class _mpc(mpnumeric):
         v._mpc_ = mpc_conjugate(s._mpc_, prec, rounding)
         return v
 
-    def __nonzero__(s):
+    def __bool__(s):
         return mpc_is_nonzero(s._mpc_)
 
     def __hash__(s):
@@ -639,7 +639,7 @@ class PythonMPContext:
         if isinstance(x, rational.mpq):
             p, q = x
             return ctx.make_mpf(from_rational(p, q, prec))
-        if strings and isinstance(x, basestring):
+        if strings and isinstance(x, str):
             try:
                 _mpf_ = from_str(x, prec, rounding)
                 return ctx.make_mpf(_mpf_)
@@ -795,7 +795,7 @@ class PythonMPContext:
 
         """
         if B:
-            A = zip(A, B)
+            A = list(zip(A, B))
         prec, rnd = ctx._prec_rounding
         real = []
         imag = []
@@ -907,7 +907,7 @@ class PythonMPContext:
             p = None
             if isinstance(x, tuple):
                 p, q = x
-            elif isinstance(x, basestring) and '/' in x:
+            elif isinstance(x, str) and '/' in x:
                 p, q = x.split('/')
                 p = int(p)
                 q = int(q)

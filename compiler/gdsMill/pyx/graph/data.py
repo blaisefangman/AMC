@@ -21,9 +21,9 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import nested_scopes
 
-import math, re, ConfigParser, struct, warnings
+
+import math, re, configparser, struct, warnings
 from pyx import text
 from pyx.style import linestyle
 from pyx.graph import style
@@ -33,7 +33,7 @@ try:
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 try:
     dict()
@@ -132,7 +132,7 @@ class values(_data):
             else:
                 l = len(values)
         self.columns = columns
-        self.columnnames = columns.keys()
+        self.columnnames = list(columns.keys())
         self.title = title
 
 
@@ -150,15 +150,15 @@ class points(_data):
                     raise ValueError("different number of columns per point")
                 for i, x in enumerate(point):
                     self.columndata[i].append(x)
-            for v in columns.values():
+            for v in list(columns.values()):
                 if abs(v) > l or (not addlinenumbers and abs(v) == l):
                     raise ValueError("column number bigger than number of columns")
             if addlinenumbers:
-                self.columndata = [range(1, len(points) + 1)] + self.columndata
-            self.columns = dict([(key, self.columndata[i]) for key, i in columns.items()])
+                self.columndata = [list(range(1, len(points) + 1))] + self.columndata
+            self.columns = dict([(key, self.columndata[i]) for key, i in list(columns.items())])
         else:
             self.columns = dict([(key, []) for key, i in columns])
-        self.columnnames = self.columns.keys()
+        self.columnnames = list(self.columns.keys())
         self.title = title
 
 
@@ -179,7 +179,7 @@ class data(_data):
                        replacedollar=1, columncallback="__column__", **columns):
         # build a nice title
         if title is _notitle:
-            items = columns.items()
+            items = list(columns.items())
             items.sort() # we want sorted items (otherwise they would be unpredictable scrambled)
             self.title = "%s: %s" % (text.escapestring(data.title or "unkown source"),
                                      ", ".join(["%s=%s" % (text.escapestring(key),
@@ -193,7 +193,7 @@ class data(_data):
 
         # analyse the **columns argument
         self.columns = {}
-        for columnname, value in columns.items():
+        for columnname, value in list(columns.items()):
             # search in the columns dictionary
             try:
                 self.columns[columnname] = self.orgdata.columns[value]
@@ -214,16 +214,16 @@ class data(_data):
                     context = context.copy()
                     context[columncallback] = self.columncallback
                     if self.orgdata.columns:
-                        key, columndata = self.orgdata.columns.items()[0]
+                        key, columndata = list(self.orgdata.columns.items())[0]
                         count = len(columndata)
                     elif self.orgdata.columndata:
                         count = len(self.orgdata.columndata[0])
                     else:
                         count = 0
                     newdata = []
-                    for i in xrange(count):
+                    for i in range(count):
                         self.columncallbackcount = i
-                        for key, values in self.orgdata.columns.items():
+                        for key, values in list(self.orgdata.columns.items()):
                             context[key] = values[i]
                         try:
                             newdata.append(eval(expression, _mathglobals, context))
@@ -233,11 +233,11 @@ class data(_data):
 
         if copy:
             # copy other, non-conflicting column names
-            for columnname, columndata in self.orgdata.columns.items():
-                if not self.columns.has_key(columnname):
+            for columnname, columndata in list(self.orgdata.columns.items()):
+                if columnname not in self.columns:
                     self.columns[columnname] = columndata
 
-        self.columnnames = self.columns.keys()
+        self.columnnames = list(self.columns.keys())
 
     def columncallback(self, value):
         try:
@@ -284,7 +284,7 @@ class file(data):
         else:
             if tofloat:
                 try:
-                    return map(float, line.split())
+                    return list(map(float, line.split()))
                 except (TypeError, ValueError):
                     result = []
                     for r in line.split():
@@ -331,7 +331,7 @@ class file(data):
             if skiptail >= every:
                 skip, x = divmod(skiptail, every)
                 del columndata[-skip:]
-            for i in xrange(len(columndata)):
+            for i in range(len(columndata)):
                 if len(columndata[i]) != maxcolumns:
                     columndata[i].extend([None]*(maxcolumns-len(columndata[i])))
             return points(columndata, title=title, addlinenumbers=0,
@@ -342,7 +342,7 @@ class file(data):
         except:
             # not a file-like object -> open it
             cachekey = self.getcachekey(filename, commentpattern, stringpattern, columnpattern, skiphead, skiptail, every)
-            if not filecache.has_key(cachekey):
+            if cachekey not in filecache:
                 filecache[cachekey] = readfile(open(filename), filename)
             data.__init__(self, filecache[cachekey], **kwargs)
         else:
@@ -364,7 +364,7 @@ class conffile(data):
           keyword arguments data and titles excluded"""
 
         def readfile(file, title):
-            config = ConfigParser.ConfigParser()
+            config = configparser.ConfigParser()
             config.optionxform = str
             config.readfp(file)
             sections = config.sections()
@@ -372,7 +372,7 @@ class conffile(data):
             columndata = [None]*len(sections)
             maxcolumns = 1
             columns = {}
-            for i in xrange(len(sections)):
+            for i in range(len(sections)):
                 point = [sections[i]] + [None]*(maxcolumns-1)
                 for option in config.options(sections[i]):
                     value = config.get(sections[i], option)
@@ -399,7 +399,7 @@ class conffile(data):
             filename.readlines
         except:
             # not a file-like object -> open it
-            if not filecache.has_key(filename):
+            if filename not in filecache:
                 filecache[filename] = readfile(open(filename), filename)
             data.__init__(self, filecache[filename], **kwargs)
         else:
@@ -483,9 +483,9 @@ class cbdfile(data):
             # remove jumps at long +/- 180
             for sd, sb in zip(sds, sbs):
                 if sd.minlong < -150*3600 and sd.maxlong > 150*3600:
-                    for i, (lat, long) in enumerate(sb.points):
-                         if long < 0:
-                             sb.points[i] = lat, long + 360*3600
+                    for i, (lat, int) in enumerate(sb.points):
+                         if int < 0:
+                             sb.points[i] = lat, int + 360*3600
 
             columndata = []
             for sd, sb in zip(sds, sbs):
@@ -493,8 +493,8 @@ class cbdfile(data):
                     (maxrank is None or sd.rank <= maxrank)):
                     if columndata:
                         columndata.append((None, None))
-                    columndata.extend([(long/3600.0, lat/3600.0)
-                                       for lat, long in sb.points])
+                    columndata.extend([(int/3600.0, lat/3600.0)
+                                       for lat, int in sb.points])
 
             result = points(columndata, title=title)
             result.defaultstyles = self.defaultstyles
@@ -506,7 +506,7 @@ class cbdfile(data):
         except:
             # not a file-like object -> open it
             cachekey = self.getcachekey(filename, minrank, maxrank)
-            if not cbdfilecache.has_key(cachekey):
+            if cachekey not in cbdfilecache:
                 cbdfilecache[cachekey] = readfile(open(filename, "rb"), filename)
             data.__init__(self, cbdfilecache[cachekey], **kwargs)
         else:
@@ -536,7 +536,7 @@ class function(_data):
             expression = expression[m.end():]
         else:
             raise ValueError("y(x)=... or similar expected")
-        if context.has_key(self.xname):
+        if self.xname in context:
             raise ValueError("xname in context")
         self.expression = compile(expression.strip(), __file__, "eval")
         self.columns = {}
@@ -584,7 +584,7 @@ class paramfunction(_data):
     defaultstyles = defaultlines
 
     def __init__(self, varname, min, max, expression, title=_notitle, points=100, context={}):
-        if context.has_key(varname):
+        if varname in context:
             raise ValueError("varname in context")
         if title is _notitle:
             self.title = expression
@@ -603,7 +603,7 @@ class paramfunction(_data):
                 self.columns[key].append(value)
         if len(keys) != len(values):
             raise ValueError("unpack tuple of wrong size")
-        self.columnnames = self.columns.keys()
+        self.columnnames = list(self.columns.keys())
 
 
 class paramfunctionxy(paramfunction):

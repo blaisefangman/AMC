@@ -20,7 +20,7 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import nested_scopes
+
 
 import array, binascii, re
 try:
@@ -34,16 +34,16 @@ try:
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 from pyx import trafo
 from pyx.path import path, moveto_pt, lineto_pt, curveto_pt, closepath
-import encoding
+from . import encoding
 
 try:
     from _t1code import *
 except:
-    from t1code import *
+    from .t1code import *
 
 
 class T1context:
@@ -815,9 +815,9 @@ class T1font:
             elif 251 <= x <= 254: # mid size ints
                 cmds.append(-((x - 251)*256) - code.pop(0) - 108)
             else: # x = 255, i.e. full size ints
-                y = ((code.pop(0)*256l+code.pop(0))*256+code.pop(0))*256+code.pop(0)
-                if y > (1l << 31):
-                    cmds.append(y - (1l << 32))
+                y = ((code.pop(0)*256+code.pop(0))*256+code.pop(0))*256+code.pop(0)
+                if y > (1 << 31):
+                    cmds.append(y - (1 << 32))
                 else:
                     cmds.append(y)
         return cmds
@@ -843,7 +843,7 @@ class T1font:
                     code.append(b)
                 else:
                     if cmd < 0:
-                        cmd += 1l << 32
+                        cmd += 1 << 32
                     cmd, x4 = divmod(cmd, 256)
                     cmd, x3 = divmod(cmd, 256)
                     x1, x2 = divmod(cmd, 256)
@@ -910,7 +910,7 @@ class T1font:
 
     def getglyphpathwxwy_pt(self, glyph, size):
         m = self.fontmatrixpattern.search(self.data1)
-        m11, m12, m21, m22, v1, v2 = map(float, m.groups()[:6])
+        m11, m12, m21, m22, v1, v2 = list(map(float, m.groups()[:6]))
         t = trafo.trafo_pt(matrix=((m11, m12), (m21, m22)), vector=(v1, v2)).scaled(size)
         context = T1context(self)
         p = path()
@@ -940,7 +940,7 @@ class T1font:
             if subrs is not None:
                 # some adjustments to the subrs dict
                 if subrs:
-                    subrsindices = subrs.keys()
+                    subrsindices = list(subrs.keys())
                     subrsmin = min(subrsindices)
                     subrsmax = max(subrsindices)
                     if self.hasflexhintsubrs and subrsmin < len(self.flexhintsubrs):
@@ -958,7 +958,7 @@ class T1font:
             # build the string from all selected subrs
             result.append("%d array\n" % (subrsmax + 1))
             for subr in range(subrsmax+1):
-                if subrs.has_key(subr):
+                if subr in subrs:
                     code = self.subrs[subr]
                 else:
                     code = self.emptysubr
@@ -967,7 +967,7 @@ class T1font:
         def addcharstrings(glyphs, result):
             result.append("%d dict dup begin\n" % (glyphs is None and len(self.glyphlist) or len(glyphs)))
             for glyph in self.glyphlist:
-                if glyphs is None or glyphs.has_key(glyph):
+                if glyphs is None or glyph in glyphs:
                     result.append("/%s %d %s %s %s\n" % (glyph, len(self.glyphs[glyph]), self.glyphrdtoken, self.glyphs[glyph], self.glyphndtoken))
             result.append("end\n")
 
@@ -1006,7 +1006,7 @@ class T1font:
         seacglyphs = {}
         subrs = {}
         othersubrs = {}
-        for glyph in glyphs.keys():
+        for glyph in list(glyphs.keys()):
             self.gatherglyphcalls(glyph, seacglyphs, subrs, othersubrs, T1context(self))
         # while we have gathered all subrs for the seacglyphs alreadys, we
         # might have missed the glyphs themself (when they are not used stand-alone)
@@ -1021,7 +1021,7 @@ class T1font:
         else:
             encodingstrings = []
             for char, glyph in enumerate(self.encoding.encvector):
-                if glyph in glyphs.keys():
+                if glyph in list(glyphs.keys()):
                     encodingstrings.append("dup %i /%s put\n" % (char, glyph))
             data1 = self.data1[:self.encodingstart] + "".join(encodingstrings) + self.data1[self.encodingend:]
         data1 = self.newlinepattern.subn("\n", data1)[0]

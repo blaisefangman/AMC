@@ -28,7 +28,7 @@ except:
     find_file_cache = {}
     def find_file(filename, kpse_file_format):
         command = 'kpsewhich --format="%s" %s' % (kpse_file_format, filename)
-        if not find_file_cache.has_key(command):
+        if command not in find_file_cache:
             find_file_cache[command] = os.popen(command, "r").readline().strip()
         return find_file_cache[command]
     kpse_gf_format = "gf"

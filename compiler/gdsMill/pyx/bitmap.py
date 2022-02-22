@@ -26,7 +26,7 @@ try:
 except:
     haszlib = 0
 
-import bbox, canvas, pswriter, pdfwriter, trafo, unit
+from . import bbox, canvas, pswriter, pdfwriter, trafo, unit
 
 def ascii85lines(datalen):
     if datalen < 4:
@@ -174,7 +174,7 @@ class PSimagedata(pswriter.PSresource):
                        ((tailpos/self.maxstrlen) * ascii85lines(self.maxstrlen) +
                         ascii85lines(datalen-tailpos)))
             file.write("[ ")
-            for i in xrange(0, tailpos, self.maxstrlen):
+            for i in range(0, tailpos, self.maxstrlen):
                 file.write("<~")
                 ascii85stream(file, self.data[i: i+self.maxstrlen])
                 file.write("~>\n")

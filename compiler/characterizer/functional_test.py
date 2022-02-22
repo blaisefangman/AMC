@@ -23,13 +23,13 @@ import debug
 import subprocess
 import os, sys, shutil
 from os import path
-import charutils 
+from . import charutils 
 import numpy as np
 from globals import OPTS, get_tool
 import time
 import design
 import math
-import trim_spice
+from . import trim_spice
 
 
 class functional_test():

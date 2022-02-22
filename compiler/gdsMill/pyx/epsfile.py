@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 import string
-import canvas, bbox, pykpathsea, unit, trafo, pswriter
+from . import canvas, bbox, pykpathsea, unit, trafo, pswriter
 
 # PostScript-procedure definitions (cf. 5002.EPSF_Spec_v3.0.pdf)
 # with important correction in EndEPSF:
@@ -160,7 +160,7 @@ def _readbbox(filename):
             else:
                 if len(values) != 4:
                     raise IOError("invalid number of bounding box values")
-                return bbox.bbox_pt(*map(int, values))
+                return bbox.bbox_pt(*list(map(int, values)))
         elif (line.rstrip() == "%%EndComments" or
               (len(line) >= 2 and line[0] != "%" and line[1] not in string.whitespace)):
             # implicit end of comments section
@@ -178,7 +178,7 @@ def _readbbox(filename):
                 raise IOError("invalid number of arguments")
             if len(values) == 3:
                 if values[2] == "Lines":
-                    for i in xrange(int(values[0])):
+                    for i in range(int(values[0])):
                         file.readline()
                 elif values[2] != "Bytes":
                     raise IOError("invalid bytesorlines-value")
@@ -218,7 +218,7 @@ def _readbbox(filename):
             values = line.split(":", 1)[1].split()
             if len(values) != 4:
                 raise IOError("invalid number of bounding box values")
-            usebbox = bbox.bbox_pt(*map(int, values))
+            usebbox = bbox.bbox_pt(*list(map(int, values)))
     if not usebbox:
         raise IOError("missing bounding box information in document trailer")
     return usebbox
@@ -319,7 +319,7 @@ class epsfile(canvas.canvasitem):
         try:
             epsfile=open(self.filename,"rb")
         except:
-            raise IOError, "cannot open EPS file '%s'" % self.filename
+            raise IOError("cannot open EPS file '%s'" % self.filename)
 
         file.write("BeginEPSF\n")
 

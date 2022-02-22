@@ -23,7 +23,7 @@ sage = None
 sage_utils = None
 
 BACKEND = 'python'
-MPZ = long
+MPZ = int
 
 if 'MPMATH_NOGMPY' not in os.environ:
     try:
@@ -58,7 +58,7 @@ MPZ_THREE = MPZ(3)
 MPZ_FIVE = MPZ(5)
 
 if BACKEND == 'python':
-    int_types = (int, long)
+    int_types = (int, int)
 else:
-    int_types = (int, long, MPZ_TYPE)
+    int_types = (int, int, MPZ_TYPE)
 

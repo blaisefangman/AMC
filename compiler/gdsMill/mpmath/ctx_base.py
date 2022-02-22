@@ -1,18 +1,18 @@
 from operator import gt, lt
 
-from functions.functions import SpecialFunctions
-from functions.rszeta import RSCache
-from calculus.quadrature import QuadratureMethods
-from calculus.calculus import CalculusMethods
-from calculus.optimization import OptimizationMethods
-from calculus.odes import ODEMethods
-from matrices.matrices import MatrixMethods
-from matrices.calculus import MatrixCalculusMethods
-from matrices.linalg import LinearAlgebraMethods
-from identification import IdentificationMethods
-from visualization import VisualizationMethods
+from .functions.functions import SpecialFunctions
+from .functions.rszeta import RSCache
+from .calculus.quadrature import QuadratureMethods
+from .calculus.calculus import CalculusMethods
+from .calculus.optimization import OptimizationMethods
+from .calculus.odes import ODEMethods
+from .matrices.matrices import MatrixMethods
+from .matrices.calculus import MatrixCalculusMethods
+from .matrices.linalg import LinearAlgebraMethods
+from .identification import IdentificationMethods
+from .visualization import VisualizationMethods
 
-import libmp
+from . import libmp
 
 class Context(object):
     pass
@@ -43,7 +43,7 @@ class StandardBaseContext(Context,
         MatrixMethods.__init__(ctx)
 
     def _init_aliases(ctx):
-        for alias, value in ctx._aliases.items():
+        for alias, value in list(ctx._aliases.items()):
             try:
                 setattr(ctx, alias, getattr(ctx, value))
             except AttributeError:
@@ -55,7 +55,7 @@ class StandardBaseContext(Context,
     verbose = False
 
     def warn(ctx, msg):
-        print "Warning:", msg
+        print("Warning:", msg)
 
     def bad_domain(ctx, msg):
         raise ValueError(msg)
@@ -269,11 +269,11 @@ class StandardBaseContext(Context,
             if n == 1:
                 return [ctx.mpf(a)]
             step = (b - a) / ctx.mpf(n - 1)
-            y = [i*step + a for i in xrange(n)]
+            y = [i*step + a for i in range(n)]
             y[-1] = b
         else:
             step = (b - a) / ctx.mpf(n)
-            y = [i*step + a for i in xrange(n)]
+            y = [i*step + a for i in range(n)]
         return y
 
     def cos_sin(ctx, z, **kwargs):

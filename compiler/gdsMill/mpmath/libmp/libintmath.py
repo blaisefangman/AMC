@@ -9,7 +9,7 @@ here from settings.py
 import math
 from bisect import bisect
 
-from backend import BACKEND, gmpy, sage, sage_utils, MPZ, MPZ_ONE, MPZ_ZERO
+from .backend import BACKEND, gmpy, sage, sage_utils, MPZ, MPZ_ONE, MPZ_ZERO
 
 def giant_steps(start, target, n=2):
     """
@@ -107,8 +107,8 @@ if BACKEND == 'gmpy' and 'bit_length' in dir(gmpy):
     bitcount = gmpy.bit_length
 
 # Used to avoid slow function calls as far as possible
-trailtable = map(trailing, range(256))
-bctable = map(bitcount, range(1024))
+trailtable = list(map(trailing, list(range(256))))
+bctable = list(map(bitcount, list(range(1024))))
 
 # TODO: speed up for bases 2, 4, 8, 16, ...
 
@@ -352,11 +352,11 @@ elif BACKEND == 'sage':
 
 def list_primes(n):
     n = n + 1
-    sieve = range(n)
+    sieve = list(range(n))
     sieve[:2] = [0, 0]
-    for i in xrange(2, int(n**0.5)+1):
+    for i in range(2, int(n**0.5)+1):
         if sieve[i]:
-            for j in xrange(i**2, n, i):
+            for j in range(i**2, n, i):
                 sieve[j] = 0
     return [p for p in sieve if p]
 
@@ -375,7 +375,7 @@ def moebius(n):
     if n < 2:
         return n
     factors = []
-    for p in xrange(2, n+1):
+    for p in range(2, n+1):
         if not (n % p):
             if not (n % p**2):
                 return 0
@@ -447,7 +447,7 @@ def eulernum(m, _cache={0:MPZ_ONE}):
         return f
     MAX = MAX_EULER_CACHE
     n = m
-    a = map(MPZ, [0,0,1,0,0,0])
+    a = list(map(MPZ, [0,0,1,0,0,0]))
     for  n in range(1, m+1):
         for j in range(n+1, -1, -2):
             a[j+1] = (j-1)*a[j] + (j+1)*a[j+2]

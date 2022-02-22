@@ -1,13 +1,13 @@
-from ctx_base import StandardBaseContext
+from .ctx_base import StandardBaseContext
 
 import math
 import cmath
-import math2
+from . import math2
 
-import function_docs
+from . import function_docs
 
-from libmp import mpf_bernoulli, to_float, int_types
-import libmp
+from .libmp import mpf_bernoulli, to_float, int_types
+from . import libmp
 
 class FPContext(StandardBaseContext):
     """
@@ -111,7 +111,7 @@ class FPContext(StandardBaseContext):
 
     def fdot(ctx, xs, ys=None):
         if ys is not None:
-            xs = zip(xs, ys)
+            xs = list(zip(xs, ys))
         return sum((x*y for (x,y) in xs), ctx.zero)
 
     def is_special(ctx, x):
@@ -223,8 +223,8 @@ class FPContext(StandardBaseContext):
 
     def hypsum(ctx, p, q, types, coeffs, z, maxterms=6000, **kwargs):
         coeffs = list(coeffs)
-        num = range(p)
-        den = range(p,p+q)
+        num = list(range(p))
+        den = list(range(p,p+q))
         tol = ctx.eps
         s = t = 1.0
         k = 0

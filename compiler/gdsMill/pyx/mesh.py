@@ -37,7 +37,7 @@
 
 
 import struct, binascii, zlib
-import bbox, canvas, color, pdfwriter, unit
+from . import bbox, canvas, color, pdfwriter, unit
 
 
 class node_pt:

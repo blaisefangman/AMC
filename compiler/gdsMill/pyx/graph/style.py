@@ -22,11 +22,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 
-from __future__ import nested_scopes
+
 
 import math, warnings
 from pyx import attr, deco, style, color, unit, canvas, path, mesh
 from pyx import text as textmodule
+from functools import reduce
 
 builtinrange = range
 
@@ -42,7 +43,7 @@ try:
 except NameError:
     # fallback implementation for Python 2.2. and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 class _style:
     """Interface class for graph styles
@@ -293,9 +294,9 @@ class range(_style):
                 privatedata.rangeposdeltacolumns[axisname][self.mask_d] = data
 
         # delta handling: process rangeposdeltacolumns
-        for a, d in privatedata.rangeposdeltacolumns.items():
-            if d.has_key(self.mask_value):
-                for k in d.keys():
+        for a, d in list(privatedata.rangeposdeltacolumns.items()):
+            if self.mask_value in d:
+                for k in list(d.keys()):
                     if k != self.mask_value:
                         if k & (self.mask_dmin | self.mask_d):
                             mindata = []
@@ -316,7 +317,7 @@ class range(_style):
                         del d[k]
 
     def initdrawpoints(self, privatedata, sharedata, graph):
-        sharedata.vrange = [[None for x in xrange(2)] for y in privatedata.rangeposcolumns + sharedata.vrangemissing]
+        sharedata.vrange = [[None for x in range(2)] for y in privatedata.rangeposcolumns + sharedata.vrangemissing]
         privatedata.rangepostmplist = [[usename, mask, index, graph.axes[axisname]] # temporarily used by drawpoint only
                                        for index, (axisname, usename, mask) in enumerate(privatedata.rangeposcolumns)]
         for missing in sharedata.vrangemissing:
@@ -741,7 +742,7 @@ class errorbar(_style):
     def initdrawpoints(self, privatedata, sharedata, graph):
         if privatedata.errorbarattrs is not None:
             privatedata.errorbarcanvas = canvas.canvas(privatedata.errorbarattrs)
-            privatedata.dimensionlist = list(xrange(len(sharedata.vpos)))
+            privatedata.dimensionlist = list(range(len(sharedata.vpos)))
 
     def drawpoint(self, privatedata, sharedata, graph, point):
         if privatedata.errorbarattrs is not None:
@@ -1382,7 +1383,7 @@ class barpos(_style):
 
     def initdrawpoints(self, privatedata, sharedata, graph):
         sharedata.vpos = [None]*(len(sharedata.barposcolumnnames))
-        sharedata.vbarrange = [[None for i in xrange(2)] for x in sharedata.barposcolumnnames]
+        sharedata.vbarrange = [[None for i in range(2)] for x in sharedata.barposcolumnnames]
         sharedata.stackedbar = sharedata.stackedbardraw = 0
 
         if self.fromvalue is not None:
@@ -1408,7 +1409,7 @@ class barpos(_style):
                 except (ArithmeticError, ValueError, TypeError):
                     sharedata.vpos[i] = sharedata.vbarrange[i][1] = None
             else:
-                for j in xrange(2):
+                for j in range(2):
                     try:
                         sharedata.vbarrange[i][j] = graph.axes[barname[:-4]].convert(self.addsubvalue(point[barname], j))
                     except (ArithmeticError, ValueError, TypeError):
@@ -1587,15 +1588,15 @@ class gridpos(_style):
         if sharedata.vposavailable:
             sharedata.value1 = sharedata.vpos[self.index1]
             sharedata.value2 = sharedata.vpos[self.index2]
-            if not sharedata.values1.has_key(sharedata.value1):
-                for hasvalue in sharedata.values1.keys():
+            if sharedata.value1 not in sharedata.values1:
+                for hasvalue in list(sharedata.values1.keys()):
                     if hasvalue - self.epsilon <= sharedata.value1 <= hasvalue + self.epsilon:
                         sharedata.value1 = hasvalue
                         break
                 else:
                     sharedata.values1[sharedata.value1] = 1
-            if not sharedata.values2.has_key(sharedata.value2):
-                for hasvalue in sharedata.values2.keys():
+            if sharedata.value2 not in sharedata.values2:
+                for hasvalue in list(sharedata.values2.keys()):
                     if hasvalue - self.epsilon <= sharedata.value2 <= hasvalue + self.epsilon:
                         sharedata.value2 = hasvalue
                         break
@@ -1626,9 +1627,9 @@ class grid(_line, _style):
             privatedata.gridattrs = None
 
     def donedrawpoints(self, privatedata, sharedata, graph):
-        values1 = sharedata.values1.keys()
+        values1 = list(sharedata.values1.keys())
         values1.sort()
-        values2 = sharedata.values2.keys()
+        values2 = list(sharedata.values2.keys())
         values2.sort()
         if self.gridlines1:
             for value2 in values2:
@@ -1732,7 +1733,7 @@ class surface(_style):
                         -graph.vzindex(*v3),
                         -graph.vzindex(*v4)]
 
-        values1 = sharedata.values1.keys()
+        values1 = list(sharedata.values1.keys())
         values1.sort()
         v1 = [0]*len(graph.axesnames)
         v2 = [0]*len(graph.axesnames)
@@ -1744,7 +1745,7 @@ class surface(_style):
             sign *= -1
             sortElements = [sortElements[3], sortElements[1], sortElements[2], sortElements[0]]
 
-        values2 = sharedata.values2.keys()
+        values2 = list(sharedata.values2.keys())
         values2.sort()
         v1 = [0]*len(graph.axesnames)
         v2 = [0]*len(graph.axesnames)

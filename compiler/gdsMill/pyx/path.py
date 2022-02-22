@@ -21,10 +21,11 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import nested_scopes
+
 
 import math
 from math import cos, sin, tan, acos, pi
+from functools import reduce
 try:
     from math import radians, degrees
 except ImportError:
@@ -32,14 +33,14 @@ except ImportError:
     def radians(x): return x*pi/180
     def degrees(x): return x*180/pi
 
-import trafo, unit
-from normpath import NormpathException, normpath, normsubpath, normline_pt, normcurve_pt
-import bbox as bboxmodule
+from . import trafo, unit
+from .normpath import NormpathException, normpath, normsubpath, normline_pt, normcurve_pt
+from . import bbox as bboxmodule
 
 # set is available as an external interface to the normpath.set method
-from normpath import set
+from .normpath import set
 # normpath's invalid is available as an external interface
-from normpath import invalid
+from .normpath import invalid
 
 try:
     sum([])
@@ -53,7 +54,7 @@ try:
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 # use new style classes when possible
 __metaclass__ = type

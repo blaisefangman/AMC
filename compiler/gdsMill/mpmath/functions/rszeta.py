@@ -60,7 +60,7 @@ class RSCache:
      def __init__(ctx):
         ctx._rs_cache = [0, 10, {}, {}]
 
-from functions import defun
+from .functions import defun
 
 #-------------------------------------------------------------------------------#
 #                                                                               #
@@ -210,8 +210,8 @@ def coef(ctx, J, eps):
     finally:
         ctx._mp.prec = orig
     if ctx is not ctx._mp:
-        data[2] = dict((k,ctx.convert(v)) for (k,v) in data[2].items())
-        data[3] = dict((k,ctx.convert(v)) for (k,v) in data[3].items())
+        data[2] = dict((k,ctx.convert(v)) for (k,v) in list(data[2].items()))
+        data[3] = dict((k,ctx.convert(v)) for (k,v) in list(data[3].items()))
     ctx._rs_cache[:] = data
     return ctx._rs_cache[2], ctx._rs_cache[3]
 
@@ -744,7 +744,7 @@ def Rzeta_simul(ctx, s, der=0):
             xS1[chi] += xterm
             yS1[chi] += yterm
     '''
-    xS1, yS1 = ctx._zetasum(s, 1, int(N)-1, range(0,der+1), True)
+    xS1, yS1 = ctx._zetasum(s, 1, int(N)-1, list(range(0,der+1)), True)
 
     # END OF COMPUTATION of xrz, yrz
     #  See II Section 3.1
@@ -1156,7 +1156,7 @@ def z_half(ctx,t,der=0):
     ctx.prec = wptheta * LOGGAMMA_BROKENNESS_FACTOR
     theta = ctx.siegeltheta(t)
     ctx.prec = wpz
-    rz = Rzeta_set(ctx,s, range(der+1))
+    rz = Rzeta_set(ctx,s, list(range(der+1)))
     if der > 0: ps1 = ctx._re(ctx.psi(0,s/2)/2 - ctx.ln(ctx.pi)/2)
     if der > 1: ps2 = ctx._re(ctx.j*ctx.psi(1,s/2)/4)
     if der > 2: ps3 = ctx._re(-ctx.psi(2,s/2)/8)
@@ -1218,7 +1218,7 @@ def zeta_half(ctx, s, k=0):
     if k > 2: ps3 = -(ctx._re(ctx.psi(2,s/2)))/8
     if k > 3: ps4 = (ctx._im(ctx.psi(3,s/2)))/16
     ctx.prec = wpR
-    xrz = Rzeta_set(ctx,s,range(k+1))
+    xrz = Rzeta_set(ctx,s,list(range(k+1)))
     yrz={}
     for chi in range(0,k+1):
         yrz[chi] = ctx.conj(xrz[chi])

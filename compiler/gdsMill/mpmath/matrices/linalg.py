@@ -125,11 +125,11 @@ class LinearAlgebraMethods(object):
         tol = ctx.absmin(ctx.mnorm(A,1) * ctx.eps) # each pivot element has to be bigger
         n = A.rows
         p = [None]*(n - 1)
-        for j in xrange(n - 1):
+        for j in range(n - 1):
             # pivoting, choose max(abs(reciprocal row sum)*abs(pivot element))
             biggest = 0
-            for k in xrange(j, n):
-                s = ctx.fsum([ctx.absmin(A[k,l]) for l in xrange(j, n)])
+            for k in range(j, n):
+                s = ctx.fsum([ctx.absmin(A[k,l]) for l in range(j, n)])
                 if ctx.absmin(s) <= tol:
                     raise ZeroDivisionError('matrix is numerically singular')
                 current = 1/s * ctx.absmin(A[k,j])
@@ -141,9 +141,9 @@ class LinearAlgebraMethods(object):
             if ctx.absmin(A[j,j]) <= tol:
                 raise ZeroDivisionError('matrix is numerically singular')
             # calculate elimination factors and add rows
-            for i in xrange(j + 1, n):
+            for i in range(j + 1, n):
                 A[i,j] /= A[j,j]
-                for k in xrange(j + 1, n):
+                for k in range(j + 1, n):
                     A[i,k] -= A[i,j]*A[j,k]
         if ctx.absmin(A[n - 1,n - 1]) <= tol:
             raise ZeroDivisionError('matrix is numerically singular')
@@ -161,11 +161,11 @@ class LinearAlgebraMethods(object):
         assert len(b) == n
         b = copy(b)
         if p: # swap b according to p
-            for k in xrange(0, len(p)):
+            for k in range(0, len(p)):
                 ctx.swap_row(b, k, p[k])
         # solve
-        for i in xrange(1, n):
-            for j in xrange(i):
+        for i in range(1, n):
+            for j in range(i):
                 b[i] -= L[i,j] * b[j]
         return b
 
@@ -177,8 +177,8 @@ class LinearAlgebraMethods(object):
         n = U.rows
         assert len(y) == n
         x = copy(y)
-        for i in xrange(n - 1, -1, -1):
-            for j in xrange(i + 1, n):
+        for i in range(n - 1, -1, -1):
+            for j in range(i + 1, n):
                 x[i] -= U[i,j] * x[j]
             x[i] /= U[i,i]
         return x
@@ -232,7 +232,7 @@ class LinearAlgebraMethods(object):
         Usually 3 up to 4 iterations are giving the maximal improvement.
         """
         assert A.rows == A.cols, 'need n*n matrix' # TODO: really?
-        for _ in xrange(maxsteps):
+        for _ in range(maxsteps):
             r = ctx.residual(A, x, b)
             if ctx.norm(r, 2) < 10*ctx.eps:
                 break
@@ -258,8 +258,8 @@ class LinearAlgebraMethods(object):
         n = A.rows
         L = ctx.matrix(n)
         U = ctx.matrix(n)
-        for i in xrange(n):
-            for j in xrange(n):
+        for i in range(n):
+            for j in range(n):
                 if i > j:
                     L[i,j] = A[i,j]
                 elif i == j:
@@ -269,7 +269,7 @@ class LinearAlgebraMethods(object):
                     U[i,j] = A[i,j]
         # calculate permutation matrix
         P = ctx.eye(n)
-        for k in xrange(len(p)):
+        for k in range(len(p)):
             ctx.swap_row(P, k, p[k])
         return P, L, U
 
@@ -297,15 +297,15 @@ class LinearAlgebraMethods(object):
             A, p = ctx.LU_decomp(A)
             cols = []
             # calculate unit vectors and solve corresponding system to get columns
-            for i in xrange(1, n + 1):
+            for i in range(1, n + 1):
                 e = ctx.unitvector(n, i)
                 y = ctx.L_solve(A, e, p)
                 cols.append(ctx.U_solve(A, y))
             # convert columns to matrix
             inv = []
-            for i in xrange(n):
+            for i in range(n):
                 row = []
-                for j in xrange(n):
+                for j in range(n):
                     row.append(cols[j][i])
                 inv.append(row)
             result = ctx.matrix(inv, **kwargs)
@@ -328,25 +328,25 @@ class LinearAlgebraMethods(object):
         assert m >= n - 1
         # calculate Householder matrix
         p = []
-        for j in xrange(0, n - 1):
-            s = ctx.fsum((A[i,j])**2 for i in xrange(j, m))
+        for j in range(0, n - 1):
+            s = ctx.fsum((A[i,j])**2 for i in range(j, m))
             if not abs(s) > ctx.eps:
                 raise ValueError('matrix is numerically singular')
             p.append(-ctx.sign(A[j,j]) * ctx.sqrt(s))
             kappa = ctx.one / (s - p[j] * A[j,j])
             A[j,j] -= p[j]
-            for k in xrange(j+1, n):
-                y = ctx.fsum(A[i,j] * A[i,k] for i in xrange(j, m)) * kappa
-                for i in xrange(j, m):
+            for k in range(j+1, n):
+                y = ctx.fsum(A[i,j] * A[i,k] for i in range(j, m)) * kappa
+                for i in range(j, m):
                     A[i,k] -= A[i,j] * y
         # solve Rx = c1
-        x = [A[i,n - 1] for i in xrange(n - 1)]
-        for i in xrange(n - 2, -1, -1):
-            x[i] -= ctx.fsum(A[i,j] * x[j] for j in xrange(i + 1, n - 1))
+        x = [A[i,n - 1] for i in range(n - 1)]
+        for i in range(n - 2, -1, -1):
+            x[i] -= ctx.fsum(A[i,j] * x[j] for j in range(i + 1, n - 1))
             x[i] /= p[i]
         # calculate residual
         if not m == n - 1:
-            r = [A[m-1-i, n-1] for i in xrange(m - n + 1)]
+            r = [A[m-1-i, n-1] for i in range(m - n + 1)]
         else:
             # determined system, residual should be 0
             r = [0]*m # maybe a bad idea, changing r[i] will change all elements
@@ -422,13 +422,13 @@ class LinearAlgebraMethods(object):
             raise ValueError('need n*n matrix')
         n = A.rows
         L = ctx.matrix(n)
-        for j in xrange(n):
-            s = A[j,j] - ctx.fsum(L[j,k]**2 for k in xrange(j))
+        for j in range(n):
+            s = A[j,j] - ctx.fsum(L[j,k]**2 for k in range(j))
             if s < ctx.eps:
                 raise ValueError('matrix not positive-definite')
             L[j,j] = ctx.sqrt(s)
-            for i in xrange(j, n):
-                L[i,j] = (A[i,j] - ctx.fsum(L[i,k] * L[j,k] for k in xrange(j))) \
+            for i in range(j, n):
+                L[i,j] = (A[i,j] - ctx.fsum(L[i,k] * L[j,k] for k in range(j))) \
                          / L[j,j]
         return L
 
@@ -456,8 +456,8 @@ class LinearAlgebraMethods(object):
             # solve
             n = L.rows
             assert len(b) == n
-            for i in xrange(n):
-                b[i] -= ctx.fsum(L[i,j] * b[j] for j in xrange(i))
+            for i in range(n):
+                b[i] -= ctx.fsum(L[i,j] * b[j] for j in range(i))
                 b[i] /= L[i,i]
             x = ctx.U_solve(L.T, b)
             return x
@@ -481,7 +481,7 @@ class LinearAlgebraMethods(object):
             for i, e in enumerate(p):
                 if i != e:
                     z *= -1
-            for i in xrange(A.rows):
+            for i in range(A.rows):
                 z *= R[i,i]
             return z
         finally:

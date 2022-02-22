@@ -20,8 +20,8 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import cStringIO, warnings
-import bbox, pswriter, pdfwriter, trafo, style, unit
+import io, warnings
+from . import bbox, pswriter, pdfwriter, trafo, style, unit
 
 
 class paperformat:
@@ -73,7 +73,7 @@ class page:
         # pagetrafo in front after the bbox was calculated
         expectpagetrafo = self.paperformat and (self.rotated or self.centered or self.fittosize)
         if expectpagetrafo:
-            canvasfile = cStringIO.StringIO()
+            canvasfile = io.StringIO()
         else:
             canvasfile = contentfile
 
@@ -125,7 +125,7 @@ class page:
 
                 # apply the pagetrafo and write it to the contentfile
                 bbox.transform(pagetrafo)
-                pagetrafofile = cStringIO.StringIO()
+                pagetrafofile = io.StringIO()
                 # context, bbox, registry are just passed as stubs (the trafo should not touch them)
                 getattr(pagetrafo, processMethod)(pagetrafofile, writer, context, registry, bbox)
                 contentfile.write(pagetrafofile.getvalue())

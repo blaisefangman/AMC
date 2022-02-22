@@ -14,7 +14,7 @@ References:
     Cambridge University Press
 """
 
-from functions import defun, defun_wrapped
+from .functions import defun, defun_wrapped
 
 @defun
 def calculate_nome(ctx, k):

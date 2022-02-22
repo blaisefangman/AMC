@@ -344,7 +344,7 @@ def lambertw(ctx, z, k=0):
     # Use Halley iteration to solve w*exp(w) = z
     two = ctx.mpf(2)
     weps = ctx.ldexp(ctx.eps, 15)
-    for i in xrange(100):
+    for i in range(100):
         ew = ctx.exp(w)
         wew = w*ew
         wewz = wew-z

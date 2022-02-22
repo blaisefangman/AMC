@@ -20,15 +20,15 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import cStringIO, copy, time, math
-import bbox, style, version, type1font, unit, trafo
+import io, copy, time, math
+from . import bbox, style, version, type1font, unit, trafo
 
 try:
     enumerate([])
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 try:
     dict([])
@@ -53,7 +53,7 @@ class PSregistry:
 
     def add(self, resource):
         rkey = (resource.type, resource.id)
-        if self.resourceshash.has_key(rkey):
+        if rkey in self.resourceshash:
            self.resourceshash[rkey].merge(resource)
         else:
            self.resourceshash[rkey] = resource
@@ -141,10 +141,10 @@ class PSfont:
             t = trafo.trafo_pt(matrix=((1, font.slant), (0, 1)))
             if font.filename:
                 # for the builtin fonts, we assume a trivial fontmatrix
-                import font.t1font as t1fontmodule
+                from . import font.t1font as t1fontmodule
                 t1font = t1fontmodule.T1pfbfont(font.filename)
                 m = t1font.fontmatrixpattern.search(t1font.data1)
-                m11, m12, m21, m22, v1, v2 = map(float, m.groups()[:6])
+                m11, m12, m21, m22, v1, v2 = list(map(float, m.groups()[:6]))
                 t *= trafo.trafo_pt(matrix=((m11, m12), (m21, m22)), vector=(v1, v2))
             else:
                 raise NotImplementedError(
@@ -190,7 +190,7 @@ class PSfontfile(PSresource):
             self.strip = 0
 
     def output(self, file, writer, registry):
-        import font.t1font
+        from . import font.t1font
         font = font.t1font.T1pfbfont(self.filename)
 
         file.write("%%%%BeginFont: %s\n" % self.name)
@@ -199,10 +199,10 @@ class PSfontfile(PSresource):
             # XXX: access to the encoding file
             if self.encodingfilename:
                 encodingfile = type1font.encodingfile(self.encodingfilename, self.encodingfilename)
-                usedglyphs = dict([(encodingfile.decode(char)[1:], 1) for char in self.usedchars.keys()])
+                usedglyphs = dict([(encodingfile.decode(char)[1:], 1) for char in list(self.usedchars.keys())])
             else:
                 font._encoding()
-                usedglyphs = dict([(font.encoding.decode(char), 1) for char in self.usedchars.keys()])
+                usedglyphs = dict([(font.encoding.decode(char), 1) for char in list(self.usedchars.keys())])
             strippedfont = font.getstrippedfont(usedglyphs)
         else:
             strippedfont = font
@@ -323,7 +323,7 @@ class epswriter:
         else:
             filename = "stream"
 
-        pagefile = cStringIO.StringIO()
+        pagefile = io.StringIO()
         registry = PSregistry()
         acontext = context()
         pagebbox = bbox.empty()
@@ -371,7 +371,7 @@ class pswriter:
         # We first have to process the content of the pages, writing them into the stream pagesfile
         # Doing so, we fill the registry and also calculate the page bounding boxes, which are
         # stored in page._bbox for every page
-        pagesfile = cStringIO.StringIO()
+        pagesfile = io.StringIO()
         registry = PSregistry()
 
         # calculated bounding boxes of the whole document
@@ -379,7 +379,7 @@ class pswriter:
 
         for nr, page in enumerate(document.pages):
             # process contents of page
-            pagefile = cStringIO.StringIO()
+            pagefile = io.StringIO()
             acontext = context()
             pagebbox = bbox.empty()
             page.processPS(pagefile, self, acontext, registry, pagebbox)
@@ -420,7 +420,7 @@ class pswriter:
                 paperformats[page.paperformat] = page.paperformat
 
         first = 1
-        for paperformat in paperformats.values():
+        for paperformat in list(paperformats.values()):
             if first:
                 file.write("%%DocumentMedia: ")
                 first = 0
@@ -464,6 +464,6 @@ class context:
 
     def __call__(self, **kwargs):
         newcontext = copy.copy(self)
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             setattr(newcontext, key, value)
         return newcontext

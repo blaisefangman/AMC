@@ -1,7 +1,7 @@
 import pyx
 import math
 from numpy import matrix
-from gdsPrimitives import *
+from .gdsPrimitives import *
 import random
 
 class pdfLayout:

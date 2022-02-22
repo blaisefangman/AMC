@@ -24,7 +24,7 @@ __allmodules__ = ["painter", "parter", "rater", "texter", "tick"]
 for module in __allmodules__:
     __import__(module, globals(), locals(), [])
 
-import axis
+from . import axis
 __allaxis__ = ["linear", "lin", "logarithmic", "log",
                "bar", "nestedbar", "split",
                "sizedlinear", "sizedlin", "autosizedlinear", "autosizedlin",

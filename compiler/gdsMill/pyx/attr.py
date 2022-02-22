@@ -30,7 +30,7 @@ except TypeError:
     _isinstance = isinstance
     def isinstance(instance, clsarg):
         import types
-        if _isinstance(clsarg, types.ClassType):
+        if _isinstance(clsarg, type):
             return _isinstance(instance, clsarg)
         for cls in clsarg:
             if _isinstance(instance, cls):

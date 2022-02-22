@@ -1,4 +1,4 @@
-from functions import defun, defun_wrapped
+from .functions import defun, defun_wrapped
 
 @defun
 def gammaprod(ctx, a, b, _infsign=False):
@@ -114,7 +114,7 @@ def barnesg(ctx, z):
     s += (z**2/2-ctx.mpf(1)/12)*ctx.log(z)
     s -= 3*z**2/4
     z2k = z2 = z**2
-    for k in xrange(1, N+1):
+    for k in range(1, N+1):
         t = ctx.bernoulli(2*k+2) / (4*k*(k+1)*z2k)
         if abs(t) < ctx.eps:
             #print k, N      # check how many terms were needed

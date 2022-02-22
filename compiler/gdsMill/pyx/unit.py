@@ -49,7 +49,7 @@ def set(uscale=None, vscale=None, wscale=None, xscale=None, defaultunit=None):
 
 
 def _convert_to(l, dest_unit="m"):
-    if type(l) in (types.IntType, types.LongType, types.FloatType):
+    if type(l) in (int, int, float):
         return l * _m[_default_unit] * scale['u'] / _m[dest_unit]
     elif not isinstance(l, length):
         l = length(l)       # convert to length instance if necessary

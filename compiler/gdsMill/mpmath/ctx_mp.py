@@ -8,11 +8,11 @@ import re
 
 from string import strip
 
-from ctx_base import StandardBaseContext
+from .ctx_base import StandardBaseContext
 
-import libmp
+from . import libmp
 
-from libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
+from .libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
     round_floor, round_ceiling, dps_to_prec, round_nearest, prec_to_dps,
     ComplexResult, to_pickable, from_pickable, normalize,
     from_int, from_float, from_str, to_int, to_float, to_str,
@@ -38,8 +38,8 @@ from libmp import (MPZ, MPZ_ZERO, MPZ_ONE, int_types, repr_dps,
     mpf_glaisher, mpf_twinprime, mpf_mertens,
     int_types)
 
-import function_docs
-import rational
+from . import function_docs
+from . import rational
 
 new = object.__new__
 
@@ -52,10 +52,10 @@ try:
     # pickle hack
     import sage.libs.mpmath.ext_main as _mpf_module
 except ImportError:
-    from ctx_mp_python import PythonMPContext as BaseMPContext
-    import ctx_mp_python as _mpf_module
+    from .ctx_mp_python import PythonMPContext as BaseMPContext
+    from . import ctx_mp_python as _mpf_module
 
-from ctx_mp_python import _mpf, _mpc, mpnumeric
+from .ctx_mp_python import _mpf, _mpc, mpnumeric
 
 
 class _mpi(mpnumeric):
@@ -159,7 +159,7 @@ class _mpi(mpnumeric):
             self.context.prec))
 
     def __pow__(self, other):
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             return self.context.make_mpi(mpi_pow_int(self._mpi_, int(other),
                 self.context.prec))
         if not hasattr(other, "_mpi_"):
@@ -212,13 +212,13 @@ class MPContext(BaseMPContext, StandardBaseContext):
         ctx._init_aliases()
 
         # XXX: automate
-        ctx.bernoulli.im_func.func_doc = function_docs.bernoulli
-        ctx.primepi.im_func.func_doc = function_docs.primepi
-        ctx.psi.im_func.func_doc = function_docs.psi
-        ctx.atan2.im_func.func_doc = function_docs.atan2
-        ctx.digamma.func_doc = function_docs.digamma
-        ctx.cospi.func_doc = function_docs.cospi
-        ctx.sinpi.func_doc = function_docs.sinpi
+        ctx.bernoulli.__func__.__doc__ = function_docs.bernoulli
+        ctx.primepi.__func__.__doc__ = function_docs.primepi
+        ctx.psi.__func__.__doc__ = function_docs.psi
+        ctx.atan2.__func__.__doc__ = function_docs.atan2
+        ctx.digamma.__doc__ = function_docs.digamma
+        ctx.cospi.__doc__ = function_docs.cospi
+        ctx.sinpi.__doc__ = function_docs.sinpi
 
     def init_builtins(ctx):
 
@@ -523,7 +523,7 @@ class MPContext(BaseMPContext, StandardBaseContext):
             return to_str(x._mpf_, n, **kwargs)
         if hasattr(x, '_mpc_'):
             return "(" + mpc_to_str(x._mpc_, n, **kwargs)  + ")"
-        if isinstance(x, basestring):
+        if isinstance(x, str):
             return repr(x)
         if isinstance(x, ctx.matrix):
             return x.__nstr__(n, **kwargs)
@@ -535,10 +535,10 @@ class MPContext(BaseMPContext, StandardBaseContext):
         """
         Equivalent to ``print nstr(x, n)``.
         """
-        print ctx.nstr(x, n, **kwargs)
+        print(ctx.nstr(x, n, **kwargs))
 
     def _convert_fallback(ctx, x, strings):
-        if strings and isinstance(x, basestring):
+        if strings and isinstance(x, str):
             if 'j' in x.lower():
                 x = x.lower().replace(' ', '')
                 match = get_complex.match(x)
@@ -637,7 +637,7 @@ maxterms, or set zeroprec."""
             cancel = -magnitude
             jumps_resolved = True
             if extraprec < max_total_jump:
-                for n in mag_dict.values():
+                for n in list(mag_dict.values()):
                     if (n is None) or (n < prec):
                         jumps_resolved = False
                         break
@@ -1288,7 +1288,7 @@ maxterms, or set zeroprec."""
                 b.append('')
             if a[1] == b[1]:
                 if a[0] != b[0]:
-                    for i in xrange(len(a[0]) + 1):
+                    for i in range(len(a[0]) + 1):
                         if a[0][i] != b[0][i]:
                             break
                     s = (a[0][:i] + br1 + a[0][i:] + ',' + sp + b[0][i:] + br2
@@ -1345,8 +1345,8 @@ maxterms, or set zeroprec."""
         a = int(a)
         prec = ctx._prec
         xs, ys = libmp.mpc_zetasum(s._mpc_, a, n, derivatives, reflect, prec)
-        xs = map(ctx.make_mpc, xs)
-        ys = map(ctx.make_mpc, ys)
+        xs = list(map(ctx.make_mpc, xs))
+        ys = list(map(ctx.make_mpc, ys))
         return xs, ys
 
 

@@ -1,4 +1,4 @@
-from functions import defun, defun_wrapped
+from .functions import defun, defun_wrapped
 
 def _check_need_perturb(ctx, terms, prec, discard_known_zeros):
     perturb = recompute = False
@@ -77,10 +77,10 @@ def hypercomb(ctx, function, params=[], discard_known_zeros=True, **kwargs):
             params = orig_params[:]
             terms = function(*params)
             if verbose:
-                print
-                print "ENTERING hypercomb main loop"
-                print "prec =", ctx.prec
-                print "hextra", hextra
+                print()
+                print("ENTERING hypercomb main loop")
+                print("prec =", ctx.prec)
+                print("hextra", hextra)
             perturb, recompute, extraprec, discard = \
                 _check_need_perturb(ctx, terms, orig, discard_known_zeros)
             ctx.prec += extraprec
@@ -110,19 +110,19 @@ def hypercomb(ctx, function, params=[], discard_known_zeros=True, **kwargs):
             for term_index, term_data in enumerate(terms):
                 w_s, c_s, alpha_s, beta_s, a_s, b_s, z = term_data
                 if verbose:
-                    print
-                    print "  Evaluating term %i/%i : %iF%i" % \
-                        (term_index+1, len(terms), len(a_s), len(b_s))
-                    print "    powers", ctx.nstr(w_s), ctx.nstr(c_s)
-                    print "    gamma", ctx.nstr(alpha_s), ctx.nstr(beta_s)
-                    print "    hyper", ctx.nstr(a_s), ctx.nstr(b_s)
-                    print "    z", ctx.nstr(z)
+                    print()
+                    print("  Evaluating term %i/%i : %iF%i" % \
+                        (term_index+1, len(terms), len(a_s), len(b_s)))
+                    print("    powers", ctx.nstr(w_s), ctx.nstr(c_s))
+                    print("    gamma", ctx.nstr(alpha_s), ctx.nstr(beta_s))
+                    print("    hyper", ctx.nstr(a_s), ctx.nstr(b_s))
+                    print("    z", ctx.nstr(z))
                 v = ctx.hyper(a_s, b_s, z, **kwargs)
                 for a in alpha_s: v *= ctx.gamma(a)
                 for b in beta_s: v /= ctx.gamma(b)
                 for w, c in zip(w_s, c_s): v *= ctx.power(w, c)
                 if verbose:
-                    print "    Value:", v
+                    print("    Value:", v)
                 evaluated_terms.append(v)
 
             if len(terms) == 1 and (not perturb):
@@ -139,9 +139,9 @@ def hypercomb(ctx, function, params=[], discard_known_zeros=True, **kwargs):
             sum_magnitude = ctx.mag(sumvalue)
             cancellation = max_magnitude - sum_magnitude
             if verbose:
-                print
-                print "  Cancellation:", cancellation, "bits"
-                print "  Increased precision:", ctx.prec - orig, "bits"
+                print()
+                print("  Cancellation:", cancellation, "bits")
+                print("  Increased precision:", ctx.prec - orig, "bits")
 
             precision_ok = cancellation < ctx.prec - orig
 
@@ -180,7 +180,7 @@ def hypercomb(ctx, function, params=[], discard_known_zeros=True, **kwargs):
                 increment = min(max(cancellation, orig//2), max(extraprec,orig))
                 ctx.prec += increment
                 if verbose:
-                    print "  Must start over with increased precision"
+                    print("  Must start over with increased precision")
                 continue
     finally:
         ctx.prec = orig
@@ -194,8 +194,8 @@ def hyper(ctx, a_s, b_s, z, **kwargs):
     z = ctx.convert(z)
     p = len(a_s)
     q = len(b_s)
-    a_s = map(ctx._convert_param, a_s)
-    b_s = map(ctx._convert_param, b_s)
+    a_s = list(map(ctx._convert_param, a_s))
+    b_s = list(map(ctx._convert_param, b_s))
     # Reduce degree by eliminating common parameters
     if kwargs.get('eliminate', True):
         i = 0
@@ -225,7 +225,7 @@ def hyper(ctx, a_s, b_s, z, **kwargs):
         return ctx._hypq1fq(p, q, a_s, b_s, z, **kwargs)
     elif p > q+1 and not kwargs.get('force_series'):
         return ctx._hyp_borel(p, q, a_s, b_s, z, **kwargs)
-    coeffs, types = zip(*(a_s+b_s))
+    coeffs, types = list(zip(*(a_s+b_s)))
     return ctx.hypsum(p, q, types, coeffs, z, **kwargs)
 
 @defun
@@ -477,8 +477,8 @@ def _hypq1fq(ctx, p, q, a_s, b_s, z, **kwargs):
     r"""
     Evaluates 3F2, 4F3, 5F4, ...
     """
-    a_s, a_types = zip(*a_s)
-    b_s, b_types = zip(*b_s)
+    a_s, a_types = list(zip(*a_s))
+    b_s, b_types = list(zip(*b_s))
     a_s = list(a_s)
     b_s = list(b_s)
     absz = abs(z)
@@ -549,8 +549,8 @@ def _hypq1fq(ctx, p, q, a_s, b_s, z, **kwargs):
                 return _cache[k]
             t = _cache[k-1]
             m = k-1
-            for j in xrange(p): t *= (a_s[j]+m)
-            for j in xrange(q): t /= (b_s[j]+m)
+            for j in range(p): t *= (a_s[j]+m)
+            for j in range(q): t /= (b_s[j]+m)
             t *= z
             t /= k
             _cache[k] = t
@@ -581,12 +581,12 @@ def _hypq1fq(ctx, p, q, a_s, b_s, z, **kwargs):
 @defun
 def _hyp_borel(ctx, p, q, a_s, b_s, z, **kwargs):
     if a_s:
-        a_s, a_types = zip(*a_s)
+        a_s, a_types = list(zip(*a_s))
         a_s = list(a_s)
     else:
         a_s, a_types = [], ()
     if b_s:
-        b_s, b_types = zip(*b_s)
+        b_s, b_types = list(zip(*b_s))
         b_s = list(b_s)
     else:
         b_s, b_types = [], ()
@@ -611,7 +611,7 @@ def _hyp_borel(ctx, p, q, a_s, b_s, z, **kwargs):
             cache[k] = t
             return t
         s = ctx.one
-        for k in xrange(1, ctx.prec):
+        for k in range(1, ctx.prec):
             t = term(k)
             s += t
             if abs(t) <= tol:
@@ -1833,8 +1833,8 @@ def meijerg(ctx, a_s, b_s, z, r=1, series=None, **kwargs):
     q = m + len(bq)
     a = an+ap
     b = bm+bq
-    a = map(ctx.convert, a)
-    b = map(ctx.convert, b)
+    a = list(map(ctx.convert, a))
+    b = list(map(ctx.convert, b))
     z = ctx.convert(z)
     if series is None:
         if p < q: series = 1
@@ -1845,7 +1845,7 @@ def meijerg(ctx, a_s, b_s, z, r=1, series=None, **kwargs):
             else:
                 series = 1
     if kwargs.get('verbose'):
-        print "Meijer G m,n,p,q,series =", m,n,p,q,series
+        print("Meijer G m,n,p,q,series =", m,n,p,q,series)
     if series == 1:
         def h(*args):
             a = args[:p]

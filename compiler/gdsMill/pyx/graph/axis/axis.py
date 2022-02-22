@@ -21,7 +21,7 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import nested_scopes
+
 
 import math, warnings
 from pyx import attr, unit, text
@@ -32,7 +32,7 @@ try:
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 class _marker: pass
 
@@ -45,7 +45,7 @@ class axisdata:
     graph during initialization."""
 
     def __init__(self, **kwargs):
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             setattr(self, key, value)
 
 
@@ -141,7 +141,7 @@ class _regularaxis(_axis):
         class variant:
             def __init__(self, data, **kwargs):
                 self.data = data
-                for key, value in kwargs.items():
+                for key, value in list(kwargs.items()):
                     setattr(self, key, value)
 
             def __getattr__(self, key):

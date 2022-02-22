@@ -60,7 +60,7 @@ class path():
         """ Add a corner square at every corner of the path."""
         
         from itertools import tee,islice
-        nwise = lambda g,n=2: zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n))))
+        nwise = lambda g,n=2: list(zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n)))))
         threewise=nwise(self.position_list,3)
 
         for (a, offset, c) in list(threewise):

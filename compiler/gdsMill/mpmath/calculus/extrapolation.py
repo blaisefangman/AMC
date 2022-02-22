@@ -1,5 +1,5 @@
-from calculus import defun
-from itertools import izip
+from .calculus import defun
+
 
 @defun
 def richardson(ctx, seq):
@@ -78,7 +78,7 @@ def richardson(ctx, seq):
     # of successive weights to obtain a recurrence relation
     c = (-1)**N * N**N / ctx.mpf(ctx._ifac(N))
     maxc = 1
-    for k in xrange(N+1):
+    for k in range(N+1):
         s += c * seq[N+k]
         maxc = max(abs(c), maxc)
         c *= (k-N)*ctx.mpf(k+N+1)**N
@@ -232,9 +232,9 @@ def shanks(ctx, seq, table=None, randomized=False):
         from random import Random
         rnd = Random()
         rnd.seed(START)
-    for i in xrange(START, STOP):
+    for i in range(START, STOP):
         row = []
-        for j in xrange(i+1):
+        for j in range(i+1):
             if j == 0:
                 a, b = 0, seq[i+1]-seq[i]
             else:
@@ -326,27 +326,27 @@ def sumem(ctx, f, interval, tol=None, reject=10, integral=None,
     err = ctx.zero
     prev = 0
     M = 10000
-    if a == ctx.ninf: adiffs = (0 for n in xrange(M))
+    if a == ctx.ninf: adiffs = (0 for n in range(M))
     else:             adiffs = adiffs or ctx.diffs(f, a)
-    if b == ctx.inf:  bdiffs = (0 for n in xrange(M))
+    if b == ctx.inf:  bdiffs = (0 for n in range(M))
     else:             bdiffs = bdiffs or ctx.diffs(f, b)
     orig = ctx.prec
     #verbose = 1
     try:
         ctx.prec += 10
         s = ctx.zero
-        for k, (da, db) in enumerate(izip(adiffs, bdiffs)):
+        for k, (da, db) in enumerate(zip(adiffs, bdiffs)):
             if k & 1:
                 term = (db-da) * ctx.bernoulli(k+1) / ctx.factorial(k+1)
                 mag = abs(term)
                 if verbose:
-                    print "term", k, "magnitude =", ctx.nstr(mag)
+                    print("term", k, "magnitude =", ctx.nstr(mag))
                 if k > 4 and mag < tol:
                     s += term
                     break
                 elif k > 4 and abs(prev) / mag < reject:
                     if verbose:
-                        print "Failed to converge"
+                        print("Failed to converge")
                     err += mag
                     break
                 else:
@@ -357,13 +357,13 @@ def sumem(ctx, f, interval, tol=None, reject=10, integral=None,
         if b != ctx.inf: s += f(b)/2
         # Tail integral
         if verbose:
-            print "Integrating f(x) from x = %s to %s" % (ctx.nstr(a), ctx.nstr(b))
+            print("Integrating f(x) from x = %s to %s" % (ctx.nstr(a), ctx.nstr(b)))
         if integral:
             s += integral
         else:
             integral, ierr = ctx.quad(f, interval, error=True)
             if verbose:
-                print "Integration error:", ierr
+                print("Integration error:", ierr)
             s += integral
             err += ierr
     finally:
@@ -381,7 +381,7 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
     maxterms = option('maxterms', ctx.dps*10)
     method = option('method', 'r+s').split('+')
     skip = option('skip', 0)
-    steps = iter(option('steps', xrange(10, 10**9, 10)))
+    steps = iter(option('steps', range(10, 10**9, 10)))
     strict = option('strict')
     #steps = (10 for i in xrange(1000))
     if 'd' in method or 'direct' in method:
@@ -410,20 +410,20 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
 
             # Get new batch of terms
             try:
-                step = steps.next()
+                step = next(steps)
             except StopIteration:
                 pass
             if verbose:
-                print "-"*70
-                print "Adding terms #%i-#%i" % (index, index+step)
-            update(partial, xrange(index, index+step))
+                print("-"*70)
+                print("Adding terms #%i-#%i" % (index, index+step))
+            update(partial, range(index, index+step))
             index += step
 
             # Check direct error
             best = partial[-1]
             error = abs(best - partial[-2])
             if verbose:
-                print "Direct error: %s" % ctx.nstr(error)
+                print("Direct error: %s" % ctx.nstr(error))
             if error <= tol:
                 return best
 
@@ -433,7 +433,7 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
                 # Convergence
                 richardson_error = abs(value - last_richardson_value)
                 if verbose:
-                    print "Richardson error: %s" % ctx.nstr(richardson_error)
+                    print("Richardson error: %s" % ctx.nstr(richardson_error))
                 # Convergence
                 if richardson_error <= tol:
                     return value
@@ -441,7 +441,7 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
                 # Unreliable due to cancellation
                 if ctx.eps*maxc > tol:
                     if verbose:
-                        print "Ran out of precision for Richardson"
+                        print("Ran out of precision for Richardson")
                     TRY_RICHARDSON = False
                 if richardson_error < error:
                     error = richardson_error
@@ -456,12 +456,12 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
                     est1, maxc, est2 = row[-1], abs(row[-2]), row[-3]
                     shanks_error = abs(est1-est2)
                 if verbose:
-                    print "Shanks error: %s" % ctx.nstr(shanks_error)
+                    print("Shanks error: %s" % ctx.nstr(shanks_error))
                 if shanks_error <= tol:
                     return est1
                 if ctx.eps*maxc > tol:
                     if verbose:
-                        print "Ran out of precision for Shanks"
+                        print("Ran out of precision for Shanks")
                     TRY_SHANKS = False
                 if shanks_error < error:
                     error = shanks_error
@@ -477,7 +477,7 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
                     value, em_error = emfun(index, tol)
                     value += partial[-1]
                     if verbose:
-                        print "Euler-Maclaurin error: %s" % ctx.nstr(em_error)
+                        print("Euler-Maclaurin error: %s" % ctx.nstr(em_error))
                     if em_error <= tol:
                         return value
                     if em_error < error:
@@ -487,7 +487,7 @@ def adaptive_extrapolation(ctx, update, emfun, kwargs):
     if strict:
         raise ctx.NoConvergence
     if verbose:
-        print "Warning: failed to converge to target accuracy"
+        print("Warning: failed to converge to target accuracy")
     return best
 
 @defun
@@ -751,7 +751,7 @@ def nsum(ctx, f, interval, **kwargs):
             return f(0) + ctx.nsum(lambda k: f(-k) + f(k), [1, ctx.inf], **kwargs)
         return ctx.nsum(f, [-b, ctx.inf], **kwargs)
     elif b != ctx.inf:
-        return ctx.fsum(f(ctx.mpf(k)) for k in xrange(int(a), int(b)+1))
+        return ctx.fsum(f(ctx.mpf(k)) for k in range(int(a), int(b)+1))
 
     a = int(a)
 
@@ -882,7 +882,7 @@ def nprod(ctx, f, interval, **kwargs):
     """
     a, b = ctx._as_points(interval)
     if a != ctx.ninf and b != ctx.inf:
-        return ctx.fprod(f(ctx.mpf(k)) for k in xrange(int(a), int(b)+1))
+        return ctx.fprod(f(ctx.mpf(k)) for k in range(int(a), int(b)+1))
 
     orig = ctx.prec
     try:

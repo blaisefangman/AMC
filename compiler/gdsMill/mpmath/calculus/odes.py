@@ -17,7 +17,7 @@ def ode_taylor(ctx, derivs, x0, y0, tol_prec, n):
         # evaluation points for derivatives
         for i in range(n):
             fxy = derivs(x, y)
-            y = [y[i]+h*fxy[i] for i in xrange(len(y))]
+            y = [y[i]+h*fxy[i] for i in range(len(y))]
             x += h
             xs.append(x)
             ys.append(y)
@@ -256,7 +256,7 @@ def odefun(ctx, F, x0, y0, tol=None, degree=None, method='taylor', verbose=False
         while 1:
             ser, xa, xb = series_data[-1]
             if verbose:
-                print "Computing Taylor series for [%f, %f]" % (xa, xb)
+                print("Computing Taylor series for [%f, %f]" % (xa, xb))
             y = mpolyval(ser, xb-xa)
             xa = xb
             ser, xb = ode_taylor(ctx, F, xb, y, tol_prec, degree)

@@ -1,4 +1,4 @@
-from calculus import defun
+from .calculus import defun
 
 #----------------------------------------------------------------------------#
 #                                Differentiation                             #
@@ -17,7 +17,7 @@ def difference_delta(ctx, s, n):
     n = int(n)
     d = ctx.zero
     b = (-1) ** (n & 1)
-    for k in xrange(n+1):
+    for k in range(n+1):
         d += b * s[k]
         b = (b * (k-n)) // (k+1)
     return d
@@ -129,11 +129,11 @@ def diff(ctx, f, x, n=1, method='step', scale=1, direction=0):
             # Directed: steps x, x+h, ... x+n*h
             if direction:
                 h *= ctx.sign(direction)
-                steps = xrange(n+1)
+                steps = range(n+1)
                 norm = h**n
             # Central: steps x-n*h, x-(n-2)*h ..., x, ..., x+(n-2)*h, x+n*h
             else:
-                steps = xrange(-n, n+1, 2)
+                steps = range(-n, n+1, 2)
                 norm = (2*h)**n
             v = ctx.difference_delta([f(x+k*h) for k in steps], n)
             v = v / norm
@@ -208,10 +208,10 @@ def diffs(ctx, f, x, n=None, method='step', scale=1, direction=0):
             h = ctx.ldexp(scale, -targetprec-10)
             if direction:
                 h *= ctx.sign(direction)
-                y = [f(x+h*k) for k in xrange(m+1)]
+                y = [f(x+h*k) for k in range(m+1)]
                 hnorm = h
             else:
-                y = [f(x+h*k) for k in xrange(-m, m+1, 2)]
+                y = [f(x+h*k) for k in range(-m, m+1, 2)]
                 hnorm = 2*h
             return y, hnorm, workprec
         finally:
@@ -228,7 +228,7 @@ def diffs(ctx, f, x, n=None, method='step', scale=1, direction=0):
 
     while 1:
         y, hnorm, workprec = getvalues(B)
-        for k in xrange(A, B):
+        for k in range(A, B):
             try:
                 callprec = ctx.prec
                 ctx.prec = workprec

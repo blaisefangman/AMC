@@ -21,8 +21,8 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import cStringIO, exceptions, re, struct, string, sys, warnings, math
-import unit, epsfile, bbox, canvas, color, trafo, path, pykpathsea, type1font
+import io, exceptions, re, struct, string, sys, warnings, math
+from . import unit, epsfile, bbox, canvas, color, trafo, path, pykpathsea, type1font
 
 
 class binfile:
@@ -88,7 +88,7 @@ class binfile:
 class stringbinfile(binfile):
 
     def __init__(self, s):
-        self.file = cStringIO.StringIO(s)
+        self.file = io.StringIO(s)
 
 
 
@@ -102,7 +102,7 @@ class TFMError(exceptions.Exception): pass
 
 class char_info_word:
     def __init__(self, word):
-        self.width_index  = int((word & 0xFF000000L) >> 24) #make sign-safe
+        self.width_index  = int((word & 0xFF000000) >> 24) #make sign-safe
         self.height_index = (word & 0x00F00000) >> 20
         self.depth_index  = (word & 0x000F0000) >> 16
         self.italic_index = (word & 0x0000FC00) >> 10
@@ -135,10 +135,10 @@ class tfmfile:
                 self.ne <= 256 and
                 self.lf == 6+self.lh+(self.ec-self.bc+1)+self.nw+self.nh+self.nd
                 +self.ni+self.nl+self.nk+self.ne+self.np):
-            raise TFMError, "error in TFM pre-header"
+            raise TFMError("error in TFM pre-header")
 
         if debug:
-            print("lh=%d" % self.lh)
+            print(("lh=%d" % self.lh))
 
         #
         # read header
@@ -160,9 +160,9 @@ class tfmfile:
             self.fontfamily = None
 
         if debug:
-            print("(FAMILY %s)" % self.fontfamily)
-            print("(CODINGSCHEME %s)" % self.charcoding)
-            print("(DESINGSIZE R %f)" % 16.0*self.designsize/16777216L)
+            print(("(FAMILY %s)" % self.fontfamily))
+            print(("(CODINGSCHEME %s)" % self.charcoding))
+            print(("(DESINGSIZE R %f)" % 16.0*self.designsize/16777216))
 
         if self.lh > 17:
             self.sevenbitsave = self.file.readuchar()
@@ -201,7 +201,7 @@ class tfmfile:
 
         if self.lh > 18:
             # just ignore the rest
-            print(self.file.read((self.lh-18)*4))
+            print((self.file.read((self.lh-18)*4)))
 
         #
         # read char_info
@@ -392,9 +392,9 @@ def readfontmap(filenames):
             if not (line=="" or line[0] in (" ", "%", "*", ";" , "#")):
                 try:
                     fm = fontmapping(line)
-                except (RuntimeError, UnsupportedPSFragment), e:
+                except (RuntimeError, UnsupportedPSFragment) as e:
                     warnings.warn("Ignoring line %i in mapping file '%s': %s" % (lineno, mappath, e))
-                except UnsupportedFontFormat, e:
+                except UnsupportedFontFormat as e:
                     pass
                 else:
                     fontmap[fm.texname] = fm
@@ -468,8 +468,8 @@ class font:
 
     def __str__(self):
         return "font %s designed at %g TeX pts used at %g TeX pts" % (self.name,
-                                                                      16.0*self.d/16777216L,
-                                                                      16.0*self.q/16777216L)
+                                                                      16.0*self.d/16777216,
+                                                                      16.0*self.q/16777216)
     __repr__ = __str__
 
     def getsize_pt(self):
@@ -477,7 +477,7 @@ class font:
         # The factor 16L/16777216L=2**(-20) converts a fix_word (here self.q)
         # to the corresponding float. Furthermore, we have to convert from TeX
         # points to points, hence the factor 72/72.27.
-        return 16L*self.q/16777216L*72/72.27
+        return 16*self.q/16777216*72/72.27
 
     def _convert_tfm_to_dvi(self, length):
         # doing the integer math with long integers will lead to different roundings
@@ -506,13 +506,13 @@ class font:
             z >>= 1
             shift -= 1
         # length*z is a long integer, but the result will be a regular integer
-        return int(length*long(z) >> shift)
+        return int(length*int(z) >> shift)
 
     def _convert_tfm_to_ds(self, length):
-        return (16*long(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv * 1000 / self.getsize_pt()
+        return (16*int(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv * 1000 / self.getsize_pt()
 
     def _convert_tfm_to_pt(self, length):
-        return (16*long(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv
+        return (16*int(round(length*float(self.q)*self.tfmconv))/16777216) * self.pyxconv
 
     # routines returning lengths as integers in dvi units
 
@@ -742,7 +742,7 @@ class dvifile:
                                  self.activefont.getsize_pt())
         else:
             if self.activetext is None:
-                if not self.fontmap.has_key(self.activefont.name):
+                if self.activefont.name not in self.fontmap:
                     raise RuntimeError("missing font information for '%s'; check fontmapping file(s)" % self.activefont.name)
                 fontmapinfo = self.fontmap[self.activefont.name]
 
@@ -893,11 +893,11 @@ class dvifile:
             epskwargs["filename"] = argdict["file"]
             epskwargs["bbox"] = bbox.bbox_pt(float(argdict["llx"]), float(argdict["lly"]),
                                            float(argdict["urx"]), float(argdict["ury"]))
-            if argdict.has_key("width"):
+            if "width" in argdict:
                 epskwargs["width"] = float(argdict["width"]) * unit.t_pt
-            if argdict.has_key("height"):
+            if "height" in argdict:
                 epskwargs["height"] = float(argdict["height"]) * unit.t_pt
-            if argdict.has_key("clip"):
+            if "clip" in argdict:
                epskwargs["clip"] = int(argdict["clip"])
             self.actpage.insert(epsfile.epsfile(x * unit.t_pt, y * unit.t_pt, **epskwargs))
         elif command == "marker":
@@ -906,7 +906,7 @@ class dvifile:
             for c in args[0]:
                 if c not in string.digits + string.letters + "@":
                     raise RuntimeError("marker contains invalid characters")
-            if self.actpage.markers.has_key(args[0]):
+            if args[0] in self.actpage.markers:
                 raise RuntimeError("marker name occurred several times")
             self.actpage.markers[args[0]] = x * unit.t_pt, y * unit.t_pt
         else:
@@ -942,7 +942,7 @@ class dvifile:
         self.filepos = 0
 
         # rescale self.pos in order to be consistent with the new scaling
-        self.pos = map(lambda x, rescale=rescale:1.0*x/rescale, self.pos)
+        self.pos = list(map(lambda x, rescale=rescale:1.0*x/rescale, self.pos))
 
         # since tfmconv converts from tfm units to dvi units, rescale it as well
         self.tfmconv /= rescale
@@ -1269,7 +1269,7 @@ class vffile:
                 # of the virtual font itself.  Note that realscale has
                 # to be a fix_word (like s)
                 # XXX: check rounding
-                reals = int(round(self.scale * (16*self.ds/16777216L) * s))
+                reals = int(round(self.scale * (16*self.ds/16777216) * s))
 
                 # print ("defining font %s -- VF scale: %g, VF design size: %d, relative font size: %d => real size: %d" %
                 #        (fontname, self.scale, self.ds, s, reals)

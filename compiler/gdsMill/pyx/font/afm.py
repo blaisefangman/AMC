@@ -59,7 +59,7 @@ def _parsefloat(s):
 def _parsefloats(s, nos):
     try:
         numbers = s.split()
-        result = map(float, numbers)
+        result = list(map(float, numbers))
         if len(result) != nos:
             raise AFMError()
     except:
@@ -365,7 +365,8 @@ class AFMfile:
         else:
             raise AFMError("Unsupported key %s in kerning data section" % key)
 
-    def _processline_kernpairs(self, line, (direction, i)):
+    def _processline_kernpairs(self, line, xxx_todo_changeme):
+        (direction, i) = xxx_todo_changeme
         try:
             key, args = line.split(None, 1)
         except ValueError:
@@ -484,6 +485,6 @@ class AFMfile:
 
 if __name__ == "__main__":
     a = AFMfile("/opt/local/share/texmf-dist/fonts/afm/yandy/lucida/lbc.afm")
-    print a.charmetrics[0].name
+    print(a.charmetrics[0].name)
     a = AFMfile("/usr/share/enscript/hv.afm")
-    print a.charmetrics[32].name
+    print(a.charmetrics[32].name)

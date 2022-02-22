@@ -1,4 +1,4 @@
-from functions import defun, defun_wrapped, defun_static
+from .functions import defun, defun_wrapped, defun_static
 
 @defun
 def stieltjes(ctx, n, a=1):
@@ -88,8 +88,8 @@ _zeta_zeros = [
 ]
 
 def _load_zeta_zeros(url):
-    import urllib
-    d = urllib.urlopen(url)
+    import urllib.request, urllib.parse, urllib.error
+    d = urllib.request.urlopen(url)
     L = [float(x) for x in d.readlines()]
     # Sanity check
     assert round(L[0]) == 14
@@ -458,11 +458,11 @@ def zeta(ctx, s, a=1, derivative=0, method=None, **kwargs):
             try:   #  py2.4 compatible try block
                 try:
                     if verbose:
-                        print "zeta: Attempting to use the Riemann-Siegel algorithm"
+                        print("zeta: Attempting to use the Riemann-Siegel algorithm")
                     return ctx.rs_zeta(s, derivative, **kwargs)
                 except NotImplementedError:
                     if verbose:
-                        print "zeta: Could not use the Riemann-Siegel algorithm"
+                        print("zeta: Could not use the Riemann-Siegel algorithm")
                     pass
             finally:
                 ctx.prec = prec
@@ -480,7 +480,7 @@ def zeta(ctx, s, a=1, derivative=0, method=None, **kwargs):
     if ctx.re(s) > 2*ctx.prec and a == 1 and not derivative:
         return ctx.one + ctx.power(2, -s)
     if verbose:
-        print "zeta: Using the Euler-Maclaurin algorithm"
+        print("zeta: Using the Euler-Maclaurin algorithm")
     prec = ctx.prec
     try:
         ctx.prec += 10
@@ -589,8 +589,8 @@ def _hurwitz(ctx, s, a=1, d=0):
                 if m <= d:
                     logs.append(logs[-1] * logr)
                 Un = [0]*(D+1)
-                for i in xrange(D): Un[i] = (1-m-s)*U[i]
-                for i in xrange(1,D+1): Un[i] += (d-(i-1))*U[i-1]
+                for i in range(D): Un[i] = (1-m-s)*U[i]
+                for i in range(1,D+1): Un[i] += (d-(i-1))*U[i-1]
                 U = Un
                 r *= rM2a
             t = ctx.fdot(U, logs) * r * ctx.bernoulli(j2)/(-fact)
@@ -621,20 +621,20 @@ def _zetasum(ctx, s, a, n, derivatives=[0], reflect=False):
     have_one_derivative = len(derivatives) == 1
     if not reflect:
         if not have_derivatives:
-            return [ctx.fsum((a+k)**negs for k in xrange(n+1))], []
+            return [ctx.fsum((a+k)**negs for k in range(n+1))], []
         if have_one_derivative:
             d = derivatives[0]
-            x = ctx.fsum(ctx.ln(a+k)**d * (a+k)**negs for k in xrange(n+1))
+            x = ctx.fsum(ctx.ln(a+k)**d * (a+k)**negs for k in range(n+1))
             return [(-1)**d * x], []
     maxd = max(derivatives)
     if not have_one_derivative:
-        derivatives = range(maxd+1)
+        derivatives = list(range(maxd+1))
     xs = [ctx.zero for d in derivatives]
     if reflect:
         ys = [ctx.zero for d in derivatives]
     else:
         ys = []
-    for k in xrange(n+1):
+    for k in range(n+1):
         w = a + k
         xterm = w ** negs
         if reflect:

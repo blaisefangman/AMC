@@ -20,21 +20,21 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import cStringIO, copy, warnings, time
+import io, copy, warnings, time
 try:
     import zlib
     haszlib = 1
 except:
     haszlib = 0
 
-import bbox, unit, style, type1font, version
+from . import bbox, unit, style, type1font, version
 
 try:
     enumerate([])
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 try:
     dict([])
@@ -60,7 +60,7 @@ class PDFregistry:
     def add(self, object):
         """ register object, merging it with an already registered object of the same type and id """
         sameobjects = self.types.setdefault(object.type, {})
-        if sameobjects.has_key(object.id):
+        if object.id in sameobjects:
             sameobjects[object.id].merge(object)
         else:
             self.objects.append(object)
@@ -119,11 +119,11 @@ class PDFregistry:
 
     def writeresources(self, file):
         file.write("/Resources <<\n")
-        file.write("/ProcSet [ %s ]\n" % " ".join(["/%s" % p for p in self.procsets.keys()]))
+        file.write("/ProcSet [ %s ]\n" % " ".join(["/%s" % p for p in list(self.procsets.keys())]))
         if self.resources:
-            for resourcetype, resources in self.resources.items():
+            for resourcetype, resources in list(self.resources.items()):
                 file.write("/%s <<\n%s\n>>\n" % (resourcetype, "\n".join(["/%s %i 0 R" % (name, self.getrefno(object))
-                                                                          for name, object in resources.items()])))
+                                                                          for name, object in list(resources.items())])))
         file.write(">>\n")
 
 
@@ -261,7 +261,7 @@ class PDFcontent(PDFobject):
 
     def __init__(self, page, writer, registry):
         PDFobject.__init__(self, registry, "content")
-        contentfile = cStringIO.StringIO()
+        contentfile = io.StringIO()
         self.bbox = bbox.empty()
         acontext = context()
         page.processPDF(contentfile, writer, acontext, registry, self.bbox)
@@ -321,7 +321,7 @@ class PDFfont(PDFobject):
                     file.write("\n")
                 else:
                     file.write(" ")
-                if usedchars.has_key(i):
+                if i in usedchars:
                     file.write("%f" % self.metric.getwidth_ds(i))
                 else:
                     file.write("0")
@@ -406,7 +406,7 @@ class PDFfontfile(PDFobject):
             self.strip = 0
 
     def mkfontfile(self):
-        import font.t1font
+        from . import font.t1font
         self.font = font.t1font.T1pfbfont(self.filename)
 
     def getflags(self):
@@ -421,10 +421,10 @@ class PDFfontfile(PDFobject):
             # XXX: access to the encoding file
             if self.encodingfilename:
                 encodingfile = type1font.encodingfile(self.encodingfilename, self.encodingfilename)
-                usedglyphs = dict([(encodingfile.decode(char)[1:], 1) for char in self.usedchars.keys()])
+                usedglyphs = dict([(encodingfile.decode(char)[1:], 1) for char in list(self.usedchars.keys())])
             else:
                 self.font._encoding()
-                usedglyphs = dict([(self.font.encoding.decode(char), 1) for char in self.usedchars.keys()])
+                usedglyphs = dict([(self.font.encoding.decode(char), 1) for char in list(self.usedchars.keys())])
             strippedfont = self.font.getstrippedfont(usedglyphs)
         else:
             strippedfont = self.font
@@ -493,6 +493,6 @@ class context:
 
     def __call__(self, **kwargs):
         newcontext = copy.copy(self)
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             setattr(newcontext, key, value)
         return newcontext

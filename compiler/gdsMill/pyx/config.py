@@ -20,12 +20,12 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import ConfigParser, os.path
-import siteconfig
+import configparser, os.path
+from . import siteconfig
 
 cflist = [os.path.join(siteconfig.pyxrcdir, "pyxrc"),  os.path.expanduser("~/.pyxrc")]
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read(cflist)
 
 def get(section, option, default):

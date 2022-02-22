@@ -1,9 +1,9 @@
 __version__ = '0.14'
 
-from usertools import monitor, timing
+from .usertools import monitor, timing
 
-from ctx_fp import FPContext
-from ctx_mp import MPContext
+from .ctx_fp import FPContext
+from .ctx_mp import MPContext
 
 fp = FPContext()
 mp = MPContext()
@@ -14,7 +14,7 @@ mp._fp = fp
 fp._fp = fp
 
 # XXX: extremely bad pickle hack
-import ctx_mp as _ctx_mp
+from . import ctx_mp as _ctx_mp
 _ctx_mp._mpf_module.mpf = mp.mpf
 _ctx_mp._mpf_module.mpc = mp.mpc
 
@@ -352,7 +352,7 @@ def runtests():
     """
     import os.path
     from inspect import getsourcefile
-    import tests.runtests as tests
+    from . import tests.runtests as tests
     testdir = os.path.dirname(os.path.abspath(getsourcefile(tests)))
     importdir = os.path.abspath(testdir + '/../..')
     tests.testit(importdir, testdir)
@@ -375,11 +375,11 @@ def doctests():
         if filter:
             if not sum([pat in obj for pat in filter]):
                 continue
-        print obj,
+        print(obj, end=' ')
         t1 = clock()
         doctest.run_docstring_examples(globs[obj], {}, verbose=("-v" in sys.argv))
         t2 = clock()
-        print round(t2-t1, 3)
+        print(round(t2-t1, 3))
 
 if __name__ == '__main__':
     doctests()

@@ -22,7 +22,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 
-from __future__ import nested_scopes
+
 
 import math, re, string, warnings
 from pyx import canvas, path, trafo, unit
@@ -79,7 +79,7 @@ class plotitem:
             style.selectstyle(privatedata, self.sharedata, graph, selectindex, selecttotal)
 
     def adjustaxesstatic(self, graph):
-        for columnname, data in self.data.columns.items():
+        for columnname, data in list(self.data.columns.items()):
             for privatedata, style in zip(self.privatedatalist, self.styles):
                 style.adjustaxis(privatedata, self.sharedata, graph, columnname, data)
 
@@ -87,7 +87,7 @@ class plotitem:
         self.dynamiccolumns = self.data.dynamiccolumns(graph)
 
     def adjustaxesdynamic(self, graph):
-        for columnname, data in self.dynamiccolumns.items():
+        for columnname, data in list(self.dynamiccolumns.items()):
             for privatedata, style in zip(self.privatedatalist, self.styles):
                 style.adjustaxis(privatedata, self.sharedata, graph, columnname, data)
 
@@ -103,7 +103,7 @@ class plotitem:
                 useitems.append((columnname, self.data.columns[columnname]))
         if not useitems:
             raise ValueError("cannot draw empty data")
-        for i in xrange(len(useitems[0][1])):
+        for i in range(len(useitems[0][1])):
             for columnname, data in useitems:
                 point[columnname] = data[i]
             for privatedata, style in zip(self.privatedatalist, self.styles):
@@ -138,7 +138,7 @@ class graph(canvas.canvas):
         self.didstyles = 0
 
     def did(self, method, *args, **kwargs):
-        if not self._calls.has_key(method):
+        if method not in self._calls:
             self._calls[method] = []
         for callargs in self._calls[method]:
             if callargs == (args, kwargs):
@@ -299,7 +299,7 @@ class graphxy(graph):
         self.width_pt = unit.topt(self.width)
         self.height_pt = unit.topt(self.height)
 
-        for axisname, aaxis in axes.items():
+        for axisname, aaxis in list(axes.items()):
             if aaxis is not None:
                 if not isinstance(aaxis, axis.linkedaxis):
                     self.axes[axisname] = axis.anchoredaxis(aaxis, self.texrunner, axisname)
@@ -307,17 +307,17 @@ class graphxy(graph):
                     self.axes[axisname] = aaxis
         for axisname, axisat in [("x", xaxisat), ("y", yaxisat)]:
             okey = axisname + "2"
-            if not axes.has_key(axisname):
-                if not axes.has_key(okey) or axes[okey] is None:
+            if axisname not in axes:
+                if okey not in axes or axes[okey] is None:
                     self.axes[axisname] = axis.anchoredaxis(axis.linear(), self.texrunner, axisname)
-                    if not axes.has_key(okey):
+                    if okey not in axes:
                         self.axes[okey] = axis.linkedaxis(self.axes[axisname], okey)
                 else:
                     self.axes[axisname] = axis.linkedaxis(self.axes[okey], axisname)
-            elif not axes.has_key(okey) and axisat is None:
+            elif okey not in axes and axisat is None:
                 self.axes[okey] = axis.linkedaxis(self.axes[axisname], okey)
 
-        if self.axes.has_key("x"):
+        if "x" in self.axes:
             self.xbasepath = self.axes["x"].basepath
             self.xvbasepath = self.axes["x"].vbasepath
             self.xgridpath = self.axes["x"].gridpath
@@ -328,7 +328,7 @@ class graphxy(graph):
             self.xtickdirection = self.axes["x"].tickdirection
             self.xvtickdirection = self.axes["x"].vtickdirection
 
-        if self.axes.has_key("y"):
+        if "y" in self.axes:
             self.ybasepath = self.axes["y"].basepath
             self.yvbasepath = self.axes["y"].vbasepath
             self.ygridpath = self.axes["y"].gridpath
@@ -340,7 +340,7 @@ class graphxy(graph):
             self.yvtickdirection = self.axes["y"].vtickdirection
 
         self.axesnames = ([], [])
-        for axisname, aaxis in self.axes.items():
+        for axisname, aaxis in list(self.axes.items()):
             if axisname[0] not in "xy" or (len(axisname) != 1 and (not axisname[1:].isdigit() or
                                                                    axisname[1:] == "1")):
                 raise ValueError("invalid axis name")
@@ -471,7 +471,7 @@ class graphxy(graph):
     def dolayout(self):
         if self.did(self.dolayout):
             return
-        for axisname in self.axes.keys():
+        for axisname in list(self.axes.keys()):
             self.doaxiscreate(axisname)
         if self.xaxisat is not None:
             self.axisatv(self.axes["x"], self.axes["y"].convert(self.xaxisat))
@@ -490,7 +490,7 @@ class graphxy(graph):
             return
         self.dolayout()
         self.dobackground()
-        for axis in self.axes.values():
+        for axis in list(self.axes.values()):
             self.insert(axis.canvas)
 
     def dokey(self):
@@ -615,7 +615,7 @@ class graphxyz(graphxy):
         self.yorder = projector.zindex(-1, 0, 0) > projector.zindex(1, 0, 0) and 1 or 0
         self.zindexscale = math.sqrt(xscale*xscale+yscale*yscale+zscale*zscale)
 
-        for axisname, aaxis in axes.items():
+        for axisname, aaxis in list(axes.items()):
             if aaxis is not None:
                 if not isinstance(aaxis, axis.linkedaxis):
                     self.axes[axisname] = axis.anchoredaxis(aaxis, self.texrunner, axisname)
@@ -623,17 +623,17 @@ class graphxyz(graphxy):
                     self.axes[axisname] = aaxis
         for axisname in ["x", "y"]:
             okey = axisname + "2"
-            if not axes.has_key(axisname):
-                if not axes.has_key(okey) or axes[okey] is None:
+            if axisname not in axes:
+                if okey not in axes or axes[okey] is None:
                     self.axes[axisname] = axis.anchoredaxis(axis.linear(), self.texrunner, axisname)
-                    if not axes.has_key(okey):
+                    if okey not in axes:
                         self.axes[okey] = axis.linkedaxis(self.axes[axisname], okey)
                 else:
                     self.axes[axisname] = axis.linkedaxis(self.axes[okey], axisname)
-        if not axes.has_key("z"):
+        if "z" not in axes:
             self.axes["z"] = axis.anchoredaxis(axis.linear(), self.texrunner, axisname)
 
-        if self.axes.has_key("x"):
+        if "x" in self.axes:
             self.xbasepath = self.axes["x"].basepath
             self.xvbasepath = self.axes["x"].vbasepath
             self.xgridpath = self.axes["x"].gridpath
@@ -644,7 +644,7 @@ class graphxyz(graphxy):
             self.xtickdirection = self.axes["x"].tickdirection
             self.xvtickdirection = self.axes["x"].vtickdirection
 
-        if self.axes.has_key("y"):
+        if "y" in self.axes:
             self.ybasepath = self.axes["y"].basepath
             self.yvbasepath = self.axes["y"].vbasepath
             self.ygridpath = self.axes["y"].gridpath
@@ -655,7 +655,7 @@ class graphxyz(graphxy):
             self.ytickdirection = self.axes["y"].tickdirection
             self.yvtickdirection = self.axes["y"].vtickdirection
 
-        if self.axes.has_key("z"):
+        if "z" in self.axes:
             self.zbasepath = self.axes["z"].basepath
             self.zvbasepath = self.axes["z"].vbasepath
             self.zgridpath = self.axes["z"].gridpath
@@ -667,7 +667,7 @@ class graphxyz(graphxy):
             self.zvtickdirection = self.axes["z"].vtickdirection
 
         self.axesnames = ([], [], [])
-        for axisname, aaxis in self.axes.items():
+        for axisname, aaxis in list(self.axes.items()):
             if axisname[0] not in "xyz" or (len(axisname) != 1 and (not axisname[1:].isdigit() or
                                                                     axisname[1:] == "1")):
                 raise ValueError("invalid axis name")
@@ -856,7 +856,7 @@ class graphxyz(graphxy):
     def dolayout(self):
         if self.did(self.dolayout):
             return
-        for axisname in self.axes.keys():
+        for axisname in list(self.axes.keys()):
             self.doaxiscreate(axisname)
 
     def dobackground(self):
@@ -868,7 +868,7 @@ class graphxyz(graphxy):
             return
         self.dolayout()
         self.dobackground()
-        for axis in self.axes.values():
+        for axis in list(self.axes.values()):
             self.insert(axis.canvas)
 
     def dokey(self):

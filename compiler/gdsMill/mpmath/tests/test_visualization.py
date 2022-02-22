@@ -10,7 +10,7 @@ def test_axes():
     try:
         import pylab
     except ImportError:
-        print "\nSkipping test (pylab not available)\n"
+        print("\nSkipping test (pylab not available)\n")
         return
     fig = pylab.figure()
     axes = fig.add_subplot(111)

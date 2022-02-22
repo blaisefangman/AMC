@@ -29,7 +29,7 @@ displayed. """
 # canvas item
 #
 
-from __future__ import nested_scopes
+
 import os
 
 class canvasitem:
@@ -72,8 +72,8 @@ class canvasitem:
         raise NotImplementedError()
 
 
-import attr, deco, deformer, document, style, trafo, type1font
-import bbox as bboxmodule
+from . import attr, deco, deformer, document, style, trafo, type1font
+from . import bbox as bboxmodule
 
 
 #
@@ -139,7 +139,7 @@ class _canvas(canvasitem):
             self.texrunner = texrunner
         else:
             # prevent cyclic imports
-            import text
+            from . import text
             self.texrunner = text.defaulttexrunner
 
         attr.checkattrs(attrs, [trafo.trafo_pt, clip, style.strokestyle, style.fillstyle])

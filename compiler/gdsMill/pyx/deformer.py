@@ -20,18 +20,18 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-from __future__ import nested_scopes
+
 
 import math, warnings
-import attr, mathutils, path, normpath, unit, color
-from path import degrees, radians
+from . import attr, mathutils, path, normpath, unit, color
+from .path import degrees, radians
 
 try:
     enumerate([])
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 
 # specific exception for an invalid parameterization point
@@ -754,7 +754,7 @@ class parallel(deformer): # <<<
             # get the next parallel piece for the normpath
             try:
                 next_parallel_normpath = self.deformsubpathitem(next_orig_nspitem, epsilon)
-            except InvalidParamException, e:
+            except InvalidParamException as e:
                 invalid_nspitem_param = e.normsubpathitemparam
                 # split the nspitem apart and continue with pieces that do not contain
                 # the invalid point anymore. At the end, simply take one piece, otherwise two.
@@ -1111,8 +1111,8 @@ class parallel(deformer): # <<<
             if curv is normpath.invalid:
                 raise InvalidParamException(param)
 
-        parampairs = zip(params[:-1], params[1:])
-        curvpairs = zip(curvs[:-1], curvs[1:])
+        parampairs = list(zip(params[:-1], params[1:]))
+        curvpairs = list(zip(curvs[:-1], curvs[1:]))
 
         crossingparams = []
         for parampair, curvpair in zip(parampairs, curvpairs):
@@ -1181,9 +1181,9 @@ class parallel(deformer): # <<<
             for nsp_j in range(nsp_i, n):
                 for nspitem_i in range(len(np[nsp_i])):
                     if nsp_j == nsp_i:
-                        nspitem_j_range = range(nspitem_i+1, len(np[nsp_j]))
+                        nspitem_j_range = list(range(nspitem_i+1, len(np[nsp_j])))
                     else:
-                        nspitem_j_range = range(len(np[nsp_j]))
+                        nspitem_j_range = list(range(len(np[nsp_j])))
                     for nspitem_j in nspitem_j_range:
                         intsparams = np[nsp_i][nspitem_i].intersect(np[nsp_j][nspitem_j], epsilon)
                         if intsparams:

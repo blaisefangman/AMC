@@ -1,7 +1,7 @@
-import functions
+from . import functions
 # Hack to update methods
-import factorials
-import hypergeometric
-import elliptic
-import zeta
-import rszeta
+from . import factorials
+from . import hypergeometric
+from . import elliptic
+from . import zeta
+from . import rszeta

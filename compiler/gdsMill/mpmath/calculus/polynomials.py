@@ -1,4 +1,4 @@
-from calculus import defun
+from .calculus import defun
 
 #----------------------------------------------------------------------------#
 #                                Polynomials                                 #
@@ -149,17 +149,17 @@ def polyroots(ctx, coeffs, maxsteps=50, cleanup=True, extraprec=10, error=False)
         # Must be monic
         lead = ctx.convert(coeffs[0])
         if lead == 1:
-            coeffs = map(ctx.convert, coeffs)
+            coeffs = list(map(ctx.convert, coeffs))
         else:
             coeffs = [c/lead for c in coeffs]
         f = lambda x: ctx.polyval(coeffs, x)
-        roots = [ctx.mpc((0.4+0.9j)**n) for n in xrange(deg)]
-        err = [ctx.one for n in xrange(deg)]
+        roots = [ctx.mpc((0.4+0.9j)**n) for n in range(deg)]
+        err = [ctx.one for n in range(deg)]
         # Durand-Kerner iteration until convergence
-        for step in xrange(maxsteps):
+        for step in range(maxsteps):
             if abs(max(err)) < tol:
                 break
-            for i in xrange(deg):
+            for i in range(deg):
                 if not abs(err[i]) < tol:
                     p = roots[i]
                     x = f(p)
@@ -173,7 +173,7 @@ def polyroots(ctx, coeffs, maxsteps=50, cleanup=True, extraprec=10, error=False)
                     err[i] = abs(x)
         # Remove small imaginary parts
         if cleanup:
-            for i in xrange(deg):
+            for i in range(deg):
                 if abs(ctx._im(roots[i])) < weps:
                     roots[i] = roots[i].real
                 elif abs(ctx._re(roots[i])) < weps:

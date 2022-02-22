@@ -21,8 +21,8 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
 import math
-import attr, canvas, deformer, unit
-import bbox as bboxmodule
+from . import attr, canvas, deformer, unit
+from . import bbox as bboxmodule
 
 # global epsilon (used to judge whether a matrix is singular)
 _epsilon = (1e-5)**2

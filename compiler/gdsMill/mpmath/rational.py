@@ -25,7 +25,7 @@ class mpq(tuple):
         a, b = self
         return mpq((-a, b))
 
-    def __nonzero__(self):
+    def __bool__(self):
         return bool(self[0])
 
     def __cmp__(self, other):
@@ -38,7 +38,7 @@ class mpq(tuple):
             a, b = self
             c, d = other
             return mpq((a*d+b*c, b*d))
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             a, b = self
             return mpq((a+b*other, b))
         return NotImplemented
@@ -50,7 +50,7 @@ class mpq(tuple):
             a, b = self
             c, d = other
             return mpq((a*d-b*c, b*d))
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             a, b = self
             return mpq((a-b*other, b))
         return NotImplemented
@@ -60,7 +60,7 @@ class mpq(tuple):
             a, b = self
             c, d = other
             return mpq((b*c-a*d, b*d))
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             a, b = self
             return mpq((b*other-a, b))
         return NotImplemented
@@ -70,13 +70,13 @@ class mpq(tuple):
             a, b = self
             c, d = other
             return mpq((a*c, b*d))
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             a, b = self
             return mpq((a*other, b))
         return NotImplemented
 
     def __div__(self, other):
-        if isinstance(other, (int, long)):
+        if isinstance(other, int):
             if other:
                 a, b = self
                 return mpq((a, b*other))

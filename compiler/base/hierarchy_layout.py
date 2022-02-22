@@ -148,7 +148,7 @@ class layout(lef.lef):
             # The instances have a precomputed boundary that we need to update.
             if inst.__class__.__name__ == "instance":
                 inst.compute_boundary(offset.scale(-1,-1))
-        for pin_name in self.pin_map.keys():
+        for pin_name in list(self.pin_map.keys()):
             # All the pins are absolute coordinates that need to be updated.
             pin_list = self.pin_map[pin_name]
             for pin in pin_list:
@@ -470,7 +470,7 @@ class layout(lef.lef):
             i.gds_write_file(newLayout)
         for i in self.objs:
             i.gds_write_file(newLayout)
-        for pin_name in self.pin_map.keys():
+        for pin_name in list(self.pin_map.keys()):
             for pin in self.pin_map[pin_name]:
                 pin.gds_write_file(newLayout)
         self.visited = True

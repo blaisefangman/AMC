@@ -21,14 +21,14 @@
 # along with PyX; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
 
-import bbox, canvas, pswriter, pdfwriter
+from . import bbox, canvas, pswriter, pdfwriter
 
 try:
     enumerate([])
 except NameError:
     # fallback implementation for Python 2.2 and below
     def enumerate(list):
-        return zip(xrange(len(list)), list)
+        return list(zip(list(range(len(list))), list))
 
 
 class encoding:
@@ -43,7 +43,7 @@ class encodingfile:
 
     def __init__(self, name, filename):
         # XXX move the cursor to a module of its own
-        from font.t1font import cursor
+        from .font.t1font import cursor
         self.name = name
         encfile = open(filename, "r")
         c = cursor(encfile.read(), "")
