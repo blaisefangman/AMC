@@ -6,7 +6,7 @@ streamer = gdsMill.GdsStreamer()
 
 #use the streamer to take a cadence layout, and convert it to GDS 2 for us to work with
 #the GDS will be named testLayoutA.gds
-streamer.streamFromCadence(cadenceLibraryContainerPath = "../AMC_temp",
+streamer.streamFromCadence(cadenceLibraryContainerPath = "/soe/bchen12/openram/branches/newptx/freepdk45/openram_temp",
                            libraryName = "gdsMillTest",
                            cellName = "testLayoutA",
                            outputPath = "./gdsFiles")
