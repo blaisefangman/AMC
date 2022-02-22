@@ -19,6 +19,7 @@
 import unittest
 from testutils import header,AMC_test
 import sys,os
+import imp
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -32,7 +33,7 @@ class sram_func_test(AMC_test):
 
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
-        reload(characterizer)
+        imp.reload(characterizer)
         from characterizer import functional_test
         import sram
         import tech

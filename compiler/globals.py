@@ -161,7 +161,7 @@ def read_config(config_file, is_unit_test=True):
     except:
         debug.error("Unable to read configuration file: {0}".format(config_file),2)
 
-    for k,v in config.__dict__.items():
+    for k,v in list(config.__dict__.items()):
         # The command line will over-ride the config file
         # except in the case of the tech name! This is because the tech name
         # is sometimes used to specify the config file itself (e.g. unit tests)
@@ -292,7 +292,7 @@ def import_tech():
     import tech
     # Set some default options now based on the technology...
     if (OPTS.process_corners == ""):
-        OPTS.process_corners = tech.spice["fet_models"].keys()
+        OPTS.process_corners = list(tech.spice["fet_models"].keys())
     if (OPTS.supply_voltages == ""):
         OPTS.supply_voltages = tech.spice["supply_voltages"]
     if (OPTS.temperatures == ""):

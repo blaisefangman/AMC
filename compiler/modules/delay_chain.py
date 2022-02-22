@@ -59,7 +59,7 @@ class delay_chain(design.design):
         
         # First stage is always 0 and is not a dummy load
         self.inv_list=[[0,False]]
-        for stage_num, fanout_size in zip(range(len(self.fanout_list)), self.fanout_list):
+        for stage_num, fanout_size in zip(list(range(len(self.fanout_list))), self.fanout_list):
             for i in range(fanout_size-1):
                 # Add the dummy loads
                 self.inv_list.append([stage_num+1, True])

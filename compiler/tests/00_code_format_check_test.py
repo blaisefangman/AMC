@@ -53,7 +53,7 @@ def setup_files(path):
         for f in current_files:
             files.append(os.path.join(dir, f))
     nametest = re.compile("\.py$", re.IGNORECASE)
-    select_files = filter(nametest.search, files)
+    select_files = list(filter(nametest.search, files))
     return select_files
 
 

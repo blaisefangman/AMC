@@ -23,6 +23,7 @@ from math import log,sqrt,ceil
 import contact
 from vector import vector
 from utils import ceil as util_ceil
+import imp
 
 
 class bank(design.design):
@@ -35,7 +36,7 @@ class bank(design.design):
                     "hierarchical_decoder", "wordline_driver_array", "single_driver_array", 
                      "driver", "split_array", "merge_array","bank_control_logic", "pinv", "nand2"]
         for mod_name in mod_list:
-            class_file = reload(__import__(mod_name))
+            class_file = imp.reload(__import__(mod_name))
             mod_class = getattr(class_file, mod_name)
             setattr (self, mod_name, mod_class)
 

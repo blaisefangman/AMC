@@ -86,7 +86,7 @@ class hierarchical_predecode(design.design):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         
         y_shift= self.nand.get_pin("A").by()
-        for label in self.rails.keys():
+        for label in list(self.rails.keys()):
             if label.startswith("in"):
                 self.add_rect(layer="metal2",
                               offset=vector(self.rails[label]-0.5*self.m2_width, 0), 

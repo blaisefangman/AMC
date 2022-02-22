@@ -22,14 +22,14 @@ files = os.listdir(sys.path[0])
 
 # assume any file that ends in "test.py" in it is a regression test
 nametest = re.compile("test\.py$", re.IGNORECASE)
-tests = filter(nametest.search, files)
+tests = list(filter(nametest.search, files))
 tests.sort()
 
 # import all of the modules
 filenameToModuleName = lambda f: os.path.splitext(f)[0]
-moduleNames = map(filenameToModuleName, tests)
-modules = map(__import__, moduleNames)
+moduleNames = list(map(filenameToModuleName, tests))
+modules = list(map(__import__, moduleNames))
 suite = unittest.TestSuite()
 load = unittest.defaultTestLoader.loadTestsFromModule
-suite.addTests(map(load, modules))
+suite.addTests(list(map(load, modules)))
 unittest.TextTestRunner(verbosity=2).run(suite)
