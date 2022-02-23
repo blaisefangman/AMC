@@ -1,6 +1,5 @@
 from .gdsPrimitives import *
 from datetime import *
-import mpmath
 from . import gdsPrimitives
 import debug
 
@@ -16,7 +15,7 @@ class VlsiLayout:
         self.layerNumbersInUse = []
         self.debug = False
         if name:
-            self.rootStructureName=name
+            self.rootStructureName=self.padText(name)
             #create the ROOT structure
             self.structures[self.rootStructureName] = GdsStructure()
             self.structures[self.rootStructureName].name = name
@@ -69,17 +68,13 @@ class VlsiLayout:
         for coordinate in coordinatesToRotate:
             newX = coordinate[0]*math.cos(angle) - coordinate[1]*math.sin(angle)
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
-            coordinatesRotate += [(newX,newY)]       
+            coordinatesRotate.extend((newX,newY))    
         return coordinatesRotate
     
     def rename(self,newName):
-        #make sure the newName is a multiple of 2 characters
-        if(len(newName)%2 == 1):
-            #pad with a zero
-            newName = newName + '\x00'
         #take the root structure and copy it to a new structure with the new name
         self.structures[newName] = self.structures[self.rootStructureName]
-        self.structures[newName].name = newName
+        self.structures[newName].name = self.padText(newName)
         #and delete the old root
         del self.structures[self.rootStructureName]
         self.rootStructureName = newName
@@ -163,19 +158,22 @@ class VlsiLayout:
             rotateAngle = 0
         else:
             rotateAngle = math.radians(float(rotateAngle))
-        mRotate = mpmath.matrix([[math.cos(rotateAngle),-math.sin(rotateAngle),0.0],
-                                 [math.sin(rotateAngle),math.cos(rotateAngle),0.0],[0.0,0.0,1.0],])
+        mRotate = np.array([[math.cos(rotateAngle),-math.sin(rotateAngle),0.0],
+                            [math.sin(rotateAngle),math.cos(rotateAngle),0.0],
+                            [0.0,0.0,1.0]])
         #set up the translation matrix
         translateX = float(coordinates[0])
         translateY = float(coordinates[1])
-        mTranslate = mpmath.matrix([[1.0,0.0,translateX],[0.0,1.0,translateY],[0.0,0.0,1.0]])
+        mTranslate = np.array([[1.0,0.0,translateX],
+                               [0.0,1.0,translateY],
+                               [0.0,0.0,1.0]])
         #set up the scale matrix (handles mirror X)
         scaleX = 1.0
         if(transFlags[0]):
             scaleY = -1.0
         else:
             scaleY = 1.0
-        mScale = mpmath.matrix([[scaleX,0.0,0.0],[0.0,scaleY,0.0],[0.0,0.0,1.0]])
+        mScale = np.array([[scaleX,0.0,0.0],[0.0,scaleY,0.0],[0.0,0.0,1.0]])
         
         #we need to keep track of all transforms in the hierarchy
         #when we add an element to the xy tree, we apply all transforms from the bottom up
@@ -409,17 +407,21 @@ class VlsiLayout:
         textToAdd.purposeLayer = purposeNumber
         textToAdd.dataType = dataType
         textToAdd.coordinates = [offsetInLayoutUnits]
-        if(len(text)%2 == 1):
-            #pad with a zero
-            text = text + '\x00'
-        textToAdd.textString = text
         textToAdd.transFlags = (False,False,True)
+        textToAdd.textString = self.padText(text)
         textToAdd.magFactor = magnification
         if rotate:
             textToAdd.transFlags = (False,True,True)
             textToAdd.rotateAngle = rotate
         #add the sref to the root structure
         self.structures[self.rootStructureName].texts+=[textToAdd]
+
+    def padText(self, text):
+        debug.check(len(text) > 0, "Cannot have zero length text string.")
+        if(len(text) % 2 == 1):
+            return text + '\x00'
+        else:
+            return text
             
     def isBounded(self,testPoint,startPoint,endPoint):
         #these arguments are touples of (x,y) coordinates
@@ -595,7 +597,7 @@ class VlsiLayout:
         return cellSizeMicron
 
     def measureSize(self,startStructure):
-        self.rootStructureName=startStructure
+        self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
@@ -605,7 +607,7 @@ class VlsiLayout:
         return cellSizeMicron
 
     def measureBoundary(self,startStructure):
-        self.rootStructureName=startStructure
+        self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
         for TreeUnit in self.xyTree:
