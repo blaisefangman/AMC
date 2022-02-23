@@ -12,7 +12,7 @@ class Gds2reader:
         self.fileHandle = None
         self.layoutObject = layoutObject
         self.debugToTerminal=debugToTerminal
-	
+        
           #do we dump debug data to the screen
     
     def print64AsBinary(self,number):
@@ -21,7 +21,7 @@ class Gds2reader:
         print("\n")
         
     def stripNonASCII(self,string):
-    	#''' Returns the string without non ASCII characters'''
+            #''' Returns the string without non ASCII characters'''
         stripped = (c for c in string if 0 < ord(c) < 127)
         return "".join(stripped)
 
@@ -63,23 +63,23 @@ class Gds2reader:
         data = struct.unpack('>q',asciiDouble)[0]
         sign = data >> 63
         exponent = ((data >> 52) & 0x7ff)-1023
-	# BINWU: Cleanup
+        # BINWU: Cleanup
         print(exponent+1023)
         mantissa = data << 12 #chop off sign and exponent
-	# BINWU: Cleanup
+        # BINWU: Cleanup
         #self.print64AsBinary((sign<<63)|((exponent+1023)<<52)|(mantissa>>12))
         asciiDouble = struct.pack('>q',(sign<<63)|(exponent+1023<<52)|(mantissa>>12))
         newFloat = struct.unpack('>d',asciiDouble)[0]
         print("Check:"+str(newFloat))
     
     def readNextRecord(self):
-	global offset
+        global offset
         recordLengthAscii = self.fileHandle.read(2) #first 2 bytes tell us the length of the record
         recordLength = struct.unpack(">h",recordLengthAscii)  #gives us a tuple with a short int inside
         offlist = list(recordLength)  #change tuple to a list
-	offset += float(offlist[0])   #count offset
-	#print float(offlist[0])
-	#print offset  #print out the record numbers for de-bugging
+        offset += float(offlist[0])   #count offset
+        #print float(offlist[0])
+        #print offset  #print out the record numbers for de-bugging
         record = self.fileHandle.read(recordLength[0]-2) #read the rest of it (first 2 bytes were already read)
         return record
 
@@ -167,9 +167,9 @@ class Gds2reader:
                 userUnits=self.ieeeDoubleFromIbmData(record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])
                 dbUnits=self.ieeeDoubleFromIbmData
                 self.layoutObject.info["units"] = (userUnits,dbUnits)
-	
+        
                 #print "userUnits %s"%((record[2]+record[3]+record[4]+record[5]+record[6]+record[7]+record[8]+record[9])).encode("hex")
-		#print "dbUnits   %s"%(record[10]+record[11]+record[12]+record[13]+record[14]+record[15]+record[16]+record[17]).encode("hex")
+                #print "dbUnits   %s"%(record[10]+record[11]+record[12]+record[13]+record[14]+record[15]+record[16]+record[17]).encode("hex")
 
                 if(self.debugToTerminal==1):
                     print("Units: 1 user unit="+str(userUnits)+" database units, 1 database unit="+str(dbUnits)+" meters.")
@@ -596,9 +596,9 @@ class Gds2reader:
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
+#                print ''.[x for x in structName if ord(x) < 128]
+#                stripped = (c for c in structName if 0 < ord(c) < 127)
+#                structName = "".join(stripped)
 #                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
@@ -648,9 +648,9 @@ class Gds2reader:
 ##############################################
 
     def findStruct(self,fileName,findStructName):
-	#print"find struct"
+        #print"find struct"
         self.fileHandle = open(fileName,"rb")
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         if(self.readHeader()):  #did the header read ok?
             record = self.findStruct_readNextStruct(findStructName)
             while(record == 1):
@@ -659,13 +659,13 @@ class Gds2reader:
             #so test for end of library
         else:
             print("There was an error parsing the GDS header.  Aborting...")
-	self.fileHandle.close()
-	#print "End the search of",findStructName
+        self.fileHandle.close()
+        #print "End the search of",findStructName
         #self.layoutObject.initialize()
-	return record
+        return record
 
     def findStruct_readNextStruct(self,findStructName):
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
         idBits = (record[0],record[1])
@@ -688,20 +688,20 @@ class Gds2reader:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it
             return record
-	wantedStruct=0
+        wantedStruct=0
         while 1:
             record = self.readNextRecord()
             idBits = (record[0],record[1])
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
+#                print ''.[x for x in structName if ord(x) < 128]
+#                stripped = (c for c in structName if 0 < ord(c) < 127)
+#                structName = "".join(stripped)
 #                print self.stripNonASCII(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
-		if(findStructName==thisStructure.name):
-			wantedStruct=1
+                if(findStructName==thisStructure.name):
+                    wantedStruct=1
                 if(self.debugToTerminal==1):
                     print("\tStructure Name: "+structName)
             elif(idBits==('\x08','\x00')):
@@ -721,16 +721,16 @@ class Gds2reader:
         if(self.debugToTerminal==1):        
             print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
-	if(wantedStruct == 0):
-		return 1
-	else:
-		#print "\tDone with collectting bound. Return"
-		return [0,thisStructure.boundaries]
+        if(wantedStruct == 0):
+                return 1
+        else:
+                #print "\tDone with collectting bound. Return"
+                return [0,thisStructure.boundaries]
 
     def findLabel(self,fileName,findLabelName):
-	#print"find Label"
+        #print"find Label"
         self.fileHandle = open(fileName,"rb")
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         if(self.readHeader()):  #did the header read ok?
             record = self.findLabel_readNextStruct(findLabelName)
             while(record == 1):
@@ -739,13 +739,13 @@ class Gds2reader:
             #so test for end of library
         else:
             print("There was an error parsing the GDS header.  Aborting...")
-	self.fileHandle.close()
-	#print "End the search of",findStructName
+        self.fileHandle.close()
+        #print "End the search of",findStructName
         #self.layoutObject.initialize()
-	return record
+        return record
 
     def findLabel_readNextStruct(self,findLabelName):
-	self.debugToTerminal=0
+        self.debugToTerminal=0
         thisStructure = GdsStructure()        
         record = self.readNextRecord()
         idBits = (record[0],record[1])
@@ -768,17 +768,17 @@ class Gds2reader:
             #means we have hit the last structure, so return the record
             #to whoever called us to do something with it
             return record
-	wantedLabel=0
-	wantedtexts=[GdsText()]
+        wantedLabel=0
+        wantedtexts=[GdsText()]
         while 1:
             record = self.readNextRecord()
             idBits = (record[0],record[1])
             if idBits==('\x07','\x00'): break; #we've reached the end of the structure
             elif(idBits==('\x06','\x06')):
                 structName = self.stripNonASCII(record[2::]) #(record[2:1] + record[1::]).rstrip()
-#		print ''.[x for x in structName if ord(x) < 128]
-#	        stripped = (c for c in structName if 0 < ord(c) < 127)
-#	        structName = "".join(stripped)
+#                print ''.[x for x in structName if ord(x) < 128]
+#                stripped = (c for c in structName if 0 < ord(c) < 127)
+#                structName = "".join(stripped)
 #                print self.stripNonASCIIx(structName) ##FIXME: trimming by Tom g.  ##could be an issue here with string trimming!
                 thisStructure.name = structName
                 if(self.debugToTerminal==1):
@@ -792,19 +792,19 @@ class Gds2reader:
             elif(idBits==('\x0B','\x00')):
                 thisStructure.arefs+=[self.readAref()]
             elif(idBits==('\x0C','\x00')):
-		label=self.readText()
-		#Be careful: label.textString contains one space string in it. Delete that one before use it
-		if( findLabelName == label.textString[0:(len(label.textString)-1)] ):
-			wantedLabel=1
-			# BINWU: Cleanup
-			#print"Find the Label",findLabelName
-			wantedtexts+=[label]
+                label=self.readText()
+                #Be careful: label.textString contains one space string in it. Delete that one before use it
+                if( findLabelName == label.textString[0:(len(label.textString)-1)] ):
+                        wantedLabel=1
+                        # BINWU: Cleanup
+                        #print"Find the Label",findLabelName
+                        wantedtexts+=[label]
                 thisStructure.texts+=[label]
-		if(self.debugToTerminal == 1):
-			print(label.textString[0:(len(label.textString)-1)],findLabelName,( findLabelName == label.textString[0:(len(label.textString)-1)] ))
-			# BINWU: Cleanup
-			#print thisStructure.name				
-			#print thisStructure.texts		
+                if(self.debugToTerminal == 1):
+                        print(label.textString[0:(len(label.textString)-1)],findLabelName,( findLabelName == label.textString[0:(len(label.textString)-1)] ))
+                        # BINWU: Cleanup
+                        #print thisStructure.name                                
+                        #print thisStructure.texts                
             elif(idBits==('\x15','\x00')):
                 thisStructure.nodes+=[self.readNode()]
             elif(idBits==('\x2E','\x02')):
@@ -812,9 +812,9 @@ class Gds2reader:
         if(self.debugToTerminal==1):        
             print("\tEnd of Structure.")
         self.layoutObject.structures[structName]=thisStructure #add this structure to the layout object
-	if(wantedLabel == 0):
-		return 1
-	else:
-		#print "\tDone with collectting bound. Return"
-		return [0,wantedtexts]
+        if(wantedLabel == 0):
+                return 1
+        else:
+                #print "\tDone with collectting bound. Return"
+                return [0,wantedtexts]
 

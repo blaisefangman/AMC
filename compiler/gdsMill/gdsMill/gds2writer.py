@@ -162,26 +162,26 @@ class Gds2writer:
 
             userUnits=self.ibmDataFromIeeeDouble(self.layoutObject.info["units"][0])
             dbUnits=self.ibmDataFromIeeeDouble((self.layoutObject.info["units"][0]*1e-6/self.layoutObject.info["units"][1])*self.layoutObject.info["units"][1])
-	    #dbUnits="1"
+            #dbUnits="1"
 
             #User Units are hardcoded, since the floating point implementation of gdsMill is not adequate, 
-		#resulting in a different value being written in output stream.  Hardcoded to sram compiler's outputed gds units.
-	    #db="39225c17d04dad2a"
-	    #uu="3e20c49ba5e353f8"
+                #resulting in a different value being written in output stream.  Hardcoded to sram compiler's outputed gds units.
+            #db="39225c17d04dad2a"
+            #uu="3e20c49ba5e353f8"
 
             #userUnits="3e20c49ba5e353f8".decode("hex")
             #dbUnits="39225c17d04dad2a".decode("hex")
 
             #dbUnits="39225c17d04dad2a".decode("hex")
-	    #db=39225c17d04dad2a
+            #db=39225c17d04dad2a
             
-		
+                
             self.writeRecord(idBits+userUnits+dbUnits)
         if(self.debugToTerminal==1): 
             print("writer: userUnits %s"%(userUnits.encode("hex")))
-	    print("writer: dbUnits   %s"%(dbUnits.encode("hex")))
-	    #self.ieeeFloatCheck(1.3e-6)
-	    
+            print("writer: dbUnits   %s"%(dbUnits.encode("hex")))
+            #self.ieeeFloatCheck(1.3e-6)
+            
             print("End of GDSII Header Written")
         return 1
     
@@ -302,7 +302,7 @@ class Gds2writer:
             y=struct.pack(">i",coordinate[1])
             coordinateRecord+=x
             coordinateRecord+=y
-	    #print thisSref.coordinates
+            #print thisSref.coordinates
             self.writeRecord(coordinateRecord)
         idBits='\x11\x00' #End Of Element
         coordinateRecord = idBits
@@ -370,9 +370,9 @@ class Gds2writer:
             drawingLayer = struct.pack(">h",thisText.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
         #if(thisText.purposeLayer):
-	    idBits='\x16\x02' #purpose layer
+            idBits='\x16\x02' #purpose layer
             purposeLayer = struct.pack(">h",thisText.purposeLayer) #changed by SAMIRA
-	    #purposeLayer = struct.pack(">h",thisText.dataType)
+            #purposeLayer = struct.pack(">h",thisText.dataType)
             self.writeRecord(idBits+purposeLayer)
         if(thisText.transFlags != ""):
             idBits='\x1A\x01'
@@ -390,7 +390,7 @@ class Gds2writer:
             rotateAngle=self.ibmDataFromIeeeDouble(thisText.rotateAngle)
             self.writeRecord(idBits+rotateAngle)
         if(thisText.pathType !=""):
-	    idBits='\x21\x02'  #path type
+            idBits='\x21\x02'  #path type
             pathType = struct.pack(">h",thisText.pathType)
             self.writeRecord(idBits+pathType)
         if(thisText.pathWidth != ""):
