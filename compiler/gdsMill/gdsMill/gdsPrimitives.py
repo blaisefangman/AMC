@@ -1,4 +1,4 @@
-
+import math
 
 class GdsStructure:
     """Class represent a GDS Structure Object"""
@@ -9,35 +9,33 @@ class GdsStructure:
         #these are the primitives defined in GDS2, and we will maintain lists of them all
         self.boundaries=[]
         self.paths=[]
-        self.srefs=[]
+        self.srefs=[]	
         self.arefs=[]
         self.texts=[]
         self.nodes=[]
         self.boxes=[]
 
-        
 class GdsBoundary:
     """Class represent a GDS Boundary Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer = ""
+        self.dataType=""
         self.coordinates=""
-
-        
+    
 class GdsPath:
     """Class represent a GDS Path Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer = ""
         self.pathType=""
-        self.dataType=None
         self.pathWidth=""
         self.coordinates=""
-
+        
     def equivalentBoundaryCoordinates(self):
         """Convert the path to a set of boundary coordinates that define it"""
         halfWidth = (self.pathWidth/2)
@@ -64,7 +62,7 @@ class GdsPath:
                 nextX = None;
                 nextY = None;
             if lastX==None:   #start of the path
-                if nextX>x:#moving right
+                if nextX>x:#moving right                    
                     boundaryEquivalent+=[(x,y+halfWidth)]
                 if nextX<x:#moving left
                     boundaryEquivalent+=[(x,y-halfWidth)]
@@ -98,9 +96,9 @@ class GdsPath:
                     boundaryEquivalent+=[(x-halfWidth,y+halfWidth)]
                 if(y < lastY and x > nextX):
                     boundaryEquivalent+=[(x+halfWidth,y-halfWidth)]
-
-            if nextX == None:   #end of path, put in the last 2 points
-                if lastX<x:#moving right
+                
+            if nextX == None:   #end of path, put in the last 2 points  
+                if lastX<x:#moving right                    
                     boundaryEquivalent+=[(x,y+halfWidth)]
                 if lastX>x:#moving left
                     boundaryEquivalent+=[(x,y-halfWidth)]
@@ -114,39 +112,36 @@ class GdsPath:
             lastY = y
         return boundaryEquivalent
 
-    
 class GdsSref:
     """Class represent a GDS structure reference Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.sName=""
-        self.transFlags=[0,0,0]
+        self.transFlags=(False,False,False)
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
 
-        
 class GdsAref:
     """Class represent a GDS array reference Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.aName=""
-        self.transFlags=[0,0,0]
+        self.transFlags=(False,False,False)
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
 
-        
 class GdsText:
     """Class represent a GDS text Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
-        self.transFlags=[0,0,0]
+        self.purposeLayer = ""
+        self.transFlags=(False,False,False)
         self.magFactor=""
         self.rotateAngle=""
         self.pathType=""
@@ -154,7 +149,6 @@ class GdsText:
         self.presentationFlags=""
         self.coordinates=""
         self.textString = ""
-
         
 class GdsNode:
     """Class represent a GDS Node Object"""
@@ -164,7 +158,6 @@ class GdsNode:
         self.drawingLayer=""
         self.nodeType=""
         self.coordinates=""
-
         
 class GdsBox:
     """Class represent a GDS Box Object"""
@@ -172,6 +165,6 @@ class GdsBox:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer = ""
         self.boxValue=""
         self.coordinates=""
