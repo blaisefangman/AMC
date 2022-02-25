@@ -204,7 +204,7 @@ class Gds2writer:
             idBits='\x16\x02' #purpose layer
             purposeLayer = struct.pack(">h",thisBoundary.purposeLayer)
             self.writeRecord(idBits+purposeLayer)
-        if(thisBoundary.dataType!=""):
+        if(thisBoundary.dataType):
             idBits='\x0E\x02'#DataType
             dataType = struct.pack(">h",thisBoundary.dataType)
             self.writeRecord(idBits+dataType)

@@ -1,12 +1,13 @@
 from .gdsPrimitives import *
 from datetime import *
+import numpy as np
 from . import gdsPrimitives
 import debug
 
 class VlsiLayout:
     """Class represent a hierarchical layout"""
 
-    def __init__(self, name=None, units=(0.001,1e-9), libraryName = "DEFAULT.DB", gdsVersion=5):
+    def __init__(self, name=None, units=(0.001,1e-9), libraryName="DEFAULT.DB", gdsVersion=5):
         #keep a list of all the structures in this layout
         self.units = units
         #print units
@@ -70,6 +71,40 @@ class VlsiLayout:
             newY = coordinate[0]*math.sin(angle) + coordinate[1]*math.cos(angle)
             coordinatesRotate.extend((newX,newY))    
         return coordinatesRotate
+
+    def uniquify(self, prefix_name=None):
+        new_structures = {}
+        if self.rootStructureName[-1] == "\x00":
+            prefix = self.rootStructureName[0:-1] + "_"
+        else:
+            prefix = self.rootStructureName + "_"
+        for name in self.structures:
+            if name[-1] == "\x00":
+                base_name = name[0:-1]
+            else:
+                base_name = name
+            # Don't do library cells
+            if prefix_name and base_name.startswith(prefix_name):
+                new_name = name
+            elif name != self.rootStructureName:
+                new_name = self.padText(prefix + base_name)
+            else:
+                new_name = name
+
+            new_structures[new_name] = self.structures[name]
+            new_structures[new_name].name = new_name
+            for sref in new_structures[new_name].srefs:
+                if sref.sName[-1] == "\x00":
+                    base_sref_name = sref.sName[0:-1]
+                else:
+                    base_sref_name = sref.sName
+                # Don't do library cells
+                if prefix_name and base_sref_name.startswith(prefix_name):
+                    new_sref_name = sref.sName
+                else:
+                    new_sref_name = self.padText(prefix + base_sref_name)
+                sref.sName = new_sref_name
+            self.structures = new_structures
     
     def rename(self,newName):
         #take the root structure and copy it to a new structure with the new name
@@ -146,8 +181,8 @@ class VlsiLayout:
         
         self.rootStructureName = structureNames[0]
 
-    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction = None, 
-                             transformPath = [], rotateAngle = 0, transFlags = (0,0,0), coordinates = (0,0)):
+    def traverseTheHierarchy(self, startingStructureName=None, delegateFunction=None, 
+                             transformPath=[], rotateAngle=0, transFlags=(0, 0, 0), coordinates=(0, 0)):
         #since this is a recursive function, must deal with the default
         #parameters explicitly        
         if startingStructureName == None:
@@ -209,35 +244,35 @@ class VlsiLayout:
     def populateCoordinateMap(self):
         def addToXyTree(startingStructureName = None,transformPath = None):
         #print"populateCoordinateMap"            
-            uVector = mpmath.matrix([1.0,0.0,0.0])  #start with normal basis vectors
-            vVector = mpmath.matrix([0.0,1.0,0.0])
-            origin = mpmath.matrix([0.0,0.0,1.0]) #and an origin (Z component is 1.0 to indicate position instead of vector)
+            uVector = np.array([[1.0],[0.0],[0.0]])  #start with normal basis vectors
+            vVector = np.array([[0.0],[1.0],[0.0]])
+            origin = np.array([[0.0],[0.0],[1.0]]) #and an origin (Z component is 1.0 to indicate position instead of vector)
             #make a copy of all the transforms and reverse it            
             reverseTransformPath = transformPath[:]
             if len(reverseTransformPath) > 1:
                 reverseTransformPath.reverse()               
             #now go through each transform and apply them to our basis and origin in succession
             for transform in reverseTransformPath:
-                origin = transform[0] * origin  #rotate
-                uVector = transform[0] * uVector  #rotate
-                vVector = transform[0] * vVector  #rotate
-                origin = transform[1] * origin  #scale
-                uVector = transform[1] * uVector  #rotate
-                vVector = transform[1] * vVector  #rotate
-                origin = transform[2] * origin  #translate
+                origin = np.dot(transform[0], origin)  #rotate
+                uVector = np.dot(transform[0] * uVector  #rotate
+                vVector = np.dot(transform[0] * vVector  #rotate
+                origin = np.dot(transform[1] * origin  #scale
+                uVector = np.dot(transform[1] * uVector  #rotate
+                vVector = np.dot(transform[1] * vVector  #rotate
+                origin = np.dot(transform[2] * origin  #translate
                 #we don't need to do a translation on the basis vectors            
             self.xyTree+=[(startingStructureName,origin,uVector,vVector)]  #populate the xyTree with each
                                                                             #structureName and coordinate space
         self.traverseTheHierarchy(delegateFunction = addToXyTree)
         
-    def microns(self,userUnits):
+    def microns(self, userUnits):
         """Utility function to convert user units to microns"""
         userUnit = self.units[1]/self.units[0]
         userUnitsPerMicron = userUnit / (userunit)
         layoutUnitsPerMicron = userUnitsPerMicron / self.units[0]
         return userUnits / layoutUnitsPerMicron
         
-    def userUnits(self,microns):
+    def userUnits(self, microns):
         """Utility function to convert microns to user units"""
         userUnit = self.units[1]/self.units[0]
         #userUnitsPerMicron = userUnit / 1e-6
@@ -381,7 +416,7 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].boundaries+=[boundaryToAdd]
     
-    def addPath(self, layerNumber=0, purposeNumber = 0, coordinates=[(0,0)], width=1.0):
+    def addPath(self, layerNumber=0, purposeNumber=0, coordinates=[(0,0)], width=1.0):
         """
         Method to add a path to a layout
         """
@@ -400,7 +435,7 @@ class VlsiLayout:
         #add the sref to the root structure
         self.structures[self.rootStructureName].paths+=[pathToAdd]
         
-    def addText(self, text, layerNumber=0, purposeNumber = 0, dataType = 0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
+    def addText(self, text, layerNumber=0, purposeNumber=0, dataType = 0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
 	offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
@@ -596,7 +631,7 @@ class VlsiLayout:
             print("Error: "+str(self.rootStructureName)+".cell_size information not found yet")
         return cellSizeMicron
 
-    def measureSize(self,startStructure):
+    def measureSize(self, startStructure):
         self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
@@ -606,7 +641,7 @@ class VlsiLayout:
         cellSizeMicron=[cellSize[0]*self.units[0],cellSize[1]*self.units[0]]
         return cellSizeMicron
 
-    def measureBoundary(self,startStructure):
+    def measureBoundary(self, startStructure):
         self.rootStructureName=self.padText(startStructure)
         self.populateCoordinateMap()
         cellBoundary = [None, None, None, None]
@@ -615,7 +650,7 @@ class VlsiLayout:
         return [[self.units[0]*cellBoundary[0],self.units[0]*cellBoundary[1]],
                 [self.units[0]*cellBoundary[2],self.units[0]*cellBoundary[3]]]
     
-    def measureSizeInStructure(self,Structure,cellBoundary):
+    def measureSizeInStructure(self, Structure, cellBoundary):
         StructureName=Structure[0]
         StructureOrigin=[Structure[1][0],Structure[1][1]]
         StructureuVector=[Structure[2][0],Structure[2][1],Structure[2][2]]
@@ -736,7 +771,7 @@ class VlsiLayout:
         # Make a name if we don't have the pin name
         return ["p"+str(coordinate)+"_"+str(layer), layer, new_boundaries]
     
-    def getPinShapeByLabel(self,label_name):
+    def getPinShapeByLabel(self, label_name):
         """
         Search for a pin label and return the largest enclosing rectangle
         on the same layer as the pin label.
@@ -807,7 +842,7 @@ class VlsiLayout:
                     
         return boundaries
 
-    def transformRectangle(self,orignalRectangle,uVector,vVector):
+    def transformRectangle(self,originalRectangle,uVector,vVector):
         """
         Transforms the four coordinates of a rectangle in space
         and recomputes the left, bottom, right, top values.

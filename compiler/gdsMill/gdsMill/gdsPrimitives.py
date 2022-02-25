@@ -1,4 +1,4 @@
-import math
+
 
 class GdsStructure:
     """Class represent a GDS Structure Object"""
@@ -9,11 +9,12 @@ class GdsStructure:
         #these are the primitives defined in GDS2, and we will maintain lists of them all
         self.boundaries=[]
         self.paths=[]
-        self.srefs=[]	
+        self.srefs=[]
         self.arefs=[]
         self.texts=[]
         self.nodes=[]
         self.boxes=[]
+
 
 class GdsBoundary:
     """Class represent a GDS Boundary Object"""
@@ -21,18 +22,20 @@ class GdsBoundary:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer = ""
-        self.dataType=""
+        self.purposeLayer=0
+        self.dataType=None
         self.coordinates=""
-    
+
+
 class GdsPath:
     """Class represent a GDS Path Object"""
     def __init__(self):
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer = ""
+        self.purposeLayer=0
         self.pathType=""
+        self.dataType=None
         self.pathWidth=""
         self.coordinates=""
         
@@ -62,7 +65,7 @@ class GdsPath:
                 nextX = None;
                 nextY = None;
             if lastX==None:   #start of the path
-                if nextX>x:#moving right                    
+                if nextX>x:#moving right
                     boundaryEquivalent+=[(x,y+halfWidth)]
                 if nextX<x:#moving left
                     boundaryEquivalent+=[(x,y-halfWidth)]
@@ -96,9 +99,9 @@ class GdsPath:
                     boundaryEquivalent+=[(x-halfWidth,y+halfWidth)]
                 if(y < lastY and x > nextX):
                     boundaryEquivalent+=[(x+halfWidth,y-halfWidth)]
-                
-            if nextX == None:   #end of path, put in the last 2 points  
-                if lastX<x:#moving right                    
+
+            if nextX == None:   #end of path, put in the last 2 points
+                if lastX<x:#moving right
                     boundaryEquivalent+=[(x,y+halfWidth)]
                 if lastX>x:#moving left
                     boundaryEquivalent+=[(x,y-halfWidth)]
@@ -118,7 +121,7 @@ class GdsSref:
         self.elementFlags=""
         self.plex=""
         self.sName=""
-        self.transFlags=(False,False,False)
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
@@ -129,7 +132,7 @@ class GdsAref:
         self.elementFlags=""
         self.plex=""
         self.aName=""
-        self.transFlags=(False,False,False)
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.coordinates=""
@@ -140,8 +143,8 @@ class GdsText:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer = ""
-        self.transFlags=(False,False,False)
+        self.purposeLayer=0
+        self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
         self.pathType=""
@@ -165,6 +168,6 @@ class GdsBox:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer = ""
+        self.purposeLayer=0
         self.boxValue=""
         self.coordinates=""
