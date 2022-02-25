@@ -254,12 +254,12 @@ class VlsiLayout:
             #now go through each transform and apply them to our basis and origin in succession
             for transform in reverseTransformPath:
                 origin = np.dot(transform[0], origin)  #rotate
-                uVector = np.dot(transform[0] * uVector  #rotate
-                vVector = np.dot(transform[0] * vVector  #rotate
-                origin = np.dot(transform[1] * origin  #scale
-                uVector = np.dot(transform[1] * uVector  #rotate
-                vVector = np.dot(transform[1] * vVector  #rotate
-                origin = np.dot(transform[2] * origin  #translate
+                uVector = np.dot(transform[0] * uVector)  #rotate
+                vVector = np.dot(transform[0] * vVector)  #rotate
+                origin = np.dot(transform[1] * origin)  #scale
+                uVector = np.dot(transform[1] * uVector)  #rotate
+                vVector = np.dot(transform[1] * vVector)  #rotate
+                origin = np.dot(transform[2] * origin)  #translate
                 #we don't need to do a translation on the basis vectors            
             self.xyTree+=[(startingStructureName,origin,uVector,vVector)]  #populate the xyTree with each
                                                                             #structureName and coordinate space

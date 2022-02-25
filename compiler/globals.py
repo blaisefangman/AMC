@@ -102,8 +102,10 @@ def check_versions():
     # check that we are not using version 3 and at least 2.7
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
-    if not (major_python_version == 2 and minor_python_version >= 7):
-        debug.error("Python 2.7 is required.",-1)
+    #if not (major_python_version == 2 and minor_python_version >= 7):
+    #    debug.error("Python 2.7 is required.",-1)
+    if not (major_python_version == 3 and minor_python_version >= 5):
+        debug.error("Python 3.5 is required.",-1)
 
 
 def init_AMC(config_file, is_unit_test=True):
