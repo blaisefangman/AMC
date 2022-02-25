@@ -436,7 +436,7 @@ class VlsiLayout:
         self.structures[self.rootStructureName].paths+=[pathToAdd]
         
     def addText(self, text, layerNumber=0, purposeNumber=0, dataType = 0, offsetInMicrons=(0,0), magnification=0.1, rotate = None):
-	offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
+        offsetInLayoutUnits = (self.userUnits(offsetInMicrons[0]),self.userUnits(offsetInMicrons[1]))
         textToAdd = GdsText()
         textToAdd.drawingLayer = layerNumber
         textToAdd.purposeLayer = purposeNumber
@@ -690,7 +690,7 @@ class VlsiLayout:
         """
         Return the coordinates in DB units and layer of all matching labels
         """
-	label_list = []
+        label_list = []
         label_layer = None
         label_coordinate = [None, None]
 
