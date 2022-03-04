@@ -51,7 +51,7 @@ class single_driver_array(design.design):
     def create_layout(self):
         """ Add single_driver cells and then route"""
         
-        for i in range(self.rows/4):
+        for i in range(self.rows // 4):
             name = "single_driver{}".format(i)
             y_offset = self.single_driver.height*i
 
@@ -128,11 +128,11 @@ class single_driver_array(design.design):
             # output each OUT on the right
             for j in range(4):
                 if i%2:
-                    text_out = "out[{0}]".format(4*i+(3-j))
-                    text_in="in[{0}]".format(4*i+(3-j))
+                    text_out = "out[{0}]".format(int(4*i+(3-j)))
+                    text_in="in[{0}]".format(int(4*i+(3-j)))
                 else:
-                    text_out = "out[{0}]".format(4*i+j)
-                    text_in="in[{0}]".format(4*i+j)
+                    text_out = "out[{0}]".format(int(4*i+j))
+                    text_in="in[{0}]".format(int(4*i+j))
 
 
                 out_pin = single_driver_inst.get_pin("out{0}".format(j))

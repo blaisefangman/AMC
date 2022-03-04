@@ -18,12 +18,12 @@ class vector():
         """ init function support two init method"""
         # will take single input as a coordinate
         if y==None:
-            self.x = x[0]
-            self.y = x[1]
+            self.x = float(x[0])
+            self.y = float(x[1])
         #will take two inputs as the values of a coordinate
         else:
-            self.x = x
-            self.y = y
+            self.x = float(x)
+            self.y = float(y)
 
     def __str__(self):
         """ override print function output """

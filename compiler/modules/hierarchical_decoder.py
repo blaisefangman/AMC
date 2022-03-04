@@ -229,7 +229,7 @@ class hierarchical_decoder(design.design):
             pin_offset = pin.ll()
             
             pin = self.pre2_4.get_pin("in[{}]".format(i))
-            self.add_layout_pin(text="A[{0}]".format(i + 2*num ),
+            self.add_layout_pin(text="A[{0}]".format(int(i + 2*num)),
                                 layer=pin.layer, 
                                 offset=pin_offset,
                                 width=pin.width(),
@@ -270,7 +270,7 @@ class hierarchical_decoder(design.design):
         for i in range(3):            
             pin = self.pre3x8_inst[num].get_pin("in[{}]".format(i))
             pin_offset = pin.ll()
-            self.add_layout_pin(text="A[{0}]".format(i + 3*num + 2*self.no_of_pre2x4),
+            self.add_layout_pin(text="A[{0}]".format(int(i + 3*num + 2*self.no_of_pre2x4)),
                                 layer=pin.layer, 
                                 offset=pin_offset,
                                 width=pin.width(),
@@ -281,8 +281,8 @@ class hierarchical_decoder(design.design):
         
         if (self.num_inputs == 4 or self.num_inputs == 5):
             self.add_decode_stage(decode_stage_mod=self.dec4_4)
-            for i in range(len(self.predec_grp[0])/2):
-                for j in range(len(self.predec_grp[1])/2):
+            for i in range(len(self.predec_grp[0]) // 2):
+                for j in range(len(self.predec_grp[1]) // 2):
                     pins =["out[{0}]".format(2*i), 
                            "out[{0}]".format(2*i+1),
                            "out[{0}]".format(2*j+len(self.predec_grp[0])), 
@@ -297,8 +297,8 @@ class hierarchical_decoder(design.design):
         elif (self.num_inputs > 5):
             self.add_decode_stage(decode_stage_mod=self.dec5_4)
             for i in range(len(self.predec_grp[0])):
-                for j in range(len(self.predec_grp[1])/2):
-                    for k in range(len(self.predec_grp[2])/2):
+                for j in range(len(self.predec_grp[1]) // 2):
+                    for k in range(len(self.predec_grp[2]) // 2):
                         Z_index = len(self.predec_grp[1])*len(self.predec_grp[2]) * i + \
                                   len(self.predec_grp[2])*2*j + 4*k
                         pins = ["out[{0}]".format(2*j+len(self.predec_grp[0])),
@@ -313,10 +313,10 @@ class hierarchical_decoder(design.design):
                                 "vdd", "gnd"]
                         self.connect_inst(args=pins, check=False)
 
-        for row in range(self.rows/4):
+        for row in range(self.rows // 4):
             for i in range(4):
                 out_pos = self.decode_stage_inst[row].get_pin("out{0}".format(i))
-                self.add_layout_pin(text="decode[{0}]".format(4*row+i),
+                self.add_layout_pin(text="decode[{0}]".format(int(4*row+i)),
                                     layer=out_pos.layer,
                                     offset=out_pos.ll(),
                                     width=out_pos.width(),
@@ -327,7 +327,7 @@ class hierarchical_decoder(design.design):
         """ Add a column of decode_stages for the decoder above the predecoders."""
         
         self.decode_stage_inst = []
-        for row in range(self.rows/4):
+        for row in range(self.rows // 4):
             name = "decode_stage[{0}]".format(row)
             if (self.no_of_pre2x4 > 0 and self.no_of_pre3x8 > 0):
                 y_off = self.predecoder_height + decode_stage_mod.height*row 
@@ -391,8 +391,8 @@ class hierarchical_decoder(design.design):
             the 16th decode_stage_5_4 inputs are connected to [2,3,6,7,11] """
         row_index = 0
         if (self.num_inputs == 4 or self.num_inputs == 5):
-            for a in range(len(self.predec_grp[0])/2):
-                for b in range(len(self.predec_grp[1])/2):
+            for a in range(len(self.predec_grp[0]) // 2):
+                for b in range(len(self.predec_grp[1]) // 2):
                     self.connect_rail(2*a, self.decode_stage_inst[row_index].get_pin("in0"))
                     self.connect_rail(2*a+1, self.decode_stage_inst[row_index].get_pin("in1"))
                     self.connect_rail(2*b+len(self.predec_grp[0]), 
@@ -403,8 +403,8 @@ class hierarchical_decoder(design.design):
 
         elif (self.num_inputs > 5):
             for a in range(len(self.predec_grp[0])):
-                for b in range(len(self.predec_grp[1])/2):
-                    for c in range(len(self.predec_grp[2])/2):
+                for b in range(len(self.predec_grp[1]) // 2):
+                    for c in range(len(self.predec_grp[2]) // 2):
                         self.connect_rail(a, self.decode_stage_inst[row_index].get_pin("in4"))
                         self.connect_rail(2*b+len(self.predec_grp[0]), 
                                           self.decode_stage_inst[row_index].get_pin("in0"))

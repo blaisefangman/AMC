@@ -1079,7 +1079,7 @@ class multi_bank(design.design):
             self.connect_inst(temp)
         
             for i in range(self.w_size):
-                self.add_layout_pin(text="dout[{0}]".format(self.w_size-1-i), 
+                self.add_layout_pin(text="dout[{0}]".format(int(self.w_size-1-i)), 
                                     layer=self.m2_pin_layer, 
                                     offset= self.dmerge_ary_inst.get_pin("Q[{0}]".format(i)).ll(),
                                     width=self.m2_width, 

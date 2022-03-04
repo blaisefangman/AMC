@@ -47,8 +47,8 @@ class split_array(design.design):
         """ Add pins for split_array, order of the pins is important """
         
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("D[{0}]".format(i/self.words_per_row))
-            self.add_pin("Q[{0}]".format(i/self.words_per_row))
+            self.add_pin("D[{0}]".format(i // self.words_per_row))
+            self.add_pin("Q[{0}]".format(i // self.words_per_row))
         self.add_pin_list(["en1_S", "en2_S", "reset", "S", "vdd", "gnd"])
 
     def create_layout(self):
@@ -75,19 +75,19 @@ class split_array(design.design):
                 mirror = "R0"
             
             self.split_inst[i] = self.add_inst(name=name, mod=self.split, offset=split_position, mirror=mirror)
-            self.connect_inst(["D[{0}]".format(i/self.words_per_row), 
-                               "Q[{0}]".format(i/self.words_per_row), 
+            self.connect_inst(["D[{0}]".format(i // self.words_per_row), 
+                               "Q[{0}]".format(i // self.words_per_row), 
                                "en1_S", "en2_S", "reset", "S", "vdd", "gnd"])
             
             D_offset = self.split_inst[i].get_pin("D").ll()
             Q_offset = vector(self.split_inst[i].get_pin("Q").lx() , self.height-self.m2_width)
 
-            self.add_layout_pin(text="D[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="D[{0}]".format(i // self.words_per_row), 
                                 layer=D_pin.layer, 
                                 offset=D_offset, 
                                 width=D_pin.width(), 
                                 height=self.m2_width)
-            self.add_layout_pin(text="Q[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="Q[{0}]".format(i // self.words_per_row), 
                                 layer=Q_pin.layer, 
                                 offset=Q_offset, 
                                 width=Q_pin.width(), 

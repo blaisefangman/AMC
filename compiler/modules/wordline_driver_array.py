@@ -52,7 +52,7 @@ class wordline_driver_array(design.design):
     def add_wordline_driver(self):
         """ Add wordline_driver cells"""
 
-        for i in range(self.rows/4):
+        for i in range(self.rows // 4):
             name = "wordline_driver{}".format(i)
             y_offset = i*self.wordline_driver.height
             if i%2:
@@ -127,9 +127,9 @@ class wordline_driver_array(design.design):
             # output each OUT on the right
             for j in range(4):
                 if i%2:
-                    text = "out[{0}]".format(4*i+(3-j))
+                    text = "out[{0}]".format(int(4*i+(3-j)))
                 else:
-                    text = "out[{0}]".format(4*i+j)
+                    text = "out[{0}]".format(int(4*i+j))
                 out_pin = wordline_driver_inst.get_pin("out{0}".format(j))
                 in_pin = wordline_driver_inst.get_pin("in{0}".format(j))
                 if (out_pin.layer=="metal1" or out_pin.layer=="m1pin"):
@@ -142,7 +142,7 @@ class wordline_driver_array(design.design):
                                     width=pin_width, 
                                     height=pin_width)
 
-                self.add_layout_pin(text="in[{0}]".format(4*i+j), 
+                self.add_layout_pin(text="in[{0}]".format(int(4*i+j)), 
                                     layer=in_pin.layer,
                                     offset= in_pin.ll(),
                                     width=self.m1_width, 

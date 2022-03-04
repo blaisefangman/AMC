@@ -1,6 +1,7 @@
 from .gdsPrimitives import *
 from datetime import *
 import numpy as np
+import math
 from . import gdsPrimitives
 import debug
 
@@ -170,7 +171,7 @@ class VlsiLayout:
         #contained by any other structure. this is the root.
         structureNames=[]
         for name in self.structures:
-            #print "deduceHierarchy: structure.name[%s]",name //FIXME: Added By Tom G.
+            #print("deduceHierarchy: structure.name = ",name) #//FIXME: Added By Tom G.
             structureNames+=[name]
             
         for name in self.structures:
@@ -254,12 +255,12 @@ class VlsiLayout:
             #now go through each transform and apply them to our basis and origin in succession
             for transform in reverseTransformPath:
                 origin = np.dot(transform[0], origin)  #rotate
-                uVector = np.dot(transform[0] * uVector)  #rotate
-                vVector = np.dot(transform[0] * vVector)  #rotate
-                origin = np.dot(transform[1] * origin)  #scale
-                uVector = np.dot(transform[1] * uVector)  #rotate
-                vVector = np.dot(transform[1] * vVector)  #rotate
-                origin = np.dot(transform[2] * origin)  #translate
+                uVector = np.dot(transform[0], uVector)  #rotate
+                vVector = np.dot(transform[0], vVector)  #rotate
+                origin = np.dot(transform[1], origin)  #scale
+                uVector = np.dot(transform[1], uVector)  #rotate
+                vVector = np.dot(transform[1], vVector)  #rotate
+                origin = np.dot(transform[2], origin)  #translate
                 #we don't need to do a translation on the basis vectors            
             self.xyTree+=[(startingStructureName,origin,uVector,vVector)]  #populate the xyTree with each
                                                                             #structureName and coordinate space
@@ -737,7 +738,7 @@ class VlsiLayout:
             debug.warning("Did not find pin on layer {0} at coordinate {1}".format(layer, coordinate))
             
         # sort the boundaries, return the max area pin boundary
-        pin_boundaries.sort(cmpBoundaryAreas,reverse=True)
+        pin_boundaries.sort(key=calcBoundaryArea,reverse=True)
         pin_boundary=pin_boundaries[0]
 
         # Convert to USER units
@@ -847,10 +848,10 @@ class VlsiLayout:
         Transforms the four coordinates of a rectangle in space
         and recomputes the left, bottom, right, top values.
         """
-        leftBottom=mpmath.matrix([orignalRectangle[0],orignalRectangle[1]])
+        leftBottom=[originalRectangle[0],originalRectangle[1]]
         leftBottom=self.transformCoordinate(leftBottom,uVector,vVector)
 
-        rightTop=mpmath.matrix([orignalRectangle[2],orignalRectangle[3]])
+        rightTop=[originalRectangle[2],originalRectangle[3]]
         rightTop=self.transformCoordinate(rightTop,uVector,vVector)
 
         left=min(leftBottom[0],rightTop[0])
@@ -881,6 +882,9 @@ class VlsiLayout:
             return True
         else:
             return False
+
+def calcBoundaryArea(A):
+    return (A[2]-A[0])*(A[3]-A[1])
 
 def cmpBoundaryAreas(A,B):
     """

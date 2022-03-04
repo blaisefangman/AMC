@@ -22,7 +22,7 @@ class GdsBoundary:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer=""
         self.dataType=None
         self.coordinates=""
 
@@ -33,7 +33,7 @@ class GdsPath:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer=""
         self.pathType=""
         self.dataType=None
         self.pathWidth=""
@@ -143,7 +143,7 @@ class GdsText:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer=""
         self.transFlags=[0,0,0]
         self.magFactor=""
         self.rotateAngle=""
@@ -168,6 +168,6 @@ class GdsBox:
         self.elementFlags=""
         self.plex=""
         self.drawingLayer=""
-        self.purposeLayer=0
+        self.purposeLayer=""
         self.boxValue=""
         self.coordinates=""

@@ -103,7 +103,7 @@ class write_complete_array(design.design):
                 wc_position = vector(i*self.wc.width+self.wc.width, 0)
             else:
                 mirror = "R0" 
-            name = "wc{0}".format(i/self.w_size)
+            name = "wc{0}".format(i // self.w_size)
             self.wc_inst[i]=self.add_inst(name=name,      
                                           mod=self.wc, 
                                           offset=wc_position,
@@ -117,7 +117,7 @@ class write_complete_array(design.design):
                                    "en", "write_complete", "vdd", "gnd"])
             else:
                 self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
-                                   "en", "wc[{0}]".format(i/self.w_size), "vdd", "gnd"])
+                                   "en", "wc[{0}]".format(i // self.w_size), "vdd", "gnd"])
 
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer=bl_pin.layer, 
@@ -207,7 +207,7 @@ class write_complete_array(design.design):
                                                 mod=self.nor2, 
                                                 offset=nor2_offset, 
                                                 mirror ="MY")
-                self.connect_inst(["wc[{0}]".format(2*i),"wc[{0}]".format(2*i+1),
+                self.connect_inst(["wc[{0}]".format(int(2*i)),"wc[{0}]".format(int(2*i+1)),
                                    "Z[{0}]".format(i),"vdd","gnd"])
                 
                 # connect nor2 pins to central metal2 bus

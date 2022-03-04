@@ -127,7 +127,7 @@ class bank_control_logic(design.design):
         
         if self.num_subanks > 1:
             gnd_pins =["S0"]
-            for i in range(self.num_subanks/2):
+            for i in range(self.num_subanks // 2):
                 gnd_pins.append("D{0}".format(4*i+3))
         
             self.wc_gate = pull_up_pull_down(num_nmos=2*self.num_subanks, num_pmos=1, 
@@ -816,7 +816,7 @@ class bank_control_logic(design.design):
                                    mirror="MX", 
                                    rotate=270)
         temp = []
-        for i in range(self.num_subanks/2):
+        for i in range(self.num_subanks // 2):
             temp.extend(["gnd", "write_complete[{0}]".format(2*i), "net[{0}]".format(2*i), 
                          "go[{0}]".format(2*i), "pre_WC", "write_complete[{0}]".format(2*i+1), 
                          "net[{0}]".format(2*i+1), "go[{0}]".format(2*i+1)])
@@ -843,10 +843,10 @@ class bank_control_logic(design.design):
             self.wc_go_off[i] = self.wc_inst.get_pin("Gn{0}".format(2*i+1))
 
         Dn_contact={}
-        for i in range(self.num_subanks/2):
+        for i in range(self.num_subanks // 2):
             Dn_contact[i] = self.wc_inst.get_pin("Dn{0}".format(4*i+1))
         
-        for i in range(self.num_subanks/2 - 1):
+        for i in range(self.num_subanks // 2 - 1):
             self.add_Zpath(Dn_contact[i], Dn_contact[i+1], -1.5*self.m_pitch("m1"))
 
         #Adding a Z connection for output node
@@ -881,7 +881,7 @@ class bank_control_logic(design.design):
                                    mirror="MX", 
                                    rotate=270)
         temp = []
-        for i in range(self.num_subanks/2):
+        for i in range(self.num_subanks // 2):
             temp.extend(["gnd", "data_ready[{0}]".format(2*i), "net[{0}]".format(2*i+self.num_subanks), 
                          "go[{0}]".format(2*i), "pre_DR","data_ready[{0}]".format(2*i+1), 
                          "net[{0}]".format(2*i+1+self.num_subanks), "go[{0}]".format(2*i+1)])
@@ -908,10 +908,10 @@ class bank_control_logic(design.design):
             self.dr_go_off[i] = self.dr_inst.get_pin("Gn{0}".format(2*i+1))
 
         Dn_contact={}
-        for i in range(self.num_subanks/2):
+        for i in range(self.num_subanks // 2):
             Dn_contact[i] = self.dr_inst.get_pin("Dn{0}".format(4*i+1))
         
-        for i in range(self.num_subanks/2 - 1):
+        for i in range(self.num_subanks // 2 - 1):
             self.add_Zpath(Dn_contact[i], Dn_contact[i+1], -1.5*self.m_pitch("m1"))
 
         #Adding a Z connection for output node

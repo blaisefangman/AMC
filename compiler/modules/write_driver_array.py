@@ -35,7 +35,7 @@ class write_driver_array(design.design):
         """ Add pins for write_driver_array, order of the pins is important """
         
         for i in range(0, self.row_size, self.words_per_row):
-            self.add_pin("data[{0}]".format(i/self.words_per_row))
+            self.add_pin("data[{0}]".format(i // self.words_per_row))
             self.add_pin_list(["bl[{0}]".format(i), "br[{0}]".format(i)])
         self.add_pin_list(["en","vdd","gnd"])
 
@@ -64,14 +64,14 @@ class write_driver_array(design.design):
                 mirror = "R0"
             
             self.wd_inst[i] = self.add_inst(name=name, mod=self.write_driver, offset=wd_position, mirror = mirror)
-            self.connect_inst(["data[{0}]".format(i/self.words_per_row), 
+            self.connect_inst(["data[{0}]".format(i // self.words_per_row), 
                                "bl[{0}]".format(i),"br[{0}]".format(i), "en", "vdd", "gnd"])
             
             bl_offset = vector(self.wd_inst[i].get_pin("bl").lx() , self.height-self.m2_width)
             br_offset = vector(self.wd_inst[i].get_pin("br").lx() , self.height-self.m2_width)
             din_offset = self.wd_inst[i].get_pin("din").ll()
 
-            self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row),
+            self.add_layout_pin(text="data[{0}]".format(i // self.words_per_row),
                                 layer=din_pin.layer, 
                                 offset=din_offset, 
                                 width=din_pin.width(), 

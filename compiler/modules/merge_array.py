@@ -47,8 +47,8 @@ class merge_array(design.design):
         """ Add pins for merge_array, order of the pins is important """
 
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("D[{0}]".format(i/self.words_per_row))
-            self.add_pin("Q[{0}]".format(i/self.words_per_row))
+            self.add_pin("D[{0}]".format(i // self.words_per_row))
+            self.add_pin("Q[{0}]".format(i // self.words_per_row))
         self.add_pin_list(["en1_M", "en2_M", "reset" ,"M" ,"vdd" ,"gnd"])
 
     def create_layout(self):
@@ -76,19 +76,19 @@ class merge_array(design.design):
                 mirror = "R0"
 
             self.merge_inst[i] = self.add_inst(name=name, mod=self.merge, offset=merge_position, mirror=mirror)
-            self.connect_inst(["D[{0}]".format(i/self.words_per_row), 
-                               "Q[{0}]".format(i/self.words_per_row), 
+            self.connect_inst(["D[{0}]".format(i // self.words_per_row), 
+                               "Q[{0}]".format(i // self.words_per_row), 
                                "en1_M", "en2_M", "reset", "M", "vdd", "gnd"])
             
             D_offset = vector(self.merge_inst[i].get_pin("D").lx() , self.height-self.m2_width)
             Q_offset = self.merge_inst[i].get_pin("Q").ll()
 
-            self.add_layout_pin(text="D[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="D[{0}]".format(i // self.words_per_row), 
                                 layer=D_pin.layer, 
                                 offset=D_offset, 
                                 width=D_pin.width(), 
                                 height=self.m2_width)
-            self.add_layout_pin(text="Q[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="Q[{0}]".format(i // self.words_per_row), 
                                 layer=Q_pin.layer, 
                                 offset=Q_offset, 
                                 width=Q_pin.width(), 

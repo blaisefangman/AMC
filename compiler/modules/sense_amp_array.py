@@ -35,8 +35,8 @@ class sense_amp_array(design.design):
         """ Add pins for sense_amp_array, order of the pins is important """
 
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("data[{0}]".format(i/self.words_per_row))
-            self.add_pin("data_bar[{0}]".format(i/self.words_per_row))
+            self.add_pin("data[{0}]".format(i // self.words_per_row))
+            self.add_pin("data_bar[{0}]".format(i // self.words_per_row))
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
         self.add_pin_list(["en","vdd","gnd"])
@@ -70,8 +70,8 @@ class sense_amp_array(design.design):
 
             self.sa_inst[i] = self.add_inst(name=name, mod=self.amp, offset=amp_position, mirror=mirror)
             self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
-                               "data[{0}]".format(i/self.words_per_row), 
-                               "data_bar[{0}]".format(i/self.words_per_row), 
+                               "data[{0}]".format(i // self.words_per_row), 
+                               "data_bar[{0}]".format(i // self.words_per_row), 
                                "en", "vdd", "gnd"])
 
             bl_offset = vector(self.sa_inst[i].get_pin("bl").lx() , self.height-self.m2_width)
@@ -90,12 +90,12 @@ class sense_amp_array(design.design):
                                 offset=br_offset, 
                                 width=br_pin.width(), 
                                 height=self.m2_width)
-            self.add_layout_pin(text="data[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="data[{0}]".format(i // self.words_per_row), 
                                 layer=dout_pin.layer, 
                                 offset=dout_offset, 
                                 width=dout_pin.width(), 
                                 height=self.m2_width)
-            self.add_layout_pin(text="data_bar[{0}]".format(i/self.words_per_row), 
+            self.add_layout_pin(text="data_bar[{0}]".format(i // self.words_per_row), 
                                 layer=dout_bar_pin.layer, 
                                 offset=dout_bar_offset, 
                                 width=dout_bar_pin.width(), 
