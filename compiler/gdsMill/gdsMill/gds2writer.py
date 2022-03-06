@@ -14,7 +14,7 @@ class Gds2writer:
     def print64AsBinary(self,number):
         #debugging method for binary inspection
         for index in range(0,64):
-            print((number>>(63-index))&0x1, end=' ')
+            print((number>>(63-index))&0x1, end='')
         print("\n")
         
     def ieeeDoubleFromIbmData(self,ibmData):
@@ -124,10 +124,10 @@ class Gds2writer:
         if("libraryName" in self.layoutObject.info):
             idBits=b'\x02\x06'
             if (len(self.layoutObject.info["libraryName"]) % 2 != 0):
-                libraryName = self.layoutObject.info["libraryName"] + "\0"
+                libraryName = self.layoutObject.info["libraryName"].encode() + "\0"
             else:
-                libraryName = self.layoutObject.info["libraryName"]
-            self.writeRecord(idBits+libraryName.encode())                
+                libraryName = self.layoutObject.info["libraryName"].encode()
+            self.writeRecord(idBits+libraryName)                
         ## reference libraries
         if("referenceLibraries" in self.layoutObject.info):
             idBits=b'\x1F\x06'
@@ -178,26 +178,26 @@ class Gds2writer:
                 
             self.writeRecord(idBits+userUnits+dbUnits)
         if(self.debugToTerminal==1): 
-            print("writer: userUnits %s"%(userUnits.encode("hex")))
-            print("writer: dbUnits   %s"%(dbUnits.encode("hex")))
+            print("writer: userUnits %s"%(userUnits.hex()))
+            print("writer: dbUnits   %s"%(dbUnits.hex()))
             #self.ieeeFloatCheck(1.3e-6)
             
             print("End of GDSII Header Written")
         return 1
     
     def writeBoundary(self,thisBoundary):
-        idBits = b'\x08\x00'  #record Type
+        idBits=b'\x08\x00'  #record Type
         self.writeRecord(idBits)
         if(thisBoundary.elementFlags!=""):
-            idBits=b'\x26\x01' #ELFLAGS
+            idBits=b'\x26\x01' # ELFLAGS
             elementFlags = struct.pack(">h",thisBoundary.elementFlags)
             self.writeRecord(idBits+elementFlags)
         if(thisBoundary.plex!=""):
-            idBits=b'\x2F\x03'  #PLEX
+            idBits=b'\x2F\x03'  # PLEX
             plex = struct.pack(">i",thisBoundary.plex)
             self.writeRecord(idBits+plex)
         if(thisBoundary.drawingLayer!=""):
-            idBits=b'\x0D\x02' #drawig layer
+            idBits=b'\x0D\x02' # drawing layer
             drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
         if(thisBoundary.purposeLayer):
@@ -209,7 +209,7 @@ class Gds2writer:
             dataType = struct.pack(">h",thisBoundary.dataType)
             self.writeRecord(idBits+dataType)
         if(thisBoundary.coordinates!=""):
-            idBits=b'\x10\x03' #XY Data Points
+            idBits=b'\x10\x03' # XY Data Points
             coordinateRecord = idBits
             for coordinate in thisBoundary.coordinates:
                 x=struct.pack(">i",int(coordinate[0]))
@@ -222,7 +222,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writePath(self,thisPath):  #writes out a path structure
-        idBits = b'\x09\x00'  #record Type
+        idBits=b'\x09\x00'  #record Type
         self.writeRecord(idBits)
         if(thisPath.elementFlags != ""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -262,7 +262,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writeSref(self,thisSref):  #reads in a reference to another structure
-        idBits = b'\x0A\x00'  #record Type
+        idBits=b'\x0A\x00'  #record Type
         self.writeRecord(idBits)
         if(thisSref.elementFlags != ""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -309,7 +309,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writeAref(self,thisAref):  #an array of references
-        idBits = b'\x0B\x00'  #record Type
+        idBits=b'\x0B\x00'  #record Type
         self.writeRecord(idBits)
         if(thisAref.elementFlags!=""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -355,7 +355,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writeText(self,thisText):
-        idBits = b'\x0C\x00'  #record Type
+        idBits=b'\x0C\x00'  #record Type
         self.writeRecord(idBits)
         if(thisText.elementFlags!=""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -390,7 +390,7 @@ class Gds2writer:
             rotateAngle=self.ibmDataFromIeeeDouble(thisText.rotateAngle)
             self.writeRecord(idBits+rotateAngle)
         if(thisText.pathType !=""):
-            idBits=b'\x21\x02'  #path type
+            idBits=b'\x21\x02'  #Path type
             pathType = struct.pack(">h",thisText.pathType)
             self.writeRecord(idBits+pathType)
         if(thisText.pathWidth != ""):
@@ -423,7 +423,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writeNode(self,thisNode):
-        idBits = b'\x15\x00'  #record Type
+        idBits=b'\x15\x00'  #record Type
         self.writeRecord(idBits)
         if(thisNode.elementFlags!=""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -456,7 +456,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
     
     def writeBox(self,thisBox):
-        idBits = b'\x2E\x02'  #record Type
+        idBits=b'\x2E\x02'  #record Type
         self.writeRecord(idBits)
         if(thisBox.elementFlags!=""):
             idBits=b'\x26\x01' #ELFLAGS

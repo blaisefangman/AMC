@@ -103,6 +103,7 @@ class spice(verilog.verilog):
             debug.info(3, "opening {0}".format(self.sp_file))
             f = open(self.sp_file)
             self.spice = f.readlines()
+            f.close()
             for i in range(len(self.spice)):
                 self.spice[i] = self.spice[i].rstrip(" \n")
 
