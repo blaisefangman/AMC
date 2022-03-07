@@ -1230,7 +1230,7 @@ class sram(design.design):
 
         sp.write("**************************************************\n")
         sp.write("* AMC generated memory.\n")
-        sp.write("* Number of Words: {}\n".format(self.total_bits/self.word_size))
+        sp.write("* Number of Words: {}\n".format(self.total_bits // self.word_size))
         sp.write("* Word Size: {}\n".format(self.word_size))
         sp.write("* Number of Banks: {}\n".format(self.num_inbanks*self.num_outbanks))
         sp.write("**************************************************\n")        

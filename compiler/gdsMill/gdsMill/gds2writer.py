@@ -94,7 +94,10 @@ class Gds2writer:
     def writeRecord(self,record):
         recordLength = len(record)+2  #make sure to include this in the length
         recordLengthAscii=struct.pack(">h",recordLength)
-        self.fileHandle.write(recordLengthAscii+record)
+        #COMMENTED FOR DEBUGGING self.fileHandle.write(recordLengthAscii+record)
+        rec = [int(i) for i in (recordLengthAscii+record)]
+        self.fileHandle.write(str(rec))
+        self.fileHandle.write('\n')
 
     def writeHeader(self):
         ##  Header
@@ -547,6 +550,6 @@ class Gds2writer:
         self.writeRecord(idBits)
         
     def writeToFile(self,fileName):
-        self.fileHandle = open(fileName,"wb")
+        self.fileHandle = open(fileName,"w") # COMMENTED FOR DEBUGGING it should be wb
         self.writeGds2()
         self.fileHandle.close()

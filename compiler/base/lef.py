@@ -23,6 +23,7 @@ class lef:
         self.lef_units = 1
         # These are the layers of the obstructions
         self.lef_layers = layers
+        self.round_grid = 4
 
     def lef_write(self, lef_name):
         """Write the entire lef of the object to the file."""
@@ -54,8 +55,8 @@ class lef:
         self.indent += "   "
         self.lef.write("{0}CLASS Core ;\n".format(self.indent))
         self.lef.write("{0}SIZE {1} by {2} ;\n".format(self.indent,
-                                                       self.lef_units*self.width,
-                                                       self.lef_units*self.height))
+                                                       round(self.lef_units*self.width, self.round_grid),
+                                                       round(self.lef_units*self.height, self.round_grid)))
         self.indent = self.indent[:-3]
         self.lef.write("END  MacroSite\n")
         
@@ -63,8 +64,8 @@ class lef:
         self.indent += "   "
         self.lef.write("{0}CLASS BLOCK ;\n".format(self.indent))
         self.lef.write("{0}SIZE {1} BY {2} ;\n" .format(self.indent,
-                                                        self.lef_units*self.width,
-                                                        self.lef_units*self.height))
+                                                        round(self.lef_units*self.width, self.round_grid),
+                                                        round(self.lef_units*self.height, self.round_grid)))
         self.lef.write("{0}SYMMETRY X Y R90 ;\n".format(self.indent))
         self.lef.write("{0}SITE MacroSite ;\n".format(self.indent))
 
@@ -120,5 +121,6 @@ class lef:
         """ Write a LEF rectangle """
         self.lef.write("{0}RECT ".format(self.indent)) 
         for item in rect:
-            self.lef.write(" {0} {1}".format(self.lef_units*item[0], self.lef_units*item[1]))
+            self.lef.write(" {0} {1}".format(round(self.lef_units*item[0], self.round_grid),
+                                             round(self.lef_units*item[1], self.round_grid)))
         self.lef.write(" ;\n")
