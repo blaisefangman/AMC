@@ -94,10 +94,7 @@ class Gds2writer:
     def writeRecord(self,record):
         recordLength = len(record)+2  #make sure to include this in the length
         recordLengthAscii=struct.pack(">h",recordLength)
-        #COMMENTED FOR DEBUGGING self.fileHandle.write(recordLengthAscii+record)
-        rec = [int(i) for i in (recordLengthAscii+record)]
-        self.fileHandle.write(str(rec))
-        self.fileHandle.write('\n')
+        self.fileHandle.write(recordLengthAscii+record)
 
     def writeHeader(self):
         ##  Header
@@ -191,6 +188,15 @@ class Gds2writer:
     def writeBoundary(self,thisBoundary):
         idBits=b'\x08\x00'  #record Type
         self.writeRecord(idBits)
+
+        assert (thisBoundary.drawingLayer >= 0), '{0}: layer {1}'.format(
+                self.currentStructureName,
+                thisBoundary.drawingLayer)
+        assert (thisBoundary.dataType == 0), self.currentStructureName
+        assert (len(thisBoundary.coordinates) >= 4 and len(thisBoundary.coordinates) <= 200), self.currentStructureName
+        assert (thisBoundary.coordinates[0][0] == thisBoundary.coordinates[-1][0]), self.currentStructureName
+        assert (thisBoundary.coordinates[0][1] == thisBoundary.coordinates[-1][1]), self.currentStructureName
+
         if(thisBoundary.elementFlags!=""):
             idBits=b'\x26\x01' # ELFLAGS
             elementFlags = struct.pack(">h",thisBoundary.elementFlags)
@@ -204,10 +210,10 @@ class Gds2writer:
             drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
         if(thisBoundary.purposeLayer):
-            idBits=b'\x16\x02' #purpose layer
+            idBits=b'\x16\x02' #purpose layer Blaise: I think this is incorrect; this is TextType code so delete
             purposeLayer = struct.pack(">h",thisBoundary.purposeLayer)
             self.writeRecord(idBits+purposeLayer)
-        if(thisBoundary.dataType):
+        if(thisBoundary.dataType!=""):
             idBits=b'\x0E\x02'#DataType
             dataType = struct.pack(">h",thisBoundary.dataType)
             self.writeRecord(idBits+dataType)
@@ -227,6 +233,13 @@ class Gds2writer:
     def writePath(self,thisPath):  #writes out a path structure
         idBits=b'\x09\x00'  #record Type
         self.writeRecord(idBits)
+
+        assert (thisPath.drawingLayer >= 0), self.currentStructureName
+        assert (thisPath.dataType!=""), self.currentStructureName
+        assert (len(thisPath.coordinates) >=4 and len(thisPath.coordinates) <= 200), self.currentStructureName
+        assert (thisPath.coordinates[0][0] == thisPath.coordinates[-1][0]), self.currentStructureName
+        assert (thisPath.coordinates[0][1] == thisPath.coordinates[-1][1]), self.currentStructureName
+
         if(thisPath.elementFlags != ""):
             idBits=b'\x26\x01' #ELFLAGS
             elementFlags = struct.pack(">h",thisPath.elementFlags)
@@ -235,12 +248,12 @@ class Gds2writer:
             idBits=b'\x2F\x03'  #PLEX
             plex = struct.pack(">i",thisPath.plex)
             self.writeRecord(idBits+plex)
-        if(thisPath.drawingLayer):
-            idBits=b'\x0D\x02' #drawig layer
+        if(thisPath.drawingLayer!=""):
+            idBits=b'\x0D\x02' #drawing layer
             drawingLayer = struct.pack(">h",thisPath.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
-        if(thisPath.purposeLayer):
-            idBits=b'\x16\x02' #purpose layer
+        if(thisPath.purposeLayer!=""):
+            idBits=b'\x16\x02' #purpose layer Blaise: I think this is incorrect
             purposeLayer = struct.pack(">h",thisPath.purposeLayer)
             self.writeRecord(idBits+purposeLayer)
         if(thisPath.pathType):
@@ -372,10 +385,8 @@ class Gds2writer:
             idBits=b'\x0D\x02' #drawing layer
             drawingLayer = struct.pack(">h",thisText.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
-        #if(thisText.purposeLayer):
-            idBits=b'\x16\x02' #purpose layer
+            idBits=b'\x16\x02' #texttype layer
             purposeLayer = struct.pack(">h",thisText.purposeLayer) #changed by SAMIRA
-            #purposeLayer = struct.pack(">h",thisText.dataType)
             self.writeRecord(idBits+purposeLayer)
         if(thisText.transFlags != ""):
             idBits=b'\x1A\x01'
@@ -496,6 +507,7 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
             
     def writeNextStructure(self,structureName):
+        self.currentStructureName = structureName
         #first put in the structure head
         thisStructure = self.layoutObject.structures[structureName]
         idBits=b'\x05\x02'
@@ -539,6 +551,7 @@ class Gds2writer:
         #put in the structure tail
         idBits=b'\x07\x00'
         self.writeRecord(idBits)
+        self.currentStructureName = ""
     
     def writeGds2(self):
         self.writeHeader();  #first, put the header in
@@ -550,6 +563,6 @@ class Gds2writer:
         self.writeRecord(idBits)
         
     def writeToFile(self,fileName):
-        self.fileHandle = open(fileName,"w") # COMMENTED FOR DEBUGGING it should be wb
+        self.fileHandle = open(fileName,"wb")
         self.writeGds2()
         self.fileHandle.close()
