@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
+
 
 
 import design
@@ -34,7 +41,7 @@ class wordline_driver_array(design.design):
         self.x_offset0 = 6*self.m1_space
         self.width = self.x_offset0 + self.wordline_driver.width
         #each wordline driver drivers 4 wordline
-        self.height = self.wordline_driver.height*(self.rows/4)
+        self.height = self.wordline_driver.height*(self.rows//4)
 
         self.add_pins()
         self.add_wordline_driver()
@@ -52,7 +59,7 @@ class wordline_driver_array(design.design):
     def add_wordline_driver(self):
         """ Add wordline_driver cells"""
 
-        for i in range(self.rows // 4):
+        for i in range(self.rows//4):
             name = "wordline_driver{}".format(i)
             y_offset = i*self.wordline_driver.height
             if i%2:
@@ -80,39 +87,39 @@ class wordline_driver_array(design.design):
 
             # vdd, gnd connection
             for vdd_pin in wordline_driver_inst.get_pins("vdd"):
-                if (vdd_pin.layer=="metal1" or vdd_pin.layer=="m1pin"):
+                if vdd_pin.layer[0:6]=="metal1":
                     pin_width = contact.m1m2.width
                 else:
                     pin_width = contact.m2m3.width
 
                 self.add_layout_pin(text="vdd", 
-                                    layer=vdd_pin.layer, 
+                                    layer=vdd_pin.layer[0:6], 
                                     offset=vdd_pin.ll(), 
                                     width=pin_width, 
                                     height=pin_width)
 
             for gnd_pin in wordline_driver_inst.get_pins("gnd"):
-                if (gnd_pin.layer=="metal1" or gnd_pin.layer=="m1pin"):
+                if gnd_pin.layer[0:6]=="metal1":
                     pin_width = contact.m1m2.width
                 else:
                     pin_width = contact.m2m3.width
 
                 self.add_layout_pin(text="gnd", 
-                                    layer=gnd_pin.layer, 
+                                    layer=gnd_pin.layer[0:6], 
                                     offset=gnd_pin.ll(), 
                                     width=pin_width, 
                                     height=pin_width)
 
             # en connection
             en_pin = wordline_driver_inst.get_pin("en")
-            if (en_pin.layer=="metal1" or en_pin.layer=="m1pin"):
+            if en_pin.layer[0:6]=="metal1":
                 pin_layer = "metal1"
                 pin_width= self.m1_width
                 layer_stack = self.m1_stack
                 contact_height= contact.m1m2.height
                 
             else:
-                pin_width = "metal3"
+                pin_layer = "metal3"
                 pin_width= self.m3_width
                 layer_stack = self.m2_stack
                 contact_height= contact.m2m3.height
@@ -127,25 +134,23 @@ class wordline_driver_array(design.design):
             # output each OUT on the right
             for j in range(4):
                 if i%2:
-                    out_text = "out[{0}]".format(4*i+(3-j))
-                    in_text = "in[{0}]".format(4*i+(3-j))
+                    text = "out[{0}]".format(4*i+(3-j))
                 else:
-                    out_text = "out[{0}]".format(4*i+j)
-                    in_text = "in[{0}]".format(4*i+j)
+                    text = "out[{0}]".format(4*i+j)
                 out_pin = wordline_driver_inst.get_pin("out{0}".format(j))
                 in_pin = wordline_driver_inst.get_pin("in{0}".format(j))
-                if (out_pin.layer=="metal1" or out_pin.layer=="m1pin"):
+                if out_pin.layer[0:6]=="metal1":
                     pin_width = self.m1_width
                 else:
                     pin_width = self.m3_width
-                self.add_layout_pin(text=out_text, 
-                                    layer=out_pin.layer,
+                self.add_layout_pin(text=text, 
+                                    layer=out_pin.layer[0:6],
                                     offset= (self.width-pin_width, out_pin.by()),
                                     width=pin_width, 
                                     height=pin_width)
 
-                self.add_layout_pin(text=in_text, 
-                                    layer=in_pin.layer,
+                self.add_layout_pin(text="in[{0}]".format(4*i+j), 
+                                    layer=in_pin.layer[0:6],
                                     offset= in_pin.ll(),
                                     width=self.m1_width, 
                                     height=self.m1_width)
@@ -156,7 +161,7 @@ class wordline_driver_array(design.design):
                       width=self.m2_width, 
                       height=self.height)
         en_pin=self.add_layout_pin(text="en", 
-                                   layer=self.m2_pin_layer, 
+                                   layer="metal2", 
                                    offset=[2*self.m1_space,0], 
                                    width=self.m2_width, 
                                    height=self.m2_width)

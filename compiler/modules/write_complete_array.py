@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
+
 
 
 import design
@@ -49,17 +56,17 @@ class write_complete_array(design.design):
             self.inv = pinv()
             self.add_mod(self.inv)
 
-            #6*self.m_pitch("m1") : vdd, gnd, en, wc0, wc1, space
+            #6*self.m_pitch("m1") : vdd, gnd, en, bm, wc0, wc1, space
             self.width= self.cols*self.wc.width+self.inv.width+self.nor2.width+6*self.m_pitch("m1")
-            self.height= self.wc.height + 6*self.m_pitch("m1")
+            self.height= self.wc.height + 7*self.m_pitch("m1")
         
         if self.w_per_row == 4:
             self.nand2 = nand2()
             self.add_mod(self.nand2)
 
-            #8*self.m_pitch("m1") : vdd, gnd, en, wc0, wc1, wc2, wc3, space
+            #8*self.m_pitch("m1") : vdd, gnd, en, bm, wc0, wc1, wc2, wc3, space
             self.width= self.cols*self.wc.width+self.nand2.width+self.nor2.width+8*self.m_pitch("m1")
-            self.height= 2*self.nor2.height + 9*self.m_pitch("m1")
+            self.height= 2*self.nor2.height + 10*self.m_pitch("m1")
         
         if self.w_per_row > 4:
             debug.error("more than 4 way column mux is not supported!",-1)
@@ -73,7 +80,7 @@ class write_complete_array(design.design):
         for i in range(0, self.cols, self.w_size):
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
-        self.add_pin_list(["en", "write_complete", "vdd", "gnd"])
+        self.add_pin_list(["en", "bm", "write_complete", "vdd", "gnd"])
 
     def create_layout(self):
         """ Create modules for instantiation and then route 
@@ -103,7 +110,7 @@ class write_complete_array(design.design):
                 wc_position = vector(i*self.wc.width+self.wc.width, 0)
             else:
                 mirror = "R0" 
-            name = "wc{0}".format(i // self.w_size)
+            name = "wc{0}".format(i//self.w_size)
             self.wc_inst[i]=self.add_inst(name=name,      
                                           mod=self.wc, 
                                           offset=wc_position,
@@ -112,13 +119,13 @@ class write_complete_array(design.design):
             bl_offset = self.wc_inst[i].get_pin("bl").ll()
             br_offset = self.wc_inst[i].get_pin("br").ll()
             
+            temp = ["bl[{0}]".format(i),"br[{0}]".format(i), "en"]
             if self.w_per_row==1:
-                self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
-                                   "en", "write_complete", "vdd", "gnd"])
+                temp.extend(["bm", "write_complete", "vdd", "gnd"])
             else:
-                self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
-                                   "en", "wc[{0}]".format(i // self.w_size), "vdd", "gnd"])
+               temp.extend(["bm", "wc[{0}]".format(i//self.w_size), "vdd", "gnd"])
 
+            self.connect_inst(temp)
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer=bl_pin.layer, 
                                 offset=bl_offset, 
@@ -175,10 +182,10 @@ class write_complete_array(design.design):
             # Connect write_complete output to central metal2 bus
             for i in range(0,self.cols,self.w_size):
                 wc_pos = self.wc_inst[i].get_pin("write_complete").uc()
-                y_pos = wc_pos.y+(i/self.w_size+2)*self.m_pitch("m1")
+                y_pos = wc_pos.y+(i//self.w_size+2)*self.m_pitch("m1")
                 self.add_wire(self.m1_stack,[wc_pos, (wc_pos.x, y_pos), 
-                                            (-(i/self.w_size+3)*self.m_pitch("m1"), y_pos)])
-                self.add_via_center(self.m1_stack, (-(i/self.w_size+3)*self.m_pitch("m1")+\
+                                            (-(i//self.w_size+3)*self.m_pitch("m1"), y_pos)])
+                self.add_via_center(self.m1_stack, (-(i//self.w_size+3)*self.m_pitch("m1")+\
                                                     0.5*contact.m1m2.width,y_pos), rotate=90)
 
             # Connect write_complete vdd and gnd to nor2 vdd and gnd
@@ -207,7 +214,7 @@ class write_complete_array(design.design):
                                                 mod=self.nor2, 
                                                 offset=nor2_offset, 
                                                 mirror ="MY")
-                self.connect_inst(["wc[{0}]".format(int(2*i)),"wc[{0}]".format(int(2*i+1)),
+                self.connect_inst(["wc[{0}]".format(2*i),"wc[{0}]".format(2*i+1),
                                    "Z[{0}]".format(i),"vdd","gnd"])
                 
                 # connect nor2 pins to central metal2 bus
@@ -264,10 +271,10 @@ class write_complete_array(design.design):
             # Connect write_complete output to central metal2 bus
             for i in range(0,self.cols,self.w_size):
                 wc_pos = self.wc_inst[i].get_pin("write_complete").uc()
-                y_pos = max(nor2_Z[1].lc().y,wc_pos.y)+i/self.w_size*self.m_pitch("m1")+self.m1_space
+                y_pos = max(nor2_Z[1].lc().y,wc_pos.y)+i//self.w_size*self.m_pitch("m1")+self.m1_space
                 self.add_wire(self.m1_stack,[wc_pos, (wc_pos.x, y_pos), 
-                                            (-(i/self.w_size+3)*self.m_pitch("m1"), y_pos)])
-                self.add_via_center(self.m1_stack,(-(i/self.w_size+3)*self.m_pitch("m1")+\
+                                            (-(i//self.w_size+3)*self.m_pitch("m1"), y_pos)])
+                self.add_via_center(self.m1_stack,(-(i//self.w_size+3)*self.m_pitch("m1")+\
                                                    0.5*contact.m1m2.width,y_pos), rotate=90)
 
             # Connect write_complete vdd and gnd to nor2 vdd and gnd
@@ -289,118 +296,86 @@ class write_complete_array(design.design):
         """ Adding vdd, gnd, en and write_complete pins """
         
         if self.w_per_row == 1:
-            vdd_offset = self.wc_inst[0].get_pin("vdd")
-            gnd_offset = self.wc_inst[0].get_pin("gnd")
-            en_offset =self.wc_inst[0].get_pin("en")
+            for pin in ["en", "bm", "vdd", "gnd"]:
+                offset = self.wc_inst[0].get_pin(pin)
+                self.add_layout_pin(text=pin, 
+                                    layer="metal1", 
+                                    offset=offset.ll(), 
+                                    width=contact.m1m2.width, 
+                                    height=contact.m1m2.width)
+                self.add_path("metal1",[offset.lc(), (self.cols*self.wc.width, offset.lc().y)], width = contact.m1m2.width)
+
             wc_pin = self.wc_inst[0].get_pin("write_complete")
-
-            self.add_layout_pin(text="vdd", 
-                                layer=self.m1_pin_layer, 
-                                offset=vdd_offset.ll(), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[vdd_offset.lc(), (self.cols*self.wc.width, vdd_offset.lc().y)])
-
-            self.add_layout_pin(text="gnd", 
-                                layer=self.m1_pin_layer, 
-                                offset=gnd_offset.ll(), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[gnd_offset.lc(), (self.cols*self.wc.width, gnd_offset.lc().y)])
-            
-            self.add_layout_pin(text="en",  
-                                layer=self.m1_pin_layer, 
-                                offset=en_offset.ll(),  
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[en_offset.lc(), (self.cols*self.wc.width, en_offset.lc().y)])
-            
             self.add_layout_pin(text="write_complete", 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset= wc_pin.ll(), 
                                 width=self.m2_width, 
                                 height=self.m2_width)
 
         if self.w_per_row == 2:
-            vdd_offset = vector(self.wc_inv_inst.lx(), self.height)
-            gnd_offset = vector(self.wc_inv_inst.lx(), self.height-self.m_pitch("m1"))
-            en_offset = vector(self.wc_inv_inst.lx(), self.height-2*self.m_pitch("m1"))
-            
-            self.add_layout_pin(text="vdd", 
-                                layer=self.m1_pin_layer, 
-                                offset=(vdd_offset.x, vdd_offset.y-0.5*self.m1_width), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[vdd_offset, (self.cols*self.wc.width, vdd_offset.y)])
-            self.add_via_center(self.m1_stack, (-6*self.m_pitch("m1")+0.5*contact.m1m2.width, 
-                                                vdd_offset.y), rotate=90)
+            pin_list = ["vdd", "gnd"]
+            for pin in pin_list:
+                offset = vector(self.wc_inv_inst.lx(), self.height-pin_list.index(pin)*self.m_pitch("m1"))
+                self.add_layout_pin(text=pin, 
+                                   layer="metal1", 
+                                   offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
+                                   width=contact.m1m2.width, 
+                                   height=contact.m1m2.width)
+                self.add_path("metal1",[offset, (self.cols*self.wc.width, offset.y)], width = contact.m1m2.width)
+                self.add_via_center(self.m1_stack, ((-6+pin_list.index(pin))*self.m_pitch("m1")+0.5*contact.m1m2.width, offset.y), rotate=90)
 
-            self.add_layout_pin(text="gnd", 
-                                layer=self.m1_pin_layer, 
-                                offset=(gnd_offset.x, gnd_offset.y-0.5*self.m1_width), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[gnd_offset, (self.cols*self.wc.width, gnd_offset.y)])
-            self.add_via_center(self.m1_stack, (-5*self.m_pitch("m1")+0.5*contact.m1m2.width, 
-                                                gnd_offset.y), rotate=90)
-
-            self.add_layout_pin(text="en",  
-                                layer=self.m1_pin_layer, 
-                                offset=(self.wc_inv_inst.lx(), en_offset.y-0.5*self.m1_width),   
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            en_pin=self.wc_inst[0].get_pin("en")
-            self.add_wire(self.m1_stack,[(self.wc_inv_inst.lx(), en_offset.y),
-                                         (-self.m_pitch("m1"),en_offset.y),
-                                         (-self.m_pitch("m1"), en_pin.lc().y),
-                                         (self.cols*self.wc.width, en_pin.lc().y)])
+            pin_list = ["en", "bm"]
+            for pin in pin_list:
+                offset = vector(self.wc_inv_inst.lx(), self.height-(2+pin_list.index(pin))*self.m_pitch("m1"))
+                pos=self.wc_inst[0].get_pin(pin)
+                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.m_pitch("m1")
+                self.add_layout_pin(text=pin,  
+                                    layer="metal1", 
+                                    offset=(self.wc_inv_inst.lx(), offset.y-0.5*contact.m1m2.width),   
+                                    width=contact.m1m2.width, 
+                                    height=contact.m1m2.width)
+                self.add_wire(self.m1_stack,[offset, (xoff, offset.y), (-self.m_pitch("m1"), pos.lc().y),
+                                             (self.cols*self.wc.width, pos.lc().y)])
 
             self.add_layout_pin(text="write_complete", 
-                                layer=self.m2_pin_layer, 
-                                offset=(self.inv_output.lx()+self.m1_space,self.inv_output.by()), 
+                                layer="metal2", 
+                                offset=(self.inv_output.lx()+2*self.m1_space,self.inv_output.by()), 
                                 width=self.m2_width, 
                                 height=self.m2_width)
             self.add_rect(layer="metal2", 
-                          offset= (self.inv_output.lx()+self.m1_space, self.inv_output.by()), 
+                          offset= (self.inv_output.lx()+2*self.m1_space, self.inv_output.by()), 
                           width=self.m2_width, 
                           height=self.height - self.inv_output.by())
                        
         if self.w_per_row == 4:
-            vdd_offset = vector(self.wc_nand2_inst2.lx(), self.height)
-            gnd_offset = vector(self.wc_nand2_inst2.lx(), self.height-self.m_pitch("m1"))
-            en_offset = vector(self.wc_nand2_inst2.lx(), self.height-2*self.m_pitch("m1"))
+            pin_list = ["vdd", "gnd"]
+            for pin in pin_list:
+                offset = vector(self.wc_nand2_inst2.lx(), self.height-pin_list.index(pin)*self.m_pitch("m1"))
+                self.add_layout_pin(text=pin, 
+                                    layer="metal1", 
+                                    offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
+                                    width=contact.m1m2.width, 
+                                    height=contact.m1m2.width)
+                self.add_path("metal1",[offset, (self.cols*self.wc.width,offset.y)])
+                self.add_via_center(self.m1_stack, ((-8+pin_list.index(pin))*self.m_pitch("m1")+0.5*contact.m1m2.width, offset.y), rotate=90)
+
+            pin_list = ["en", "bm"]
+            for pin in pin_list:
+                offset = vector(self.wc_nand2_inst2.lx(), self.height-(2+pin_list.index(pin))*self.m_pitch("m1"))
+                pos = self.wc_inst[0].get_pin(pin)
+                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.m_pitch("m1")
+                self.add_layout_pin(text=pin, 
+                                    layer="metal1", 
+                                    offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
+                                    width=contact.m1m2.width, 
+                                    height=contact.m1m2.width)
+                
+                self.add_wire(self.m1_stack,[offset, (xoff, offset.y), (-self.m_pitch("m1"), pos.lc().y),
+                                            (self.cols*self.wc.width, pos.lc().y)])
+
             wc_offset = self.wc_nand2_inst2.get_pin("Z")
-            
-            self.add_layout_pin(text="vdd", 
-                                layer=self.m1_pin_layer, 
-                                offset=(vdd_offset.x, vdd_offset.y-0.5*self.m1_width), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[vdd_offset, (self.cols*self.wc.width, vdd_offset.y)])
-            self.add_via_center(self.m1_stack, (-8*self.m_pitch("m1")+0.5*contact.m1m2.width, 
-                                                vdd_offset.y), rotate=90)
-
-            self.add_layout_pin(text="gnd", 
-                                layer=self.m1_pin_layer, 
-                                offset=(gnd_offset.x, gnd_offset.y-0.5*self.m1_width), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            self.add_path("metal1",[gnd_offset, (self.cols*self.wc.width, gnd_offset.y)])
-            self.add_via_center(self.m1_stack, (-7*self.m_pitch("m1")+0.5*contact.m1m2.width, 
-                                                gnd_offset.y), rotate=90)
-
-            self.add_layout_pin(text="en", 
-                                layer=self.m1_pin_layer, 
-                                offset=(en_offset.x, en_offset.y-0.5*self.m1_width), 
-                                width=self.m1_width, 
-                                height=self.m1_width)
-            en_pin=self.wc_inst[0].get_pin("en")
-            self.add_wire(self.m1_stack,[en_offset, (en_pin.lx()-self.m_pitch("m1"), en_offset.y),
-                                        (-self.m_pitch("m1"), en_pin.lc().y),
-                                        (self.cols*self.wc.width, en_pin.lc().y)])
-
             self.add_layout_pin(text="write_complete", 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset= (wc_offset.lx()-0.5*self.m2_width,wc_offset.by()), 
                                 width=self.m2_width, 
                                 height=self.m2_width)

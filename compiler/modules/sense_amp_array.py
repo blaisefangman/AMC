@@ -1,14 +1,19 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
 import debug
 from vector import vector
 from sense_amp import sense_amp
+from bitcell import bitcell
 
 class sense_amp_array(design.design):
     """ Array of dynamically generated sense amplifiers to read the bitlines """
@@ -18,7 +23,9 @@ class sense_amp_array(design.design):
         debug.info(1, "Creating {0}".format(name))
 
         self.amp = sense_amp()
-        self.add_mod(self.amp)
+        self.add_mod(self.amp)        
+        self.cell = bitcell()
+        self.add_mod(self.cell)
 
         self.word_size = word_size
         self.words_per_row = words_per_row
@@ -35,10 +42,11 @@ class sense_amp_array(design.design):
         """ Add pins for sense_amp_array, order of the pins is important """
 
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("data[{0}]".format(i // self.words_per_row))
-            self.add_pin("data_bar[{0}]".format(i // self.words_per_row))
+            self.add_pin("data[{0}]".format(i//self.words_per_row))
+            self.add_pin("data_bar[{0}]".format(i//self.words_per_row))
             self.add_pin("bl[{0}]".format(i))
             self.add_pin("br[{0}]".format(i))
+            self.add_pin("d[{0}]".format(i))
         self.add_pin_list(["en","vdd","gnd"])
 
     def create_layout(self):
@@ -54,6 +62,7 @@ class sense_amp_array(design.design):
         br_pin = self.amp.get_pin("br")
         dout_pin = self.amp.get_pin("dout")
         dout_bar_pin = self.amp.get_pin("dout_bar")
+        d_pin = self.amp.get_pin("dout1")
         self.sa_inst = {}
         
         for i in range(0,self.row_size,self.words_per_row):
@@ -70,35 +79,42 @@ class sense_amp_array(design.design):
 
             self.sa_inst[i] = self.add_inst(name=name, mod=self.amp, offset=amp_position, mirror=mirror)
             self.connect_inst(["bl[{0}]".format(i),"br[{0}]".format(i), 
-                               "data[{0}]".format(i // self.words_per_row), 
-                               "data_bar[{0}]".format(i // self.words_per_row), 
+                               "data[{0}]".format(i//self.words_per_row), 
+                               "data_bar[{0}]".format(i//self.words_per_row), 
+                               "d[{0}]".format(i//self.words_per_row),
                                "en", "vdd", "gnd"])
 
             bl_offset = vector(self.sa_inst[i].get_pin("bl").lx() , self.height-self.m2_width)
             br_offset = vector(self.sa_inst[i].get_pin("br").lx() , self.height-self.m2_width)
             dout_offset = self.sa_inst[i].get_pin("dout").ll()
             dout_bar_offset = self.sa_inst[i].get_pin("dout_bar").ll()
+            d_offset = self.sa_inst[i].get_pin("dout1").ll()
 
 
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer=bl_pin.layer, 
                                 offset=bl_offset, 
-                                width=bl_pin.width(), 
+                                width=self.m2_width, 
                                 height=self.m2_width)
             self.add_layout_pin(text="br[{0}]".format(i), 
                                 layer=br_pin.layer, 
                                 offset=br_offset, 
-                                width=br_pin.width(), 
+                                width=self.m2_width, 
                                 height=self.m2_width)
-            self.add_layout_pin(text="data[{0}]".format(i // self.words_per_row), 
+            self.add_layout_pin(text="data[{0}]".format(i//self.words_per_row), 
                                 layer=dout_pin.layer, 
                                 offset=dout_offset, 
                                 width=dout_pin.width(), 
                                 height=self.m2_width)
-            self.add_layout_pin(text="data_bar[{0}]".format(i // self.words_per_row), 
+            self.add_layout_pin(text="data_bar[{0}]".format(i//self.words_per_row), 
                                 layer=dout_bar_pin.layer, 
                                 offset=dout_bar_offset, 
                                 width=dout_bar_pin.width(), 
+                                height=self.m2_width)
+            self.add_layout_pin(text="d[{0}]".format(i//self.words_per_row), 
+                                layer=d_pin.layer, 
+                                offset=d_offset, 
+                                width=d_pin.width(), 
                                 height=self.m2_width)
 
     def connect_rails(self):

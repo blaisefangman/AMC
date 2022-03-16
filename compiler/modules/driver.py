@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -51,7 +55,7 @@ class driver(design.design):
         self.width = self.x_offset2 + self.inv.width
         
         self.add_layout_pin(text="gnd", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=[self.x_offset1, -0.5*contact.m1m2.width], 
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -77,7 +81,7 @@ class driver(design.design):
 
             yoffset = (row + 1) * self.inv.height - 0.5 * contact.m1m2.width
             self.add_layout_pin(text=pin_name, 
-                                layer=self.m1_pin_layer, 
+                                layer="metal1", 
                                 offset=[self.x_offset1, yoffset], 
                                 width=contact.m1m2.width, 
                                 height=contact.m1m2.width)
@@ -98,7 +102,7 @@ class driver(design.design):
             # en connection
             a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
-            clk_offset = vector(self.m1_width + 2*self.m1_space ,a_pos.y)
+            clk_offset = vector(2*self.m1_space+0.5*contact.m1m2.height ,a_pos.y)
             self.add_segment_center(layer="metal1", start=clk_offset, end=a_pos)
             self.add_via_center(self.m1_stack, clk_offset, rotate=90)
 
@@ -132,7 +136,7 @@ class driver(design.design):
                              width=self.m2_width, 
                              height=self.height)
         en_pin=self.add_layout_pin(text="en", 
-                                   layer=self.m2_pin_layer, 
+                                   layer="metal2", 
                                    offset=[2*self.m1_space,0], 
                                    width=self.m2_width, 
                                    height=self.m2_width)

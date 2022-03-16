@@ -1,5 +1,5 @@
 
-.SUBCKT sense_amp bl br dout dout_bar en vdd gnd
+.SUBCKT sense_amp bl br dout dout_bar dout1 en vdd gnd
 M1 dout1 dout_bar vdd vdd p w=5.4u l=0.6u 
 M2 dout1 dout_bar net_2 gnd n w=2.7u l=0.6u  
 M3 dout_bar dout1 vdd vdd p w=5.4u l=0.6u  
@@ -16,4 +16,3 @@ M13 dout en_bar 1 vdd p w=2.4u l=0.6u
 M14 1 dout_bar gnd gnd n w=2.4u l=0.6u
 M15 1 dout_bar vdd vdd p w=2.4u l=0.6u  
 .ENDS sense_amp
-

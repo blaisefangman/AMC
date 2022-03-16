@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import debug
@@ -19,7 +23,7 @@ class write_driver(design.design):
     write driver drives input data to complementry bitlines.
     """
 
-    pin_names = ["din", "bl", "br", "en", "gnd", "vdd"]
+    pin_names = ["din", "bm", "bl", "br", "en", "pchg", "gnd", "vdd"]
     (width,height) = utils.get_libcell_size("write_driver", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "write_driver", GDS["unit"])
 

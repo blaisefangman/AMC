@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -24,12 +28,14 @@ class replica_bitline(design.design):
         and bitline charging. Stages is the depth of the delay line and rows 
         is the height of the replica bit loads. """
 
-    def __init__(self, delay_stages, delay_fanout, bitcell_loads, name="replica_bitline"):
+    def __init__(self, delay_stages, delay_fanout, bitcell_loads, rbl_height, name="replica_bitline"):
         design.design.__init__(self, name)
 
         self.bitcell_loads = bitcell_loads
         self.delay_stages = delay_stages
         self.delay_fanout = delay_fanout
+        self.rbl_height = rbl_height
+         
         
         self.add_pin_list(["en", "out", "vdd", "gnd"])
         self.create_modules()
@@ -46,15 +52,40 @@ class replica_bitline(design.design):
         
         self.replica_bitcell = replica_bitcell()
         self.add_mod(self.replica_bitcell)
-
-        self.delay_chain = delay_chain([self.delay_fanout]*self.delay_stages)
-        self.add_mod(self.delay_chain)
-
+        
         self.inv = pinv(size=5)
         self.add_mod(self.inv)
 
         self.access_tx = ptx(tx_type="pmos")
         self.add_mod(self.access_tx)
+
+        
+        #self.stage_size= int(max(10*self.inv.width, (self.bitcell_loads * self.replica_bitcell.height))/self.inv.width)
+        self.stage_size= int(max(self.rbl_height-3*self.inv.width, (self.bitcell_loads * self.replica_bitcell.height))/self.inv.width)
+        total_delay = sum([self.delay_fanout]*self.delay_stages)
+        self.stage = 1
+        self.delay_chain={}
+        if  total_delay > self.stage_size:
+            self.stage = total_delay//self.stage_size
+            if ((total_delay%self.stage_size) > (self.stage_size//2)):
+                self.stage = self.stage + 1
+            
+            if self.stage%2==0:
+                for i in range(self.stage-1):
+                    self.delay_chain[i] = delay_chain([1]*self.stage_size, name="delay_chain{}".format(i))
+                    self.add_mod(self.delay_chain[i])
+                
+                self.delay_chain[self.stage-1] = delay_chain([1]*self.stage_size, name="delay_chain{}".format(self.stage-1))
+                self.add_mod(self.delay_chain[self.stage-1])
+            
+            else:
+                for i in range(self.stage):
+                    self.delay_chain[i] = delay_chain([1]*self.stage_size, name="delay_chain{}".format(i))
+                    self.add_mod(self.delay_chain[i])
+        else:
+            self.delay_chain[0] = delay_chain([self.delay_fanout]*self.delay_stages)
+            self.add_mod(self.delay_chain[0])
+
 
 
     def calculate_module_offsets(self):
@@ -66,16 +97,24 @@ class replica_bitline(design.design):
         # access TX goes above inverter
         self.access_tx_offset = vector(0.5*self.inv.height,self.rbl_inv_offset.y) + \
                                 vector(0,0.5*self.inv.height)
-        self.delay_chain_offset = self.rbl_inv_offset + vector(-contact.m1m2.width,self.inv.width)
+        
+        self.delay_chain_offset={}
+        for i in range(self.stage):
+            if i%2:
+                self.delay_chain_offset[i] = self.rbl_inv_offset + vector(-contact.m1m2.width-(i+1)*self.delay_chain[0].height,self.inv.width)
+            else:
+                self.delay_chain_offset[i] = self.rbl_inv_offset + vector(-contact.m1m2.width-i*self.delay_chain[0].height,self.inv.width)
+
+            
 
         # Replica bitcell is not rotated, it is placed 2 M1 pitch away from the delay chain
         self.replica_bitcell_offset = vector(self.rbl_inv_offset.x+2*self.m_pitch("m2"), 
                                              self.access_tx_offset.y+self.replica_bitcell.height)
         
         self.height = max(self.replica_bitcell_offset.y + (self.bitcell_loads+1)*self.replica_bitcell.height, 
-                          self.delay_chain_offset.y+self.delay_chain.width)
+                          self.delay_chain_offset[0].y+self.delay_chain[0].width+2*self.m_pitch("m1"))
         
-        self.width = self.replica_bitcell_offset.x + self.replica_bitcell.width + 3*self.m_pitch("m1")
+        self.width = self.replica_bitcell_offset.x + self.replica_bitcell.width + 3*self.m_pitch("m1")+(self.stage-1)*self.delay_chain[0].height
 
     def add_modules(self):
         """ Add all of the module instances in the logical netlist """
@@ -94,11 +133,26 @@ class replica_bitline(design.design):
         # D, G, S, B
         self.connect_inst(["vdd", "delayed_en", "bl[0]", "vdd"])
 
-        self.dc_inst=self.add_inst(name="delay_chain",
-                                   mod=self.delay_chain,
-                                   offset=self.delay_chain_offset,
-                                   rotate=90)
-        self.connect_inst(["en", "delayed_en", "vdd", "gnd"])
+        self.dc_inst={}
+        for i in range(self.stage):
+            if i%2:
+                mirror ="MX"
+            else:
+                mirror ="R0"
+            self.dc_inst[i]=self.add_inst(name="delay_chain{}".format(i),
+                                          mod=self.delay_chain[i],
+                                          offset=self.delay_chain_offset[i],
+                                          mirror=mirror,
+                                          rotate=90)
+            if self.stage == 1:
+                self.connect_inst(["en", "delayed_en", "vdd", "gnd"])
+            
+            elif (self.stage > 1 and i==0):
+                self.connect_inst(["en", "delayed_en{}".format(i), "vdd", "gnd"])
+            elif (self.stage > 1 and i==self.stage-1):
+                self.connect_inst(["delayed_en{}".format(i-1), "delayed_en", "vdd", "gnd"])
+            else:
+                self.connect_inst(["delayed_en{}".format(i-1), "delayed_en{}".format(i), "vdd", "gnd"])
 
         self.rbc_inst=self.add_inst(name="bitcell",
                                     mod=self.replica_bitcell,
@@ -162,7 +216,7 @@ class replica_bitline(design.design):
 
         xshift = (2*pw_width+nw_width-self.replica_bitcell.width)/2
         yshift = (max(nw_height, pw_height)-self.replica_bitcell.height)/2
-        well_height = 2*self.well_enclose_active + 3*contact.active.width
+        well_height = 2*self.well_enclose_active + 3*contact.active.height
         
         #add one pwell and one nwell contact at top of array
         pwell_contact_offset = vector(-xshift+self.well_enclose_active, 
@@ -203,7 +257,7 @@ class replica_bitline(design.design):
 
             self.well_height = max(drc["minarea_implant"]/implant_width, 
                          2*self.well_enclose_active + 3*contact.active.height,
-                         2*self.well_enclose_active + self.active_minarea/contact.well.height)
+                         2*self.well_enclose_active + 2*(self.active_minarea/contact.well.height))
             self.add_contact(("active", "contact", "metal1"), 
                               self.dbc_inst[self.bitcell_loads-1].ul()+contact_offset, 
                               add_extra_layer=info["well_contact_extra"])
@@ -241,7 +295,7 @@ class replica_bitline(design.design):
         
         # 1. GATE ROUTE: Add the poly contact and nwell enclosure
         poly_offset = self.tx_inst.get_pin("G").rc()
-        contact_offset = vector(self.dc_inst.get_pin("out").bc().x, poly_offset.y)
+        contact_offset = vector(self.dc_inst[0].get_pin("out").bc().x, poly_offset.y)
         self.add_contact_center(self.poly_stack, contact_offset)
         self.add_rect(layer="poly",
                       offset=self.tx_inst.get_pin("G").lr(),
@@ -280,7 +334,7 @@ class replica_bitline(design.design):
                       height=self.access_tx.width)
 
         # 2. Route delay chain output to access tx gate
-        delay_en_offset = self.dc_inst.get_pin("out").bc()
+        delay_en_offset = self.dc_inst[0].get_pin("out").bc()
         self.add_path("metal1", [delay_en_offset,contact_offset])
 
         # 3. Route the mid-point of previous route to the bitcell WL
@@ -373,13 +427,29 @@ class replica_bitline(design.design):
         self.add_rect(layer="metal1",
                       offset=inv_vdd_offset.scale(1,0),
                       width=contact.m1m2.width,
-                      height=self.dc_inst.get_pin("vdd").by())
+                      height=self.dc_inst[0].get_pin("vdd").by())
 
         self.add_layout_pin(text="vdd",
                             layer=self.rbl_inv_inst.get_pin("vdd").layer,
                             offset=inv_vdd_offset.scale(1,0),
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
+
+
+        # Also connect the delay_chains vdd and gnd pins together
+        for i in range(self.stage-1):
+            pos1=self.dc_inst[i].get_pin("vdd").uc()
+            pos2=vector(pos1.x, self.dc_inst[i].uy() + self.m_pitch("m1"))
+            pos4=self.dc_inst[i+1].get_pin("vdd").uc()
+            pos3=vector(pos4.x, self.dc_inst[i].uy() + self.m_pitch("m1"))
+            self.add_wire(self.m1_rev_stack, [pos1, pos2, pos3, pos4])
+            
+            pos1=self.dc_inst[i].get_pin("gnd").uc()
+            pos2=vector(pos1.x, self.dc_inst[i].uy() + 2*self.m_pitch("m1"))
+            pos4=self.dc_inst[i+1].get_pin("gnd").uc()
+            pos3=vector(pos4.x, self.dc_inst[i].uy() + 2*self.m_pitch("m1"))
+            self.add_path("metal1", [pos1, pos2, pos3, pos4], width=contact.m1m2.width)
+
         
     def route_gnd(self):
         """ Route all signals connected to gnd """
@@ -392,18 +462,19 @@ class replica_bitline(design.design):
         self.add_rect(layer="metal2",
                       offset = vector(gnd_start.lx(), gnd_start.lc().y-contact.m1m2.height),
                       width = contact.m1m2.width,
-                      height =max(self.dc_inst.uy(), gnd_end) - gnd_start.lc().y)
+                      height =max(self.dc_inst[0].uy(), gnd_end) - gnd_start.lc().y)
 
         self.add_rect(layer="metal1",
                       offset=(gnd_start.lc().x,0),
                       width=contact.m1m2.width,
                       height=gnd_start.uc().y)
         
-        yoff=self.rbc_inst.get_pin("wl").lc().y+self.m_pitch("m1")
+        #yoff=self.rbc_inst.get_pin("wl").lc().y+self.m_pitch("m1")
+        yoff=self.rbc_inst.get_pins("gnd")[-1].ul().y-contact.m1m2.width
         self.add_rect(layer="metal1",
                       offset=(gnd_start.lc().x,yoff),
                       width=contact.m1m2.width,
-                      height=max(self.dc_inst.uy(), gnd_end)-yoff)
+                      height=max(self.dc_inst[0].uy(), gnd_end)-yoff)
 
 
         # Add via for the inverter
@@ -485,12 +556,25 @@ class replica_bitline(design.design):
     def add_layout_pins(self):
         """ Route the input and output signal """
         
-        en_pin = self.dc_inst.get_pin("in")
-        x_off1 = self.rbl_inv_inst.lx()-self.m_pitch("m1")
-        off2 = self.dc_inst.get_pin("in").uc()
+        shift = contact.m1m2.height + self.m1_minarea/contact.m1m2.height
+        for i in range(self.stage-1):         
+            pos1=self.dc_inst[i].get_pin("in").uc()
+            pos4=self.dc_inst[i+1].get_pin("out").uc()
+            if i%2:
+                pos2=vector(pos1.x, pos1.y-max(2*shift, 2*self.m_pitch("m1")))
+                pos3=vector(pos4.x, pos1.y-max(2*shift, 2*self.m_pitch("m1")))
+                self.add_wire(self.m1_rev_stack, [pos1, pos2, pos3, pos4])
+            else:
+                pos2=vector(pos1.x, pos1.y-shift)
+                pos3=vector(pos4.x, pos1.y-shift)
+                self.add_wire(self.m1_rev_stack, [pos1, pos2, pos3])
+
+        en_pin = self.dc_inst[self.stage-1].get_pin("in")
+        x_off1 = self.dc_inst[self.stage-1].lx()-self.m_pitch("m1")
+        off2 = self.dc_inst[self.stage-1].get_pin("in").uc()
         self.add_wire(self.m1_rev_stack, 
-                      [(x_off1, 0), (x_off1, self.dc_inst.by()-self.m_pitch("m1")),
-                       (off2.x, self.dc_inst.by()-self.m_pitch("m1")), off2])
+                      [(x_off1, 0), (x_off1, self.dc_inst[self.stage-1].by()-3*self.m_pitch("m1")),
+                       (off2.x, self.dc_inst[self.stage-1].by()-3*self.m_pitch("m1")), off2])
         self.add_layout_pin(text="en",
                             layer=en_pin.layer,
                             offset=(x_off1-0.5*self.m1_width, 0),

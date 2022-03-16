@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -12,31 +16,31 @@ import utils
 from tech import drc
 from vector import vector
 from pinv import pinv
+from math import ceil
+
 
 class delay_chain(design.design):
-    """ Generate a delay chain with the given number of stages and fanout.
-        This automatically adds an extra inverter with no load on the input.
-        Input is a list contains the electrical effort of each stage. """
+    """ Generate a delay chain with the given number of stages"""
 
-    def __init__(self, fanout_list, name="delay_chain"):
+    def __init__(self, num_inv, num_stage, name="delay_chain"):
         design.design.__init__(self, name)
 
-        for f in fanout_list:
-            debug.check(f>0,"Must have non-zero fanouts for each stage.")
-
-        # number of inverters including any fanout loads.
-        self.fanout_list = fanout_list
-        self.num_invs = 1 + sum(fanout_list)
+        self.num_inv = num_inv
+        self.num_stage = num_stage
         
         self.inv = pinv()
         self.add_mod(self.inv)
 
+        if self.num_inv <self.num_stage:
+            debug.error("number of inverters must be greater than or equal to number of stages!",-1)
+        
         self.add_pins()
         self.create_module()
         self.route_inv()
+        self.width = (self.num_even_stage+self.final_stage)*self.inv.width + 4*self.m_pitch("m1")+contact.m1m2.height
+        self.height = self.stage_size*self.inv.height
         self.add_layout_pins()
-        orgin = vector(-self.m1_minarea/contact.m1m2.width, 0)
-        self.translate_all(orgin)
+        self.offset_all_coordinates()
 
     def add_pins(self):
         """ Add pins for delay_chain, order of the pins is important """
@@ -44,165 +48,176 @@ class delay_chain(design.design):
         self.add_pin_list(["in", "out", "vdd", "gnd"])
 
     def create_module(self):
-        """ Add the inverter logical module """
-
-        self.create_inv_list()
-        self.shift = max(self.m1_space, self.implant_space, drc["extra_to_extra"])
-        self.width = self.num_invs*self.inv.width + (self.num_invs-1)*self.shift +\
-                     self.m1_minarea/contact.m1m2.width
-        self.height = self.inv.height
-        self.add_inv_list()
+        """ Generate a list of inverters"""
         
-    def create_inv_list(self):
-        """ Generate a list of inverters. Each inverter has a stage number and a flag indicating 
-            if it is a dummy load. This is the order that they will get placed too. """
+        self.stage_size = int(ceil(self.num_inv/self.num_stage))
         
-        # First stage is always 0 and is not a dummy load
-        self.inv_list=[[0,False]]
-        for stage_num, fanout_size in zip(list(range(len(self.fanout_list))), self.fanout_list):
-            for i in range(fanout_size-1):
-                # Add the dummy loads
-                self.inv_list.append([stage_num+1, True])
+        if self.num_inv%self.num_stage == 0:
+            self.num_even_stage = self.num_stage
+            self.final_stage_size = 0
+            self.final_stage = 0
+        else:
+            if self.num_inv-(self.stage_size*self.num_stage) < self.stage_size:
+                self.num_even_stage = self.num_stage
+                self.final_stage_size = self.num_inv - (self.num_even_stage*self.stage_size)
+                self.final_stage = 1
+            else :
+                self.num_even_stage = self.num_stage -1
+                self.stage_size = self.stage_size+1
+                self.final_stage_size = abs(self.num_inv - (self.num_even_stage*self.stage_size))
+                self.final_stage = 1
+        
+        self.inv_inst = {}
+        self.index =0
+        for i in range(self.num_even_stage):
+            for j in range(self.stage_size):
+                if j%2:
+                    mirror="MX"
+                    off = (i*self.inv.width, (j+1)*self.inv.height)
+                else:
+                    mirror="R0"
+                    off = (i*self.inv.width, j*self.inv.height)
                 
-            # Add the gate to drive the next stage
-            self.inv_list.append([stage_num+1, False])
+                self.index= i*self.stage_size+j
 
-    def add_inv_list(self):
-        """ Add the inverters and connect them based on the stage list """
-        
-        dummy_load_counter = 1
-        self.inv_inst_list = []
-        
-        for i in range(self.num_invs):
-            inv_offset = vector(i*(self.inv.width+self.shift),0)
-            cur_inv=self.add_inst(name="dinv{}".format(i),
-                                  mod=self.inv,
-                                  offset=inv_offset)
+                self.inv_inst[self.index]=self.add_inst(name="delay_inv{0}{1}".format(i,j),
+                                                        mod=self.inv,
+                                                        offset= off,
+                                                        mirror=mirror)
+                
+                if j == 0 and i ==0:
+                    self.connect_inst(["in", "in{0}_{1}".format(i, j+1), "vdd", "gnd"])
+                
+                elif (i== self.num_even_stage-1) and (j== self.stage_size-1):
+                    if self.num_stage == 1:
+                        self.connect_inst(["in{0}_{1}".format(j-1, 1), "out", "vdd", "gnd"])
+                    else:
+                        self.connect_inst(["in{0}_{1}".format(j, i), "out", "vdd", "gnd"])                  
+                
+                elif (i== 0):
+                    if (self.final_stage and j <self.final_stage_size+1):
+                        self.connect_inst(["in{0}_{1}".format(j-1, (self.num_even_stage+1)), "in{0}_{1}".format(j, 1), "vdd", "gnd"])                
+                    else:
+                        self.connect_inst(["in{0}_{1}".format(j-1, self.num_even_stage), "in{0}_{1}".format(j, 1), "vdd", "gnd"])                
+
+                else:
+                    self.connect_inst(["in{0}_{1}".format(j, i), "in{0}_{1}".format(j, i+1), "vdd", "gnd"])        
+
+        for j in range(self.final_stage_size):
+            if j%2:
+                mirror="MX"
+                off = (self.num_even_stage*self.inv.width, (j+1)*self.inv.height)
+            else:
+                mirror="R0"
+                off = (self.num_even_stage*self.inv.width, j*self.inv.height)
             
-            # keep track of the inverter instances so we can use them to get the pins
-            self.inv_inst_list.append(cur_inv)
+            self.index=self.num_even_stage*self.stage_size+j
 
-            cur_stage = self.inv_list[i][0]
-            next_stage = self.inv_list[i][0]+1
-            if i == 0:
-                input = "in"
-            else:
-                input = "s{}".format(cur_stage)
-            if i == self.num_invs-1:
-                output = "out"
-            else:                
-                output = "s{}".format(next_stage)
+            self.inv_inst[self.index] = self.add_inst(name="delay_inv{0}{1}".format(self.num_even_stage,j),
+                                                      mod=self.inv,
+                                                      offset= off,
+                                                      mirror=mirror)
 
-            # if the gate is a dummy load don't connect the output else reset the counter
-            if self.inv_list[i][1]: 
-                output = output+"n{0}".format(dummy_load_counter)
-                dummy_load_counter += 1
-            else:
-                dummy_load_counter = 1
-                    
-            self.connect_inst(args=[input, output, "vdd", "gnd"])
-            self.add_rect(layer= "metal1", 
-                          offset= cur_inv.get_pin("A").ul(),
-                          width=(self.m1_minarea/contact.m1m2.first_layer_height),
-                          height=-contact.m1m2.first_layer_height)
-    
+            self.connect_inst(["in{0}_{1}".format(j, self.num_even_stage), "in{0}_{1}".format(j, self.num_even_stage+1), "vdd", "gnd"])
+
     def route_inv(self):
         """ Add metal routing for each of the fanout stages """
         
-        start_inv = end_inv = 0
-        yshift = self.via_shift("v1")+contact.m1m2.width+0.5*self.m2_width
+        l = int(len(self.inv_inst))-1
+        for j in range(self.final_stage_size):
+            pin1 = self.inv_inst[l-self.final_stage_size+1+j].get_pin("Z")
+            pin2 = self.inv_inst[j+1].get_pin("A")
+            mid_pos1=vector(pin1.rx()+self.m_pitch("m1"), pin1.lc().y)
+            mid_pos2=vector(mid_pos1.x, (j+1)*self.inv.height)
+            mid_pos3=vector(pin2.lx()-self.m_pitch("m1"), mid_pos2.y)
+            mid_pos4=vector(mid_pos3.x, pin2.lc().y)
+            self.add_path("metal2", [mid_pos1, mid_pos2, mid_pos3, mid_pos4])
+            self.add_via_center(self.m1_stack, mid_pos1, rotate=90)
+            self.add_via_center(self.m1_stack, mid_pos4, rotate=90)
+            self.add_path("metal1", [pin1.lc(), mid_pos1])
+            self.add_path("metal1", [ mid_pos4, pin2.lc()])
         
-        for fanout in self.fanout_list:
-            # end inv number depends on the fan out number
+        for j in range(self.stage_size-self.final_stage_size-1):
+            pin1 = self.inv_inst[l-self.stage_size+1+j].get_pin("Z")
+            pin2 = self.inv_inst[self.final_stage_size+1+j].get_pin("A")
+            mid_pos1=vector(pin1.rx()+self.m_pitch("m1"), pin1.lc().y)
+            mid_pos2=vector(mid_pos1.x, (j+self.final_stage_size+1)*self.inv.height)
+            mid_pos3=vector(pin2.lx()-self.m_pitch("m1"), mid_pos2.y)
+            mid_pos4=vector(mid_pos3.x, pin2.lc().y)
+            self.add_path("metal2", [mid_pos1, mid_pos2, mid_pos3, mid_pos4])
+            self.add_via_center(self.m1_stack, mid_pos1, rotate=90)
+            self.add_via_center(self.m1_stack, mid_pos4, rotate=90)
+            self.add_path("metal1", [pin1.lc(), mid_pos1])
+            self.add_path("metal1", [mid_pos4, pin2.lc()])
+        
+        for i in range(self.stage_size):
+            for j in range(self.num_even_stage-1):
+                pin1 = self.inv_inst[i+j*self.stage_size].get_pin("Z")
+                pin2 = self.inv_inst[self.stage_size+i+j*self.stage_size].get_pin("A")
+                yoff = min (pin1.by(), pin2.by())
+                height= abs(pin1.by()-pin2.by())+self.m1_width
+                off = (pin2.lx()-self.m1_space, yoff)
+                self.add_rect(layer="metal1", offset= off, width=self.m1_space, height=height)
+        for i in range(self.final_stage_size):
+            pin1 = self.inv_inst[i+(self.num_even_stage-1)*self.stage_size].get_pin("Z")
+            pin2 = self.inv_inst[i+self.num_even_stage*self.stage_size].get_pin("A")
+            yoff = min (pin1.by(), pin2.by())
+            height= abs(pin1.by()-pin2.by())+self.m1_width
+            off = (pin2.lx()-self.m1_space, yoff)
+            self.add_rect(layer="metal1", offset= off, width=self.m1_space, height=height)
             
-            end_inv = start_inv + fanout
-            start_inv_inst = self.inv_inst_list[start_inv]
-
-            # route from output to first load
-            start_inv_pin = start_inv_inst.get_pin("Z")
-            load_inst = self.inv_inst_list[start_inv+1]
-            mid_pos=(start_inv_pin.rx()+self.m1_space, start_inv_pin.lc().y)
-            load_pin = load_inst.get_pin("A").lc()+vector(contact.m1m2.height, 0)
-            
-            self.add_path("metal1", [start_inv_pin.lc(), mid_pos, load_pin], width=self.m1_space)
-            
-            next_inv = start_inv+2
-            while next_inv <= end_inv:
-                
-                prev_load_inst = self.inv_inst_list[next_inv-1]
-                prev_load_pin = vector(prev_load_inst.get_pin("A").lc().x, 
-                                       prev_load_inst.get_pin("Z").by()- yshift)
-                load_inst = self.inv_inst_list[next_inv]
-                
-                load_pin = vector(load_inst.get_pin("A").lc().x+contact.m1m2.height,
-                                  load_inst.get_pin("Z").by()- yshift)
-                self.add_path("metal2", [prev_load_pin, load_pin])
-                
-                xshift = vector(-contact.m1m2.height, 0.5*contact.m1m2.width)
-                self.add_via(self.m1_stack,self.inv_inst_list[next_inv-1].get_pin("A").ll()-xshift, rotate=90)
-                
-                self.add_via(self.m1_stack, self.inv_inst_list[next_inv].get_pin("A").ll()-xshift, rotate=90)
-                next_inv += 1
-
-            # set the start of next one after current end
-            start_inv = end_inv
-
     def add_layout_pins(self):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
              the top end with no input/output to obstruct."""
 
-        extra_m1=self.m1_minarea/contact.m1m2.height
-        vdd_pin = self.inv_inst_list[0].get_pin("vdd")
-        gnd_pin = self.inv_inst_list[0].get_pin("gnd")
-        self.add_rect(layer="metal1",
-                      offset=vdd_pin.ll(),
-                      width=self.width-contact.m1m2.height-extra_m1,
-                      height=contact.m1m2.width)
-
-        self.add_layout_pin(text="vdd",
-                            layer=vdd_pin.layer,
-                            offset=vdd_pin.ll(),
-                            width=contact.m1m2.width,
-                            height=contact.m1m2.width)
-
-        self.add_rect(layer="metal1",
-                      offset=gnd_pin.ll(),
-                      width=self.width-contact.m1m2.height-extra_m1,
-                      height=contact.m1m2.width)
-
-        self.add_layout_pin(text="gnd",
-                            layer=gnd_pin.layer,
-                            offset=gnd_pin.ll(),
-                            width=contact.m1m2.width,
-                            height=contact.m1m2.width)
         
         # input is A pin of first inverter
-        a_pin = self.inv_inst_list[0].get_pin("A")
+        a_pin = self.inv_inst[0].get_pin("A")
         self.add_layout_pin(text="in",
                             layer=a_pin.layer,
                             offset=a_pin.ll(),
-                            width=self.m1_width,
-                            height=self.m1_width)
+                            width=a_pin.width(),
+                            height=a_pin.height())
 
         # output is Z pin of last inverter
-        z_pin = self.inv_inst_list[-1].get_pin("Z")
-        pos1=(z_pin.lx()-0.5*self.m1_width, z_pin.lc().y)
-        pos2=(z_pin.lx()-0.5*self.m1_width, 2*contact.m1m2.width)
-        pos3=(-extra_m1, 2*contact.m1m2.width)
-        self.add_path("metal2", [pos1, pos2, pos3])
-
-       
-
-        out_pin= vector(-contact.m1m2.height-extra_m1, 2*contact.m1m2.width-0.5*contact.m1m2.width)
-        self.add_rect(layer="metal1",
-                      offset=out_pin,
-                      width=self.m1_minarea/contact.m1m2.width,
-                      height=contact.m1m2.width)
-        
-        self.add_via(self.m1_stack,(-extra_m1,out_pin.y),rotate=90)
-        
+        z_pin = self.inv_inst[int(len(self.inv_inst))-1-self.final_stage_size].get_pin("Z")
         self.add_layout_pin(text="out",
-                            layer=self.m1_pin_layer,
-                            offset=out_pin,
-                            width=self.m1_width,
-                            height=self.m1_width)
+                            layer=z_pin.layer,
+                            offset=z_pin.ll(),
+                            width=z_pin.width(),
+                            height=z_pin.height())
+
+        #gnd = -2pitch, vdd = -3pitch
+        for i in range(2):
+            xoff=self.inv_inst[0].get_pin("A").lx()-0.5*self.m2_width
+            self.add_rect(layer="metal2", 
+                          offset = (xoff-(2+i)*self.m_pitch("m1"),0),
+                          width=self.m2_width,
+                          height=self.height)
+        for i in range(self.stage_size):
+            if i%2:
+                pin = self.inv_inst[i].get_pin("gnd")
+                self.add_path("metal1", [(xoff-2*self.m_pitch("m1"), pin.lc().y), pin.lc()])
+                self.add_via_center(self.m1_stack, (xoff-2*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+
+            else:
+                pin = self.inv_inst[i].get_pin("vdd")
+                self.add_path("metal1", [(xoff-3*self.m_pitch("m1"), pin.lc().y), pin.lc()])
+                self.add_via_center(self.m1_stack, (xoff-3*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+
+            #first gnd
+            pin = self.inv_inst[0].get_pin("gnd")
+            self.add_path("metal1", [(xoff-2*self.m_pitch("m1"), pin.lc().y), pin.lc()])
+            self.add_via_center(self.m1_stack, (xoff-2*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+        
+        power_pin=["gnd", "vdd"]
+        for i in range(2):
+            pin = self.inv_inst[0].get_pin(power_pin[i])
+            self.add_path("metal1", [(xoff-(2+i)*self.m_pitch("m1"), pin.lc().y), pin.lc()])
+            self.add_via_center(self.m1_stack, (xoff-(2+i)*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+            self.add_layout_pin(text=power_pin[i],
+                                layer=pin.layer,
+                                offset=pin.ll(),
+                                width=pin.width(),
+                                height=pin.height())
+

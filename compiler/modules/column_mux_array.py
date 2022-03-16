@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -93,7 +97,7 @@ class column_mux_array(design.design):
                           width=self.width, 
                           height=self.m1_width)
             self.add_layout_pin(text="sel[{}]".format(j), 
-                                layer=self.m1_pin_layer, 
+                                layer="metal1", 
                                 offset=offset, 
                                 width=self.m1_width, 
                                 height=self.m1_width)
@@ -164,7 +168,7 @@ class column_mux_array(design.design):
                               width=self.m2_width, 
                               height=self.route_height)
                 self.add_layout_pin(text="bl_out[{}]".format(int(j/self.words_per_row)), 
-                                    layer=self.m2_pin_layer, 
+                                    layer="metal2", 
                                     offset=bl_out_offset.scale(1,0), 
                                     width=self.m2_width, 
                                     height=self.m2_width)
@@ -174,7 +178,7 @@ class column_mux_array(design.design):
                               width=self.m2_width, 
                               height=self.route_height)
                 self.add_layout_pin(text="br_out[{}]".format(int(j/self.words_per_row)),
-                                    layer=self.m2_pin_layer, 
+                                    layer="metal2", 
                                     offset=br_out_offset.scale(1,0), 
                                     width=self.m2_width, 
                                     height=self.m2_width)
@@ -204,7 +208,7 @@ class column_mux_array(design.design):
                           width= self.m2_width, 
                           height=self.height-offset.y)
             self.add_layout_pin(text="bl[{}]".format(col_num), 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=offset,
                                 width= self.m2_width, 
                                 height=self.m2_width)
@@ -215,7 +219,7 @@ class column_mux_array(design.design):
                           width= self.m2_width, 
                           height=self.height-offset.y)
             self.add_layout_pin(text="br[{}]".format(col_num), 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=offset,
                                 width= self.m2_width, 
                                 height=self.m2_width)

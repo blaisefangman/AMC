@@ -293,7 +293,7 @@ class bitcell_array(design.design):
         #there is one pwell and one nwell contact for each column
         for col in range(2*self.column_size):
             if col % 2:
-                well_xoffset = ((col-1)/2)*self.cell.width - x_shift + pw_width
+                well_xoffset = ((col-1)//2)*self.cell.width - x_shift + pw_width
                 well_width = nw_width+self.implant_space
                 well_type="nwell"
                 implant_type="nimplant"
@@ -303,7 +303,7 @@ class bitcell_array(design.design):
                 contact_yoff = y_off+well_height-self.well_enclose_active-contact.active.height
 
             else:
-                well_xoffset = (col/2)*self.cell.width - x_shift
+                well_xoffset = (col//2)*self.cell.width - x_shift
                 well_width = pw_width 
                 well_type="pwell"
                 implant_type="pimplant"

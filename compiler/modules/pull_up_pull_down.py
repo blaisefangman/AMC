@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -33,6 +39,8 @@ class pull_up_pull_down(design.design):
         if name=="":
             name = "pull_up_pull_down_{0}".format(pull_up_pull_down.unique_id)
             pull_up_pull_down.unique_id += 1
+        else:
+            name = name
         design.design.__init__(self, name)
         debug.info(2, "create pull_up_pull_down structure {0}".format(name))
 
@@ -203,7 +211,6 @@ class pull_up_pull_down(design.design):
         vt_offset = vector(self.pmos_inst[0].lx(), 0)
         self.add_rect(layer="vt",
                       offset=vt_offset,
-                      layer_dataType = layer["vt_dataType"],
                       width=self.nmos_inst[0].rx()-self.pmos_inst[0].lx(),
                       height=self.height)
 
@@ -241,7 +248,7 @@ class pull_up_pull_down(design.design):
                       width=self.width,
                       height=contact.m1m2.width)
         self.add_layout_pin(text="gnd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=vector(0,0),
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
@@ -251,7 +258,7 @@ class pull_up_pull_down(design.design):
                       width=self.width,
                       height=contact.m1m2.width)
         self.add_layout_pin(text="vdd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=vector(0,self.height-contact.m1m2.width),
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
@@ -355,7 +362,6 @@ class pull_up_pull_down(design.design):
                       height=metal_height)
         
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
                       offset=extra_off,
                       width= extra_width,
                       height= extra_height)
@@ -390,7 +396,7 @@ class pull_up_pull_down(design.design):
         for i in range(self.num_pmos):
             pin_offset = self.pmos_inst[i].get_pin("D").ll()
             self.add_layout_pin(text="Dp{0}".format(i),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=pin_offset,
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -405,7 +411,7 @@ class pull_up_pull_down(design.design):
                                 height=self.poly_width)
 
         self.add_layout_pin(text="Sp0",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                              offset=self.pmos_inst[0].get_pin("S").ll(),
                              width=self.m1_width,
                              height=self.m1_width)
@@ -414,7 +420,7 @@ class pull_up_pull_down(design.design):
         for i in range(self.num_nmos):
             pin_offset = self.nmos_inst[i].get_pin("D").ll()
             self.add_layout_pin(text="Dn{0}".format(i),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=pin_offset,
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -429,7 +435,7 @@ class pull_up_pull_down(design.design):
                                 height=self.poly_width)
         
         self.add_layout_pin(text="Sn0",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                              offset=self.nmos_inst[0].get_pin("S").ll(),
                              width=self.m1_width,
                              height=self.m1_width)

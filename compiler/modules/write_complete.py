@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
+
 
 
 import design
@@ -26,7 +33,7 @@ class write_complete(design.design):
     the technology library.
     """
 
-    pin_names = ["bl", "br", "en", "write_complete", "vdd", "gnd"]
+    pin_names = ["bl", "br", "en", "bm", "write_complete", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("write_complete", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "write_complete", GDS["unit"])
 

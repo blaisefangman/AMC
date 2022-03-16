@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -27,8 +31,8 @@ class precharge(design.design):
         self.ptx_width = 2*self.minwidth_tx
         self.add_pin_list(["bl", "br", "en", "vdd"])
         self.width = self.bitcell.width
-
         self.create_layout()
+        
 
     def create_layout(self):
         """ Create modules for instantiation and then route"""
@@ -144,7 +148,7 @@ class precharge(design.design):
                       width = self.width,
                       height= self.m1_width)
         self.add_layout_pin(text="en",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(0,self.height-self.m1_width),
                             width = self.m1_width,
                             height = self.m1_width)
@@ -181,7 +185,7 @@ class precharge(design.design):
                       width=self.width,
                       height=contact.m1m2.width)
         self.add_layout_pin(text="vdd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=self.vdd_position,
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
@@ -218,8 +222,7 @@ class precharge(design.design):
         extra_width = self.width-active_off.x+self.extra_enclose
         extra_height = max(contact.well.width + 2*self.extra_enclose, ceil(self.extra_minarea/extra_width))
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
-                      offset= extra_off,
+                      offset= (extra_off.x, min(extra_off.y, 0)),
                       width= extra_width,
                       height= extra_height)
         
@@ -258,12 +261,10 @@ class precharge(design.design):
         # pimplant for pmoses
         self.add_rect(layer="vt",
                       offset=vector(0,0),
-                      layer_dataType = layer["vt_dataType"],
                       width=x_off,
                       height=self.height)
         self.add_rect(layer="vt",
                       offset=vector(x_off,self.pmos2_inst.by()),
-                      layer_dataType = layer["vt_dataType"],
                       width=self.width-x_off,
                       height=self.height-self.pmos2_inst.by())
 
@@ -276,7 +277,7 @@ class precharge(design.design):
                       width=self.m2_width,
                       height=self.height)
         self.add_layout_pin(text="bl",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=offset,
                             width=self.m2_width,
                             height=self.m2_width)
@@ -287,7 +288,7 @@ class precharge(design.design):
                       width=self.m2_width,
                       height=self.height)
         self.add_layout_pin(text="br",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=offset,
                             width=self.m2_width,
                             height=self.m2_width)
@@ -308,8 +309,11 @@ class precharge(design.design):
         self.add_path("metal1", [pos1, pos2])
 
         self.add_via_center(self.m1_stack, (pmos2_s.uc().x, pmos2_s.lc().y), rotate=90)
+        self.add_path("metal2", [pmos2_s.lc(), (self.bitcell.get_pin("br").cx(),pmos2_s.lc().y)])
         self.add_via_center(self.m1_stack, (pmos1_s.uc().x, pmos1_s.lc().y), rotate=90)
+        self.add_path("metal2", [pmos1_s.lc(), (self.bitcell.get_pin("bl").cx(),pmos1_s.lc().y)])
         self.add_via_center(self.m1_stack, (pmos2_s.uc().x, pmos3_s.by()), rotate=90)
+        self.add_path("metal2", [(pmos2_s.uc().x, pmos3_s.by()), (self.bitcell.get_pin("br").cx(),pmos3_s.by())])
         
         height = ceil(self.m1_minarea/contact.m1m2.first_layer_height)
         self.add_rect_center(layer="metal1", 

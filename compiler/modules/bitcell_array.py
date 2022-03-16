@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,12 +16,15 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import debug
 import design
 import contact
 import utils
+import math
 from tech import info, GDS, layer
 from vector import vector
 from globals import OPTS
@@ -42,22 +49,18 @@ class bitcell_array(design.design):
         self.add_pins()
 
         if info["foundry_cell"]:
-            #from endcells_frame import endcells_frame
+            from endcells_frame import endcells_frame
             
-            #self.endcell = endcells_frame(self.column_size, self.row_size)
-            #self.add_mod(self.endcell)
+            self.endcell = endcells_frame(self.column_size, self.row_size)
+            self.add_mod(self.endcell)
             
-            #self.xleft_shift = self.endcell.left_width
-            #self.ybot_shift = self.endcell.bot_width
-            #self.xright_shift = self.endcell.right_width
-            #self.ytop_shift = self.endcell.top_width
-            #self.width = self.column_size*self.cell.width + self.xright_shift + self.xleft_shift
-            #self.add_endcells_frame()
-            self.xleft_shift = 0
-            self.ybot_shift = 0
-            self.xright_shift = 0
-            self.ytop_shift = 0
-            self.width = self.column_size*self.cell.width
+            self.xleft_shift = self.endcell.left_width
+            self.ybot_shift = self.endcell.bot_width
+            self.xright_shift = self.endcell.right_width
+            self.ytop_shift = self.endcell.top_width
+            self.width = self.column_size*self.cell.width + self.xright_shift + self.xleft_shift
+            self.height = self.row_size*self.cell.height + self.ybot_shift + self.ytop_shift
+            self.add_endcells_frame()
             
         else:
             
@@ -69,7 +72,6 @@ class bitcell_array(design.design):
 
         self.create_layout()
         self.add_layout_pins()
-        
 
         if info["add_well_tap"]:
             # Don't add well-tap to foundary cells and bitcells that already have well tap
@@ -79,7 +81,10 @@ class bitcell_array(design.design):
         lowest = self.find_lowest_coords()
         self.height = highest.y-lowest.y
         self.width = highest.x-lowest.x
-        self.translate_all(vector(0, lowest.y))
+        if info["foundry_cell"]:
+            self.translate_all(lowest)
+        else:
+            self.translate_all(vector(0, lowest.y))
         
 
     def add_pins(self):
@@ -91,9 +96,6 @@ class bitcell_array(design.design):
         for row in range(self.row_size):
             self.add_pin("wl[{0}]".format(row))
         self.add_pin_list(["vdd", "gnd"])
-        
-        #if info["foundry_cell"]:
-            #self.add_pin("sub")
 
     def create_layout(self):
         """ Add bitcell in a 2D array, Flip the cells in odd rows to share power rails """
@@ -105,9 +107,9 @@ class bitcell_array(design.design):
             yoffset = 0.0
             
             if col% 2:
-                tempx = xoffset 
-            else:
                 tempx = xoffset + self.cell.width
+            else:
+                tempx = xoffset 
             
             for row in range(self.row_size):
                 name = "bit_r{0}_c{1}".format(row, col)
@@ -116,28 +118,25 @@ class bitcell_array(design.design):
                 else:
                     tempy = yoffset
                 
-                if row % 2 and col% 2:
-                    mirror = "MX"
-                    rotate=0
-                if row % 2 and not col% 2:
+                if row % 2 and col% 2: #1,1
                     mirror = "R0"
                     rotate=180
-                if not row % 2 and col% 2:
+                if row % 2 and not col% 2: #1,0
+                    mirror = "MX"
+                    rotate=0
+                if not row % 2 and col% 2: #0,1
+                    mirror = "MX"
+                    rotate=180
+                if not row % 2 and not col% 2: #0,0
                     mirror = "R0"
                     rotate=0
-                if not row % 2 and not col% 2:
-                    mirror = "MY"
-                    rotate=0
                 
-                pin_list = ["bl[{0}]".format(col),"br[{0}]".format(col), "wl[{0}]".format(row), "vdd", "gnd"]
-                if info["foundry_cell"]:
-                    pin_list.extend(["gnd"])
                 self.cell_inst[row,col]=self.add_inst(name=name, 
                                                       mod=self.cell, 
                                                       offset=[tempx, tempy], 
                                                       mirror=mirror,
                                                       rotate=rotate)
-                self.connect_inst(pin_list)
+                self.connect_inst(["bl[{0}]".format(col),"br[{0}]".format(col), "wl[{0}]".format(row), "vdd", "gnd"])
                 yoffset += self.cell.height
             xoffset += self.cell.width
 
@@ -146,8 +145,8 @@ class bitcell_array(design.design):
         
         # add bl & br pin and label
         for col in range(self.column_size):
-            bl_pin = self.cell_inst[0,col].get_pin("bl")
-            br_pin = self.cell_inst[0,col].get_pin("br")
+            bl_pin = self.cell_inst[0,col].get_pin("br")
+            br_pin = self.cell_inst[0,col].get_pin("bl")
             
             self.add_layout_pin(text="bl[{0}]".format(col), 
                                 layer=bl_pin.layer, 
@@ -174,7 +173,7 @@ class bitcell_array(design.design):
             # With vdd and gnd on different layer --> vdd and gnd are perpendicular
         
             #Find which pin (vdd/gnd) is vertical
-            if self.cell.get_pin("gnd").layer == self.cell.get_pin("bl").layer:
+            if self.cell.get_pin("gnd").layer == self.cell.get_pin("br").layer:
                 self.v_pin = "gnd"
                 self.h_pin = "vdd"
 
@@ -229,22 +228,32 @@ class bitcell_array(design.design):
         #y_shift is the height of cell_6t layout outside of its bounding box
         # OR the height of BL endcell (dummy cell) at the top of array        
         
-        self.y_shift = 0.5*min(self.cell.height, self.cell.width)
-        if info["foundry_cell"]:
-            self.y_shift = self.y_shift+self.ytop_shift
+        #self.y_shift = round(0.5*min(self.cell.height, self.cell.width), 4)
+        if not info["foundry_cell"]:
+            if info["has_nwell"]:
+                (nw_width, nw_height) = utils.get_libcell_size("cell_6t", GDS["unit"], layer["nwell"])
+            else :
+                (nw_width, nw_height) = (0,0)
+
+            self.y_shift = round(0.5*(nw_height-self.cell.height), 4)
         
+        else:
+            self.y_shift = round(0.5*min(self.cell.height, self.cell.width), 4)+self.ytop_shift+ self.ybot_shift
+                
         height= self.row_size*self.cell.height
         width= self.column_size*self.cell.width
         
+        if info["name"]=="scn3me_subm":
+            self.y_shift =  round(0.5*min(self.cell.height, self.cell.width), 4)
         
-        h_power_rail_yoff = height+self.y_shift+4*self.m3_width-0.5*contact.m2m3.width
+        h_power_rail_yoff = height+self.y_shift+4*self.m3_width-0.5*contact.m2m3.width 
         pos1=(0, h_power_rail_yoff)
         pos2=(width, h_power_rail_yoff)
         self.add_path("metal3", [pos1, pos2], width=contact.m2m3.width)
         
         off = (0, height+self.y_shift+4*self.m3_width-contact.m2m3.width)
         self.add_layout_pin(text=v_pin, 
-                            layer=self.m3_pin_layer, 
+                            layer="metal3", 
                             offset=off, 
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -265,11 +274,11 @@ class bitcell_array(design.design):
             self.add_rect(layer="metal2",
                           offset=(self.cell_inst[0,col].get_pin("bl").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.m3_width)
+                          height=height+2*self.y_shift+4*self.m3_width+contact.m2m3.width)
             self.add_rect(layer="metal2",
                           offset=(self.cell_inst[0,col].get_pin("br").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.m3_width)
+                          height=height+2*self.y_shift+4*self.m3_width+contact.m2m3.width)
 
         self.ybot_shift = self.y_shift
     
@@ -289,16 +298,17 @@ class bitcell_array(design.design):
         else:
             (pw_width, pw_height) = (0.5*(self.cell.width-nw_width),self.cell.height)
         
-        x_shift = 0.5*(2*pw_width+nw_width-self.cell.width)
-        y_shift = 0.5*(nw_height-self.cell.height)
+        x_shift = round(0.5*(2*pw_width+nw_width-self.cell.width),4)
+        y_shift = round(0.5*(nw_height-self.cell.height), 4)
         y_off = self.row_size*self.cell.height+y_shift
         well_height = 2*self.well_enclose_active + 3*contact.active.width
         
         #there is one pwell and one nwell contact for each column
         for col in range(2*self.column_size):
             if col % 2:
-                well_xoffset = ((col-1)/2)*self.cell.width - x_shift + pw_width
+                well_xoffset = ((col-1)//2)*self.cell.width - x_shift + pw_width
                 well_width = nw_width+self.implant_space
+                extra_width = 0
                 well_type="nwell"
                 implant_type="nimplant"
                 implant_offset=(well_xoffset+ self.implant_space, y_off)
@@ -307,14 +317,20 @@ class bitcell_array(design.design):
                 contact_yoff = y_off+well_height-self.well_enclose_active-contact.active.height
 
             else:
-                well_xoffset = (col/2)*self.cell.width - x_shift
+                well_xoffset = (col//2)*self.cell.width - x_shift
                 well_width = pw_width 
+                extra_width = self.cell.width
                 well_type="pwell"
                 implant_type="pimplant"
                 implant_offset=(well_xoffset, y_off)
                 implant_width=well_width + self.implant_space
                 contact_xoff = well_xoffset+self.well_enclose_active 
                 contact_yoff = y_off+self.well_enclose_active
+
+            self.add_rect(layer="extra_layer",
+                          offset=(well_xoffset, y_off),
+                          width= extra_width,
+                          height= well_height)
 
             self.add_contact(("active", "contact", "metal1"), (contact_xoff, contact_yoff))
             
@@ -342,7 +358,7 @@ class bitcell_array(design.design):
                           height= contact.m1m2.width)
 
             self.add_layout_pin(text="vdd",
-                                layer= self.m1_pin_layer,
+                                layer= "metal1",
                                 offset=pin_off,
                                 width= self.m1_width,
                                 height= self.m1_width)
@@ -353,32 +369,35 @@ class bitcell_array(design.design):
                           height= self.m1_width)
 
             self.add_layout_pin(text="gnd",
-                                layer= self.m1_pin_layer,
+                                layer= "metal1",
                                 offset=(0, y_off+self.well_enclose_active),
                                 width= self.m1_width,
                                 height= self.m1_width)
         
-        self.y_shift = self.well_enclose_active+0.5*contact.well.width
+        self.y_shift = y_shift
+        if info["foundry_cell"]:
+            self.y_shift = self.y_shift+self.ytop_shift+ self.ybot_shift
+
         if info["has_pwell"]:
             # Add this pwell to avoid DRC violation when connecting arrays in bank
             self.add_rect(layer="pwell",
-                          offset=(0,-self.y_shift),
+                          offset=(0,-y_shift),
                           width=self.width,
-                          height=self.y_shift)
+                          height=y_shift)
         
-        height= self.row_size*self.cell.height+2*self.y_shift+well_height
+        height= self.row_size*self.cell.height+2*y_shift+well_height
         for col in range(self.column_size):
             #extend the bitlines from bottom to the top edge
             self.add_rect(layer="metal2",
-                          offset=(self.cell_inst[0,col].get_pin("bl").lx(),-self.y_shift),
+                          offset=(self.cell_inst[0,col].get_pin("bl").lx(),-y_shift),
                           width=contact.m1m2.width,
                           height=height)
             self.add_rect(layer="metal2",
-                          offset=(self.cell_inst[0,col].get_pin("br").lx(),-self.y_shift),
+                          offset=(self.cell_inst[0,col].get_pin("br").lx(),-y_shift),
                           width=contact.m1m2.width,
                           height=height)
         
-        self.ybot_shift = 0.5*(nw_height-self.cell.height) 
+        self.ybot_shift = self.y_shift 
 
 
     def add_endcells_frame(self):
@@ -392,11 +411,21 @@ class bitcell_array(design.design):
         for col in range(self.column_size):
             temp.extend(["bl[{0}]".format(col)])
             temp.extend(["br[{0}]".format(col)])
-            temp.extend(["bl[{0}]".format(col)])
-            temp.extend(["gnd"])
         for row in range(self.row_size):
             temp.extend(["wl[{0}]".format(row)])
-            temp.extend(["wl[{0}]".format(row)])
-        temp.extend(["vdd", "gnd", "sub"])
+        temp.extend(["vdd", "gnd", "vdd", "gnd"])
         self.connect_inst(temp)
 
+        power_pin = ["vdd", "gnd"]
+        frame_pin = ["vdds", "gnds"]
+        for i in frame_pin:
+            for pin in self.frame.get_pins(i):
+                self.add_rect(layer=pin.layer,
+                              offset=(-self.xleft_shift, pin.by()),
+                              width=self.xleft_shift,
+                              height=pin.height())
+                self.add_layout_pin(text=power_pin[frame_pin.index(i)],
+                                layer= "metal1",
+                                offset=(-self.xleft_shift, pin.by()),
+                                width= pin.width(),
+                                height= pin.height())

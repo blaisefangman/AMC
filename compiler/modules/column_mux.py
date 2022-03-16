@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -98,10 +102,20 @@ class column_mux(design.design):
         offset = (self.nmos1.get_pin("G").lc().x+ x_off, self.nmos1.get_pin("G").by())
         self.add_path("poly", [self.nmos1.get_pin("G").lc(), self.nmos2.get_pin("G").lc()])        
         self.add_layout_pin(text="sel", 
-                            layer=self.poly_pin_layer, 
+                            layer="poly", 
                             offset=offset, 
                             width=self.poly_width,
                             height=self.poly_width)
+
+
+        if info["tx_dummy_poly"]:
+            width= self.nmos2.rx() - self.nmos1.lx()
+            for pos in [self.nmos1.ll(), self.nmos1.ul()-vector(0, self.poly_width)]:
+                self.add_rect(layer="poly",
+                              offset=pos,
+                              width=width,
+                              height=self.poly_width)
+
 
     def add_bitline_pins(self):
         """ Add the BL and BR pins to column_mux cell """
@@ -111,24 +125,24 @@ class column_mux(design.design):
 
         # bl and br
         self.add_layout_pin(text="bl", 
-                            layer=self.m2_pin_layer, 
+                            layer="metal2", 
                             offset=bl_pos + vector(0,self.top-contact.m1m2.width),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         self.add_layout_pin(text="br", 
-                            layer=self.m2_pin_layer, 
+                            layer="metal2", 
                             offset=br_pos + vector(0,self.top-contact.m1m2.width),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         
         # bl_out and br_out
         self.add_layout_pin(text="bl_out", 
-                            layer=self.m2_pin_layer, 
+                            layer="metal2", 
                             offset=bl_pos+ vector(0,-contact.well.height-self.pin_height),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         self.add_layout_pin(text="br_out", 
-                            layer=self.m2_pin_layer, 
+                            layer="metal2", 
                             offset=br_pos+ vector(0,-contact.well.height-self.pin_height),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -181,7 +195,7 @@ class column_mux(design.design):
                        width = self.width,
                        height=self.m1_width)
         self.add_layout_pin(text="gnd", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=self.gnd_position,
                             width = self.m1_width, 
                             height=self.m1_width)
@@ -238,7 +252,6 @@ class column_mux(design.design):
         vt_offset = vector(0, self.nmos1.by())
         self.add_rect(layer="vt",
                       offset=vt_offset,
-                      layer_dataType = layer["vt_dataType"],
                       width=self.width,
                       height=self.nmos.width)
 
@@ -248,7 +261,6 @@ class column_mux(design.design):
         extra_width = self.width
         extra_off= vector(0, active_offse[1]-self.extra_enclose)
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
                       offset=extra_off,
                       width= extra_width,
                       height= extra_height)

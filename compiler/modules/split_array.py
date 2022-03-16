@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
+
 
 
 import design
@@ -22,22 +29,31 @@ from split import split
 class split_array(design.design):
     """ Array of dynamically generated split cells for multi bank SRAM. """
 
-    def __init__(self, word_size, words_per_row, name=""):
+    def __init__(self, word_size, words_per_row, mask, name=""):
         
         if name=="":
             name = "split_array_{0}_{1}".format(word_size, words_per_row)
         design.design.__init__(self, name )
         debug.info(1, "Creating {0}".format(name))
 
-        self.split = split()
-        self.add_mod(self.split)
-
         self.word_size = word_size
         self.words_per_row = words_per_row
         self.name = name
+        self.mask = mask
         self.row_size = self.word_size * self.words_per_row
+        
+        self.split = split()
+        self.add_mod(self.split)
+        
+        if self.mask:
+            from split import split2
+            
+            self.split2 = split2()
+            self.add_mod(self.split2)
 
         self.height = self.split.height
+        if self.mask:
+            self.height = self.split2.height
         self.width = self.split.width * self.word_size * self.words_per_row
 
         self.add_pins()
@@ -47,8 +63,13 @@ class split_array(design.design):
         """ Add pins for split_array, order of the pins is important """
         
         for i in range(0,self.row_size,self.words_per_row):
-            self.add_pin("D[{0}]".format(i // self.words_per_row))
-            self.add_pin("Q[{0}]".format(i // self.words_per_row))
+            self.add_pin("D[{0}]".format(i//self.words_per_row))
+            self.add_pin("Q[{0}]".format(i//self.words_per_row))
+        if self.mask:
+            for i in range(0,self.row_size,self.words_per_row):
+                self.add_pin("bm_in[{0}]".format(i//self.words_per_row))
+                self.add_pin("bm_out[{0}]".format(i//self.words_per_row))
+
         self.add_pin_list(["en1_S", "en2_S", "reset", "S", "vdd", "gnd"])
 
     def create_layout(self):
@@ -62,6 +83,14 @@ class split_array(design.design):
             
         D_pin = self.split.get_pin("D")
         Q_pin = self.split.get_pin("Q")
+        
+        if self.mask:
+            bm_in_pin = self.split2.get_pin("bm_in")
+            bm_out_pin = self.split2.get_pin("bm_out")
+            mod = self.split2
+        else: 
+            mod= self.split
+
         self.split_inst= {}
         
         for i in range(0,self.row_size,self.words_per_row):
@@ -74,97 +103,54 @@ class split_array(design.design):
             else:
                 mirror = "R0"
             
-            self.split_inst[i] = self.add_inst(name=name, mod=self.split, offset=split_position, mirror=mirror)
-            self.connect_inst(["D[{0}]".format(i // self.words_per_row), 
-                               "Q[{0}]".format(i // self.words_per_row), 
-                               "en1_S", "en2_S", "reset", "S", "vdd", "gnd"])
+            self.split_inst[i] = self.add_inst(name=name, mod=mod, offset=split_position, mirror=mirror)
+
+            temp = ["D[{0}]".format(i//self.words_per_row),"Q[{0}]".format(i//self.words_per_row)]
+            if self.mask:
+                temp.extend(["bm_in[{0}]".format(i//self.words_per_row),"bm_out[{0}]".format(i//self.words_per_row)])
             
-            D_offset = self.split_inst[i].get_pin("D").ll()
+            temp.extend(["en1_S", "en2_S", "reset", "S", "vdd", "gnd"])
+            self.connect_inst(temp)
+            
+            D_offset = self.split_inst[i].get_pin("D")
             Q_offset = vector(self.split_inst[i].get_pin("Q").lx() , self.height-self.m2_width)
 
-            self.add_layout_pin(text="D[{0}]".format(i // self.words_per_row), 
-                                layer=D_pin.layer, 
-                                offset=D_offset, 
-                                width=D_pin.width(), 
+            self.add_layout_pin(text="D[{0}]".format(i//self.words_per_row), 
+                                layer=D_offset.layer, 
+                                offset=D_offset.ll(), 
+                                width=self.m3_width, 
                                 height=self.m2_width)
-            self.add_layout_pin(text="Q[{0}]".format(i // self.words_per_row), 
+            self.add_layout_pin(text="Q[{0}]".format(i//self.words_per_row), 
                                 layer=Q_pin.layer, 
                                 offset=Q_offset, 
                                 width=Q_pin.width(), 
+                                height=self.m2_width)
+            if self.mask:
+                bm_in_offset = self.split_inst[i].get_pin("bm_in").ll()
+                bm_out_offset = vector(self.split_inst[i].get_pin("bm_out").lx() , self.split_inst[i].get_pin("bm_out").uy()-self.m2_width)
+                self.add_layout_pin(text="bm_in[{0}]".format(i//self.words_per_row), 
+                                layer=bm_in_pin.layer, 
+                                offset=bm_in_offset, 
+                                width=bm_in_pin.width(), 
+                                height=self.m2_width)
+                self.add_layout_pin(text="bm_out[{0}]".format(i//self.words_per_row), 
+                                layer=bm_out_pin.layer, 
+                                offset=bm_out_offset, 
+                                width=bm_out_pin.width(), 
                                 height=self.m2_width)
 
     def connect_rails(self):
         """ Add vdd, gnd, en1_s, en2_s, reset and select rails across entire array"""
         
-        #vdd 
-        vdd_pin = self.split.get_pin("vdd")
-        self.add_rect(layer="metal1", 
-                      offset=vdd_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="vdd", 
-                            layer=vdd_pin.layer, 
-                            offset=vdd_pin.ll().scale(0,1), 
-                            width=vdd_pin.height(), 
-                            height=vdd_pin.height())
-
-        #gnd 
-        gnd_pin = self.split.get_pin("gnd")
-        self.add_rect(layer="metal1", 
-                      offset=gnd_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="gnd", 
-                            layer=gnd_pin.layer, 
-                            offset=gnd_pin.ll().scale(0,1), 
-                            width=gnd_pin.height(), 
-                            height=gnd_pin.height())
-
-        #en1_S
-        en1_pin = self.split.get_pin("en1_S")
-        self.add_rect(layer="metal1", 
-                      offset=en1_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="en1_S", 
-                            layer=en1_pin.layer, 
-                            offset=en1_pin.ll().scale(0,1), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
-
-        #en2_S
-        en2_pin = self.split.get_pin("en2_S")
-        self.add_rect(layer="metal1", 
-                      offset=en2_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="en2_S", 
-                            layer=en2_pin.layer, 
-                            offset=en2_pin.ll().scale(0,1), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
-        
-        # reset
-        reset_pin = self.split.get_pin("reset")
-        self.add_rect(layer="metal1", 
-                      offset=reset_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="reset", 
-                            layer=reset_pin.layer, 
-                            offset=reset_pin.ll().scale(0,1), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
-
-        # S
-        sel_pin = self.split.get_pin("S")
-        self.add_rect(layer="metal1", 
-                      offset=sel_pin.ll().scale(0,1), 
-                      width=self.width, 
-                      height=self.m1_width)
-        self.add_layout_pin(text="S", 
-                            layer=sel_pin.layer, 
-                            offset=sel_pin.ll().scale(0,1), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
-
+        pin_list = ["vdd", "gnd", "S", "en1_S", "en2_S", "reset"]
+        for i in pin_list:
+            pin=self.split_inst[0].get_pin(i)
+            self.add_rect(layer="metal1", 
+                          offset=pin.ll().scale(0,1),
+                          width=self.width, 
+                          height=self.m1_width)
+            self.add_layout_pin(text=i, 
+                                layer=pin.layer, 
+                                offset=pin.ll().scale(0,1),
+                                width=pin.width(), 
+                                height=pin.height())

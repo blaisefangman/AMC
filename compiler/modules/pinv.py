@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import contact
@@ -145,7 +149,7 @@ class pinv(design.design):
                           height=self.height+contact.m1m2.width)
         
         pwell_width= self.nmos_inst.height + contact.well.width + self.well_enclose_active+ \
-                     max(self.implant_enclose_body_active, self.m1_space)
+                     max(self.implant_enclose_body_active, self.m1_space) + self.m1_space
         if info["has_pwell"]:
             # This should cover pwell-contact and nmos
             pwell_pos = nimplant_pos= (self.nmos_inst.lx(),-0.5*contact.m1m2.width)
@@ -163,7 +167,6 @@ class pinv(design.design):
         self.vt_width=self.pmos_inst.height + self.nmos_inst.height
         self.add_rect(layer="vt",
                       offset=self.vt_offset,
-                      layer_dataType = layer["vt_dataType"],
                       width=self.vt_width,
                       height=self.height+contact.m1m2.width)
 
@@ -178,7 +181,7 @@ class pinv(design.design):
                       width=self.width,
                       height =contact.m1m2.width)
         self.add_layout_pin(text="gnd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             pin_dataType=None, 
                             label_dataType=None,  
                             offset=vector(0,-0.5*contact.m1m2.width),
@@ -190,7 +193,7 @@ class pinv(design.design):
                       width=self.width,
                       height =contact.m1m2.width)
         self.add_layout_pin(text="vdd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=vector(0,self.height-0.5*contact.m1m2.width),
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
@@ -246,8 +249,8 @@ class pinv(design.design):
         active_off2 = pwell_contact_offset
         metal_off2= pwell_contact_offset.scale(1,0)
         metal_height2 = pwell_contact_offset.y
-        self.nimplant_of = vector(self.nmos_inst.rx(), -0.5*contact.m1m2.width)
-        self.nimplant_width = contact.well.width+self.well_enclose_active+\
+        nimplant_of = vector(self.nmos_inst.rx(), -0.5*contact.m1m2.width)
+        nimplant_width = contact.well.width+self.well_enclose_active+ self.m1_space+\
                         max(self.implant_enclose_body_active, self.m1_space)
         extra_width = contact.well.width+self.extra_enclose+self.well_enclose_active
         extra_height = max(self.active_height+2*self.extra_enclose, 
@@ -264,12 +267,12 @@ class pinv(design.design):
 
         if pimplant_type:
             self.add_rect(layer="pimplant",
-                          offset=self.nimplant_of,
-                          width=self.nimplant_width,
+                          offset=nimplant_of,
+                          width=nimplant_width,
                           height=self.height+contact.m1m2.width)
 
         self.add_active_implant(nwell_contact_offset, active_off1, metal_off1, metal_height1, extra_width, extra_height, extra_off1)
-        self.add_active_implant(pwell_contact_offset, active_off2, metal_off2, metal_height2, extra_width, self.height+contact.m1m2.width, extra_off2)
+        self.add_active_implant(pwell_contact_offset, active_off2, metal_off2, metal_height2, extra_width+self.m1_space, self.height+contact.m1m2.width, extra_off2)
 
 
     def add_active_implant(self, well_off, active_off, metal_off, metal_height, extra_width, extra_height, extra_off):
@@ -287,7 +290,6 @@ class pinv(design.design):
                       height=metal_height)
         
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
                       offset=extra_off,
                       width= extra_width,
                       height= extra_height)
@@ -338,7 +340,7 @@ class pinv(design.design):
                       height=self.poly_width)
 
         self.add_layout_pin(text="A",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(0,(self.height-contact.m1m2.width)/2),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -354,10 +356,10 @@ class pinv(design.design):
         nmos_drain_pos = self.nmos_inst.get_pin("D")
         pmos_drain_pos = self.pmos_inst.get_pin("D")
         mid_pos = vector(self.nmos_inst.lx(), nmos_drain_pos.lc().y)
-        output_offset = vector(self.width- self.m1_space, nmos_drain_pos.lc().y)
+        output_offset = vector(self.width- 2*self.m1_space, nmos_drain_pos.lc().y)
         
         # output pin at the edge of the cell in middle
-        output_pin_offset = vector(self.width-self.m1_space-contact.m1m2.width, 
+        output_pin_offset = vector(self.width-2*self.m1_space-contact.m1m2.width, 
                                    nmos_drain_pos.by())
 
         
@@ -374,15 +376,15 @@ class pinv(design.design):
                       width=contact.m1m2.first_layer_width,
                       height=height)
 
-        Z_off = (self.width-self.m1_space, nmos_drain_pos.lc().y-0.5*contact.m1m2.width)
+        Z_off = (self.width-2*self.m1_space, nmos_drain_pos.lc().y-0.5*contact.m1m2.width)
         self.add_layout_pin(text="Z",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=Z_off,
-                            width=self.m1_space,
+                            width=2*self.m1_space,
                             height=self.m1_width)
         self.add_rect(layer="metal1",
                       offset=Z_off,
-                      width=self.m1_space,
+                      width=2*self.m1_space,
                       height=self.m1_width)
     
     def add_dummy_poly(self):

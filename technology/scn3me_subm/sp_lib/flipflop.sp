@@ -10,9 +10,11 @@ M7 int1 clk_bar dout vdd p w=1.2u l=0.6u
 M8 int1 clk dout gnd n w=1.2u l=0.6u
 .ENDS dlatch
 
-.SUBCKT flipflop in out out_bar clk vdd gnd
+.SUBCKT flipflop in out out_bar clk rst0 rst1 vdd gnd
 M1 clk_bar clk vdd vdd p w=2.4u l=0.6u
-M2 clk_bar clk gnd gnd n w=1.2u l=0.6u 
+M2 clk_bar clk gnd gnd n w=1.2u l=0.6u
+M3 out rst1 vdd vdd p w=2.4u l=0.6u
+M4 out rst0 gnd gnd n w=1.2u l=0.6u
 Xmaster in mout mout_bar clk clk_bar vdd gnd dlatch
 Xslave mout_bar out_bar out clk_bar clk vdd gnd dlatch
 .ENDS flipflop

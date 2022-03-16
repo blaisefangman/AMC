@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -56,13 +60,13 @@ class precharge_array(design.design):
             
             bl_pin = inst.get_pin("bl")
             self.add_layout_pin(text="bl[{0}]".format(i), 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=bl_pin.ll(), 
                                 width=self.m2_width, 
                                 height=bl_pin.height())
             br_pin = inst.get_pin("br") 
             self.add_layout_pin(text="br[{0}]".format(i), 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=br_pin.ll(), 
                                 width=self.m2_width, 
                                 height=bl_pin.height())
@@ -72,12 +76,12 @@ class precharge_array(design.design):
         """Add vdd and en rails across the array"""
 
         self.add_layout_pin(text="vdd", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=self.pc_cell.get_pin("vdd").ll(), 
                             width=self.m1_width, 
                             height=self.m1_width)
         self.add_layout_pin(text="en", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=self.pc_cell.get_pin("en").ll(), 
                             width=self.m1_width, 
                             height=self.m1_width)

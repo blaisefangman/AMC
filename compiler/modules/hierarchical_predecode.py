@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -86,14 +90,14 @@ class hierarchical_predecode(design.design):
         """ Create all of the rails for the inputs and vdd/gnd/inputs_bar/inputs """
         
         y_shift= self.nand.get_pin("A").by()
-        for label in list(self.rails.keys()):
+        for label in self.rails.keys():
             if label.startswith("in"):
                 self.add_rect(layer="metal2",
                               offset=vector(self.rails[label]-0.5*self.m2_width, 0), 
                               width=self.m2_width,
                               height=self.height - y_shift)
                 self.add_layout_pin(text=label,
-                                    layer=self.m2_pin_layer,
+                                    layer="metal2",
                                     offset=vector(self.rails[label]-0.5*self.m2_width, 0), 
                                     width=self.m2_width,
                                     height=self.m2_width)
@@ -204,7 +208,7 @@ class hierarchical_predecode(design.design):
 
             z_pos = self.inv_inst[num].get_pin("Z")
             self.add_layout_pin(text="out[{}]".format(num),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=z_pos.ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
