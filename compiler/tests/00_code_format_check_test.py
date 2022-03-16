@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import unittest
@@ -53,7 +57,7 @@ def setup_files(path):
         for f in current_files:
             files.append(os.path.join(dir, f))
     nametest = re.compile("\.py$", re.IGNORECASE)
-    select_files = list(filter(nametest.search, files))
+    select_files = filter(nametest.search, files)
     return select_files
 
 
@@ -63,7 +67,7 @@ def check_file_format_tab(file_name):
     f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f, 1):
-        if b'\t' in line:
+        if '\t' in line:
             key_positions.append(num)
     if len(key_positions) > 0:
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' tabs in ' +

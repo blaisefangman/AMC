@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import unittest, warnings
@@ -37,8 +41,8 @@ class AMC_test(unittest.TestCase):
     def local_check(self, a, final_verification=False):
         """ check both LVS and DRC rules for the layout"""
 
-        tempspice = OPTS.AMC_temp + "temp.sp"
-        tempgds = OPTS.AMC_temp + "temp.gds"
+        tempspice = OPTS.AMC_temp + a.name+ ".sp"
+        tempgds = OPTS.AMC_temp + a.name +".gds"
         a.sp_write(tempspice)
         a.gds_write(tempgds)
         
@@ -104,5 +108,5 @@ def header(filename, technology):
     print("|====" + "AMC: Asynchronous Memory Compiler".center(70) + "====|")
     print("|====" + "".center(70) + "====|")
     print("|====" + (tst1+ " " + filename).center(70) + "====|")
-    print("|====" + (tst2+ " " + technology).center(70) + "====|")  
+    print("|====" + (tst2+ " " + technology).center(70) + "====|")
     print("|==============================================================================|")

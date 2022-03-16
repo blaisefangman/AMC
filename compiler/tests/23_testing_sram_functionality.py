@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 """ Run a regresion test on SRAM functionality. """
@@ -19,7 +25,6 @@
 import unittest
 from testutils import header,AMC_test
 import sys,os
-import imp
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
@@ -33,25 +38,27 @@ class sram_func_test(AMC_test):
 
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
-        imp.reload(characterizer)
+        reload(characterizer)
         from characterizer import functional_test
         import sram
         import tech
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=8, words_per_row=4, num_rows=64, num_subanks=2, 
-                      branch_factors=(1,2), bank_orientations=("H", "H"), name="sram")
+        s = sram.sram(word_size=8, words_per_row=1, num_rows=64, num_subanks=2, 
+                      branch_factors=(1,2), bank_orientations=("H", "H"), mask=False, 
+                      power_gate=False, name="sram")
                       
         tempspice = OPTS.AMC_temp + "sram.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
-        size = (s.addr_size, s.word_size)
+        size = (s.addr_size, s.w_size)
         
         
         #at least 4 simulation is needed to calculate delays for each operation
         T = functional_test.functional_test(size, corner, name=s.name, 
                                             w_per_row = s.w_per_row, num_rows = s.num_rows, 
+                                            mask=s.mask, power_gate=s.power_gate, 
                                             load=tech.spice["input_cap"], 
                                             slew=tech.spice["rise_time"])
 

@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import re
@@ -22,14 +26,14 @@ files = os.listdir(sys.path[0])
 
 # assume any file that ends in "test.py" in it is a regression test
 nametest = re.compile("test\.py$", re.IGNORECASE)
-tests = list(filter(nametest.search, files))
+tests = filter(nametest.search, files)
 tests.sort()
 
 # import all of the modules
 filenameToModuleName = lambda f: os.path.splitext(f)[0]
-moduleNames = list(map(filenameToModuleName, tests))
-modules = list(map(__import__, moduleNames))
+moduleNames = map(filenameToModuleName, tests)
+modules = map(__import__, moduleNames)
 suite = unittest.TestSuite()
 load = unittest.defaultTestLoader.loadTestsFromModule
-suite.addTests(list(map(load, modules)))
+suite.addTests(map(load, modules))
 unittest.TextTestRunner(verbosity=2).run(suite)

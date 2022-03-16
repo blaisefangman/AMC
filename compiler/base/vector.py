@@ -85,7 +85,7 @@ class vector():
         return self
 
     def snap_offset_to_grid(self, offset):
-        """ Changes the coodrinate to match the grid settings """
+        """ Changes the coordinate to match the grid settings """
         grid = tech.drc["grid"]  
         # this gets the nearest integer value
         off_in_grid = int(round(round((offset / grid), 2), 0))

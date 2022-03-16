@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 word_size = 16
@@ -21,7 +27,8 @@ num_subanks = 2
 branch_factors = (1,1)
 bank_orientations = ("H", "H")
 name = "sram"
-add_sync_interface=False
+mask=False
+power_gate=False
 
 tech_name = "scn3me_subm"
 process_corners = ["TT"]

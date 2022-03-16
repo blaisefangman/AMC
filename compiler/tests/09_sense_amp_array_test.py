@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """ Run a regresion test on a sense amp array. """
@@ -26,16 +30,16 @@ class sense_amp_test(AMC_test):
 
         import sense_amp_array
 
-        debug.info(2, "Testing sense_amp_array for word_size=16, words_per_row=1")
-        a = sense_amp_array.sense_amp_array(word_size=16, words_per_row=1, name="sa_array1")
+        debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=1")
+        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=1, name="sa_array1")
         self.local_check(a)
 
-        debug.info(2, "Testing sense_amp_array for word_size=16, words_per_row=2")
-        a = sense_amp_array.sense_amp_array(word_size=16, words_per_row=2, name="sa_array2")
+        debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=2")
+        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=2, name="sa_array2")
         self.local_check(a)
 
-        debug.info(2, "Testing sense_amp_array for word_size=16, words_per_row=4")
-        a = sense_amp_array.sense_amp_array(word_size=16, words_per_row=4, name="sa_array4")
+        debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=4")
+        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=4, name="sa_array4")
         self.local_check(a)
         
         # return it back to it's normal state

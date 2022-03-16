@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,12 +16,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 """ Run a regresion test on a multi-bank_SRAM. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header, AMC_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
@@ -40,16 +46,16 @@ class multi_bank_test(AMC_test):
         """ range of acceptable value: 
         word_size in any number greater than 1
         word_per_row in [1, 2, 4] 
-        num_rows in [32, 64, 128, 256, 512]
+        num_rows in [32, 64, 128, 256]
         num_subanks in [1, 2, 4, 8]
         num_banks in [1, 2, 4] 
         orientation in ["H","V"]: Horizontal or Verical
         two_level_bank in [False, True]: if true split and merge cell will be added
         """ 
 
-        a = multi_bank.multi_bank(word_size=8, words_per_row=2, num_rows=32, num_subanks=2, 
-                                  num_banks=4, orientation="H", two_level_bank=True, 
-                                  name="multi_bank")
+        a = multi_bank.multi_bank(word_size=16, words_per_row=2, num_rows=32, num_subanks=1, 
+                                  num_banks=2, orientation="H", two_level_bank=False, 
+                                  mask = True, power_gate = True, name="multi_bank")
         self.local_check(a)
         
         # return it back to it's normal state

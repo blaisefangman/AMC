@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """ Generate the LEF file for an SRAM. """
@@ -23,13 +27,15 @@ class lef_test(AMC_test):
         import sram
 
         debug.info(1, "Testing LEF for a sample sram")
-        s = sram.sram(word_size=4,
+        s = sram.sram(word_size=16,
                       words_per_row=1,
                       num_rows=64,
-                      num_subanks=4, 
-                      branch_factors=(1,4),
+                      num_subanks=2, 
+                      branch_factors=(1,2),
                       bank_orientations=("H", "H"),
-                      name="sram3")
+                      mask=True,
+                      power_gate=True,
+                      name="sram")
                       
         gdsfile = s.name + ".gds"
         leffile = s.name + ".lef"

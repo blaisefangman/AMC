@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """ Run a regresion test on a two-level_SRAM. """
@@ -27,7 +31,8 @@ class sram_test(AMC_test):
         debug.info(1, "SRAM Test")
         a = sram.sram(word_size=16, words_per_row=1, num_rows=64, 
                       num_subanks=4, branch_factors=(1,4), 
-                      bank_orientations=("H", "H"), name="sram")
+                      bank_orientations=("H", "H"), mask = True, 
+                      power_gate = False, name="sram")
         
         tempspice = OPTS.AMC_temp + "sram.sp"
         a.sp_write(tempspice)
@@ -42,7 +47,7 @@ class sram_test(AMC_test):
         address2="0"*a.addr_size
         
         reduced_file="{0}{1}".format(OPTS.AMC_temp, "reduced.sp")
-        trim_spice.trim_spice(filename, reduced_file, a.word_size, a.w_per_row, a.num_rows, 
+        trim_spice.trim_spice(filename, reduced_file, a.w_size, a.w_per_row, a.num_rows, 
                               address1, address2)
         globals.end_AMC()
         

@@ -35,7 +35,7 @@ class GdsPath:
         self.drawingLayer=""
         self.purposeLayer=""
         self.pathType=""
-        #self.dataType=""
+        self.dataType=""
         self.pathWidth=""
         self.coordinates=""
         

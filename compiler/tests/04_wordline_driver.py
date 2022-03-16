@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """ Run a regresion test on a wordline driver array
@@ -31,7 +35,7 @@ class driver_test(AMC_test):
 
         debug.info(2, "Checking driver")
         a = wordline_driver_array.wordline_driver_array(rows=64)
-        self.local_check(a)
+        self.local_drc_check(a)
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True

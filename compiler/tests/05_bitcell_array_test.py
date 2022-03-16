@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """ Run a regresion test on a basic bitcell_array. """
@@ -27,7 +31,7 @@ class array_test(AMC_test):
         import bitcell_array
 
         debug.info(2, "Testing 64x4 array for 6t_cell")
-        a = bitcell_array.bitcell_array(name="bitcell_array", cols=4, rows=8)
+        a = bitcell_array.bitcell_array(name="bitcell_array", cols=8, rows=8)
         self.local_check(a)
 
         # return it back to it's normal state

@@ -620,8 +620,15 @@ class VlsiLayout:
         print("Done\n\n")
 
     def getLayoutBorder(self,borderlayer):
+        # Added to ensure OpenRAM doesn't break, might not be necessary
+        if hasattr(borderlayer, '__len__'):
+            bl_backwards_comp = False
+        else:
+            borderlayer=(borderlayer, "")
+            bl_backwards_comp = True
+
         for boundary in self.structures[self.rootStructureName].boundaries:
-            if boundary.drawingLayer==borderlayer:
+            if (boundary.drawingLayer==borderlayer[0] and (bl_backwards_comp or boundary.dataType==borderlayer[1])):
                 if self.debug:
                     debug.info(1,"Find border "+str(boundary.coordinates))
                 left_bottom=boundary.coordinates[0]
@@ -835,8 +842,8 @@ class VlsiLayout:
                 # Rectangle is [leftx, bottomy, rightx, topy].
                 boundaryRect=[left_bottom[0],left_bottom[1],right_top[0],right_top[1]]
                 boundaryRect=self.transformRectangle(boundaryRect,structureuVector,structurevVector)
-                boundaryRect=[boundaryRect[0]+structureOrigin[0],boundaryRect[1]+structureOrigin[1],
-                              boundaryRect[2]+structureOrigin[0],boundaryRect[3]+structureOrigin[1]]
+                boundaryRect=[boundaryRect[0]+float(structureOrigin[0]),boundaryRect[1]+float(structureOrigin[1]),
+                              boundaryRect[2]+float(structureOrigin[0]),boundaryRect[3]+float(structureOrigin[1])]
 
                 if self.labelInRectangle(coordinates,boundaryRect):
                     boundaries.append(boundaryRect)
@@ -865,8 +872,8 @@ class VlsiLayout:
         """
         Rotate a coordinate in space.
         """
-        x=coordinate[0]*uVector[0]+coordinate[1]*uVector[1]
-        y=coordinate[1]*vVector[1]+coordinate[0]*vVector[0]
+        x=coordinate[0]*uVector[0][0]+coordinate[1]*uVector[1][0]
+        y=coordinate[1]*vVector[1][0]+coordinate[0]*vVector[0][0]
         transformCoordinate=[x,y]
 
         return transformCoordinate

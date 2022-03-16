@@ -36,23 +36,23 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         # because each reference must be a unique name.
         # These modules ensure unique names or have no changes if they
         # aren't unique
-        ok_list = ['split.split',
-                   'split.split2',
-                   'merge.merge',
-                   'bitcell.bitcell',
-                   'contact.contact',
-                   'ptx.ptx',
-                   'pinv.pinv',
-                   'nand2.nand2',
-                   'nor2.nor2',
-                   'nand3.nand3',
-                   'nor3.nor3',
-                   'single_driver.single_driver',
-                   'driver.driver',
-                   'flipflop.flipflop',
-                   'xor2.xor2',
-                   'hierarchical_predecode2x4.hierarchical_predecode2x4',
-                   'hierarchical_predecode3x8.hierarchical_predecode3x8']
+        ok_list = ["<class 'split.split'>",
+                   "<class 'split.split2'>",
+                   "<class 'merge.merge'>",
+                   "<class 'bitcell.bitcell'>",
+                   "<class 'contact.contact'>",
+                   "<class 'ptx.ptx'>",
+                   "<class 'pinv.pinv'>",
+                   "<class 'nand2.nand2'>",
+                   "<class 'nor2.nor2'>",
+                   "<class 'nand3.nand3'>",
+                   "<class 'nor3.nor3'>",
+                   "<class 'single_driver.single_driver'>",
+                   "<class 'driver.driver'>",
+                   "<class 'flipflop.flipflop'>",
+                   "<class 'xor2.xor2'>",
+                   "<class 'hierarchical_predecode2x4.hierarchical_predecode2x4'>",
+                   "<class 'hierarchical_predecode3x8.hierarchical_predecode3x8'>"]
         if name not in design.name_map:
             design.name_map.append(name)
         elif str(self.__class__) in ok_list:

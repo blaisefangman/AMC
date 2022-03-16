@@ -189,14 +189,6 @@ class Gds2writer:
         idBits=b'\x08\x00'  #record Type
         self.writeRecord(idBits)
 
-        assert (thisBoundary.drawingLayer >= 0), '{0}: layer {1}'.format(
-                self.currentStructureName,
-                thisBoundary.drawingLayer)
-        assert (thisBoundary.dataType == 0), self.currentStructureName
-        assert (len(thisBoundary.coordinates) >= 4 and len(thisBoundary.coordinates) <= 200), self.currentStructureName
-        assert (thisBoundary.coordinates[0][0] == thisBoundary.coordinates[-1][0]), self.currentStructureName
-        assert (thisBoundary.coordinates[0][1] == thisBoundary.coordinates[-1][1]), self.currentStructureName
-
         if(thisBoundary.elementFlags!=""):
             idBits=b'\x26\x01' # ELFLAGS
             elementFlags = struct.pack(">h",thisBoundary.elementFlags)
@@ -207,7 +199,10 @@ class Gds2writer:
             self.writeRecord(idBits+plex)
         if(thisBoundary.drawingLayer!=""):
             idBits=b'\x0D\x02' # drawing layer
-            drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
+            if type(thisBoundary.drawingLayer)==tuple:
+                drawingLayer = struct.pack(">h",thisBoundary.drawingLayer[0])
+            else:
+                drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
         if(thisBoundary.purposeLayer):
             idBits=b'\x16\x02' #purpose layer Blaise: I think this is incorrect; this is TextType code so delete
@@ -233,12 +228,6 @@ class Gds2writer:
     def writePath(self,thisPath):  #writes out a path structure
         idBits=b'\x09\x00'  #record Type
         self.writeRecord(idBits)
-
-        assert (thisPath.drawingLayer >= 0), self.currentStructureName
-        assert (thisPath.dataType!=""), self.currentStructureName
-        assert (len(thisPath.coordinates) >=4 and len(thisPath.coordinates) <= 200), self.currentStructureName
-        assert (thisPath.coordinates[0][0] == thisPath.coordinates[-1][0]), self.currentStructureName
-        assert (thisPath.coordinates[0][1] == thisPath.coordinates[-1][1]), self.currentStructureName
 
         if(thisPath.elementFlags != ""):
             idBits=b'\x26\x01' #ELFLAGS
@@ -383,7 +372,10 @@ class Gds2writer:
             self.writeRecord(idBits+plex)
         if(thisText.drawingLayer != ""):
             idBits=b'\x0D\x02' #drawing layer
-            drawingLayer = struct.pack(">h",thisText.drawingLayer)
+            if type(thisText.drawingLayer)==tuple:
+                drawingLayer = struct.pack(">h",thisText.drawingLayer[0])
+            else:
+                drawingLayer = struct.pack(">h",thisText.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
             idBits=b'\x16\x02' #texttype layer
             purposeLayer = struct.pack(">h",thisText.purposeLayer) #changed by SAMIRA
@@ -448,7 +440,7 @@ class Gds2writer:
             plex = struct.pack(">i",thisNode.plex)
             self.writeRecord(idBits+plex)
         if(thisNode.drawingLayer!=""):
-            idBits=b'\x0D\x02' #drawig layer
+            idBits=b'\x0D\x02' #drawing layer
             drawingLayer = struct.pack(">h",thisNode.drawingLayer)
             self.writeRecord(idBits+drawingLayer)            
         if(thisNode.nodeType!=""):
@@ -481,7 +473,7 @@ class Gds2writer:
             plex = struct.pack(">i",thisBox.plex)
             self.writeRecord(idBits+plex)
         if(thisBox.drawingLayer!=""):
-            idBits=b'\x0D\x02' #drawig layer
+            idBits=b'\x0D\x02' #drawing layer
             drawingLayer = struct.pack(">h",thisBox.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
         if(thisBox.purposeLayer):
@@ -507,7 +499,6 @@ class Gds2writer:
         self.writeRecord(coordinateRecord)
             
     def writeNextStructure(self,structureName):
-        self.currentStructureName = structureName
         #first put in the structure head
         thisStructure = self.layoutObject.structures[structureName]
         idBits=b'\x05\x02'
@@ -551,7 +542,6 @@ class Gds2writer:
         #put in the structure tail
         idBits=b'\x07\x00'
         self.writeRecord(idBits)
-        self.currentStructureName = ""
     
     def writeGds2(self):
         self.writeHeader();  #first, put the header in

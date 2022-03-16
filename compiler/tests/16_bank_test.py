@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 """ Run a regresion test on various size banks. """
@@ -40,18 +46,21 @@ class bank_test(AMC_test):
         
         word_size is any number greater than 1
         word_per_row in [1, 2, 4] 
-        num_rows in [32, 64, 128, 256, 512]
+        num_rows in [32, 64, 128, 256]
         num_subanks in [1, 2, 4, 8]
         two_level_bank [False, True] : if True split and merge cells will be added
-        """ 
-        a = bank.bank(word_size=32, words_per_row=1, num_rows=64, 
-                      num_subanks=2, two_level_bank=True, name="bank")
+        
+        """
+        a = bank.bank(word_size=16, words_per_row=1, num_rows=32, 
+                      num_subanks=2, two_level_bank=True, mask=False, 
+                      power_gate=True, name="bank")
 
         self.local_check(a)
 
         OPTS.check_lvsdrc = True
         # return it back to it's normal state
         globals.end_AMC()
+        
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":
