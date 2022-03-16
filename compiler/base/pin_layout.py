@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import debug
@@ -22,14 +26,21 @@ class pin_layout:
             self.rect = [vector(rect[0]),vector(rect[1])]
         # snap the rect to the grid
         self.rect = [x.snap_to_grid() for x in self.rect]
+        
+
         # if it's a layer number look up the layer name. this assumes a unique layer number.
+        layer_list =[]
+        for i in layer.values():
+            layer_list.append(i[0])
+        
         if type(layer_name_num)==int:
-            self.layer = list(layer.keys())[list(layer.values()).index(layer_name_num)]
+            self.layer = layer.keys()[layer_list.index(layer_name_num)]
         else:
             self.layer=layer_name_num
+        
         self.pin_dataType=pin_dataType
         self.label_dataType=label_dataType
-        #self.layer_num = layer[self.layer]
+
 
     def __str__(self):
         """ override print function output """

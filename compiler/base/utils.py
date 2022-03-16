@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import os
@@ -97,7 +101,7 @@ def get_libcell_pins(pin_list, name, units):
             (name, layer, boundary)=label
             rect = pin_rect(boundary)
             # this is a list because other cells/designs may have must-connect pins
-            cell[str(pin)].append(pin_layout(pin, rect, layer, tech.layer["pin_dataType"], tech.layer["label_dataType"]))
+            cell[str(pin)].append(pin_layout(pin, rect, layer, tech.GDS["pin_dataType"], tech.GDS["label_dataType"]))
     return cell
 
 

@@ -1,8 +1,13 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
+
 
 
 """ This provides a set of useful generic types for the gdsMill interface. """
@@ -11,6 +16,7 @@ from vector import vector
 import tech
 import math
 from globals import OPTS
+from utils import round_to_grid
 
 class geometry:
     """ A specific path, shape, or text geometry. Base class for shared items. """
@@ -118,8 +124,9 @@ class instance(geometry):
         self.rotate = rotate
         self.offset = vector(offset).snap_to_grid()
         self.mirror = mirror
-        self.width = mod.width
-        self.height = mod.height
+        self.width = round_to_grid(mod.width)
+        self.height =round_to_grid(mod.height)
+
         self.compute_boundary(offset,mirror,rotate)
         
         debug.info(4, "creating instance: " + self.name)
@@ -146,12 +153,18 @@ class instance(geometry):
             angle += math.radians(180.0)
             
         if self.mod.is_library_cell:
-            # For lib cells, block the whole thing except on metal3
-            # since they shouldn't use metal3
-            if layer==tech.layer["metal1"] or layer==tech.layer["metal2"]:
+            # For lib cells, block the whole thing for metal1 and metal2 
+            # for metal3, metal4 block the whole thing if layer is used in their gds
+            if layer==tech.layer["metal1"][0] or layer==tech.layer["metal2"][0]:
                 return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
+            elif layer==tech.layer["metal3"][0] or layer==tech.layer["metal4"][0]:
+                if layer in self.gds.layerNumbersInUse:
+                    return [self.transform_coords(self.mod.get_boundary(), self.offset, mirr, angle)]
+                else:
+                    return []
             else:
                 return []
+        
         else:
 
             blockages = self.mod.get_blockages(layer)
@@ -222,7 +235,7 @@ class path(geometry):
         geometry.__init__(self)
         self.name = "path"
         self.layerNumber = layerNumber
-        self.coordinates = [[x[0], x[1]] for x in coordinates]
+        self.coordinates = map(lambda x: [x[0], x[1]], coordinates)
         self.coordinates = vector(self.coordinates).snap_to_grid()
         self.path_width = path_width
 
@@ -276,7 +289,7 @@ class label(geometry):
         debug.info(4, "writing label (" + str(self.layerNumber) + "): " + self.text)
         newLayout.addText(text=self.text,
                           layerNumber=self.layerNumber,
-                          dataType=tech.layer["label_dataType"],
+                          dataType=tech.GDS["label_dataType"],
                           offsetInMicrons=self.offset,
                           magnification=self.zoom,
                           rotate=None)

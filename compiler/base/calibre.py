@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 """
@@ -105,12 +109,20 @@ def run_drc(cell_name, gds_name):
         'drcResultsFile': OPTS.AMC_temp + cell_name + ".drc.results",
         'drcSummaryFile': OPTS.AMC_temp + cell_name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
+        'drcLayoutGetFromViewer': 0,
         'cmnFDIUseLayerMap': 1,
+        'cmnTranscriptFile': OPTS.AMC_temp + cell_name + "calibredrc.log",
+        'cmnDRCMaxVertexCount': 199,
+        'drcCellName': 1,
+        'cmnRunHyper': 1,
+        'cmnRunMT': 1,
+        'cmnTranscriptEchoToFile': 1,
+        'cmnSaveTVFRulesToSVRF': 1,
         'drcUserRecipes': ''}
 
     # write the runset file
     f = open(OPTS.AMC_temp + "drc_runset", "w")
-    for k in sorted(drc_runset.keys()):
+    for k in sorted(drc_runset.iterkeys()):
         f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
@@ -124,7 +136,6 @@ def run_drc(cell_name, gds_name):
                                                                     OPTS.AMC_temp,
                                                                     errfile,
                                                                     outfile)
-    print(cmd)
     debug.info(2, cmd)
     os.system(cmd)
     os.chdir(cwd)
@@ -141,9 +152,9 @@ def run_drc(cell_name, gds_name):
     f.close()
     # those lines should be the last 3
     results = results[-3:]
-    geometries = int(re.split(r"\W+", results[0])[5])
-    rulechecks = int(re.split(r"\W+", results[1])[4])
-    errors = int(re.split(r"\W+", results[2])[5])
+    geometries = int(re.split("\W+", results[0])[5])
+    rulechecks = int(re.split("\W+", results[1])[4])
+    errors = int(re.split("\W+", results[2])[5])
 
     # always display this summary
     if errors > 0:
@@ -200,7 +211,7 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     # write the runset file
     f = open(OPTS.AMC_temp + "lvs_runset", "w")
-    for k in sorted(lvs_runset.keys()):
+    for k in sorted(lvs_runset.iterkeys()):
         f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
@@ -228,15 +239,15 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     # CORRECT
     # INCORRECT
     test = re.compile("#     CORRECT     #")
-    correct = list(filter(test.search, results))
+    correct = filter(test.search, results)
     test = re.compile("NOT COMPARED")
-    notcompared = list(filter(test.search, results))
+    notcompared = filter(test.search, results)
     test = re.compile("#     INCORRECT     #")
-    incorrect = list(filter(test.search, results))
+    incorrect = filter(test.search, results)
 
     # Errors begin with "Error:"
-    test = re.compile(r"\s+Error:")
-    errors = list(filter(test.search, results))
+    test = re.compile("\s+Error:")
+    errors = filter(test.search, results)
     for e in errors:
         debug.error(e.strip("\n"))
 
@@ -248,12 +259,12 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     f.close()
 
     test = re.compile("ERROR:")
-    exterrors = list(filter(test.search, results))
+    exterrors = filter(test.search, results)
     for e in exterrors:
         debug.error(e.strip("\n"))
 
     test = re.compile("WARNING:")
-    extwarnings = list(filter(test.search, results))
+    extwarnings = filter(test.search, results)
     #for e in extwarnings:
         #debug.warning(e.strip("\n"))
 
@@ -268,10 +279,10 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
     f.close()
 
     # Errors begin with "ERROR:"
-    test = re.compile(r"ERROR:")
-    stdouterrors = list(filter(test.search, results))
+    test = re.compile("ERROR:")
+    stdouterrors = filter(test.search, results)
     for e in stdouterrors:
-        debug.error(e.strip(r"\n"))
+        debug.error(e.strip("\n"))
 
     out_errors = len(stdouterrors)
 
@@ -310,7 +321,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
 
     # write the runset file
     f = open(OPTS.AMC_temp + "pex_runset", "w")
-    for k in sorted(pex_runset.keys()):
+    for k in sorted(pex_runset.iterkeys()):
         f.write("*{0}: {1}\n".format(k, pex_runset[k]))
     f.close()
 
@@ -335,7 +346,7 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
 
     # Errors begin with "ERROR:"
     test = re.compile("ERROR:")
-    stdouterrors = list(filter(test.search, results))
+    stdouterrors = filter(test.search, results)
     for e in stdouterrors:
         debug.error(e.strip("\n"))
 
@@ -356,7 +367,7 @@ def correct_port(name, output_file_name, ref_file_name):
     pex_file.seek(match_index_start)
     rest_text = pex_file.read()
     # locate the end of circuit definition line
-    match = re.search(r"\* \n", rest_text)
+    match = re.search("\* \n", rest_text)
     match_index_end = match.start()
     # store the unchanged part of pex file in memory
     pex_file.seek(0)

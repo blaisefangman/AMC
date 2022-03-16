@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import hierarchy_layout
@@ -11,6 +15,7 @@ import globals
 import debug
 import os
 from globals import OPTS
+from tech import drc, layer
 
 class design(hierarchy_spice.spice, hierarchy_layout.layout):
     """ Design Class for all modules to inherit the base features.
@@ -31,22 +36,23 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         # because each reference must be a unique name.
         # These modules ensure unique names or have no changes if they
         # aren't unique
-        ok_list = ["<class 'split.split'>",
-                   "<class 'merge.merge'>",
-                   "<class 'bitcell.bitcell'>",
-                   "<class 'contact.contact'>",
-                   "<class 'ptx.ptx'>",
-                   "<class 'pinv.pinv'>",
-                   "<class 'nand2.nand2'>",
-                   "<class 'nor2.nor2'>",
-                   "<class 'nand3.nand3'>",
-                   "<class 'nor3.nor3'>",
-                   "<class 'single_driver.single_driver'>",
-                   "<class 'driver.driver'>",
-                   "<class 'flipflop.flipflop'>",
-                   "<class 'xor2.xor2'>",
-                   "<class 'hierarchical_predecode2x4.hierarchical_predecode2x4'>",
-                   "<class 'hierarchical_predecode3x8.hierarchical_predecode3x8'>"]
+        ok_list = ['split.split',
+                   'split.split2',
+                   'merge.merge',
+                   'bitcell.bitcell',
+                   'contact.contact',
+                   'ptx.ptx',
+                   'pinv.pinv',
+                   'nand2.nand2',
+                   'nor2.nor2',
+                   'nand3.nand3',
+                   'nor3.nor3',
+                   'single_driver.single_driver',
+                   'driver.driver',
+                   'flipflop.flipflop',
+                   'xor2.xor2',
+                   'hierarchical_predecode2x4.hierarchical_predecode2x4',
+                   'hierarchical_predecode3x8.hierarchical_predecode3x8']
         if name not in design.name_map:
             design.name_map.append(name)
         elif str(self.__class__) in ok_list:
@@ -106,38 +112,44 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.m1_rev_stack=("metal2", "via1", "metal1")
         self.m2_stack=("metal2", "via2", "metal3")
         self.m2_rev_stack=("metal3", "via2", "metal2")
+        self.m3_stack=("metal3", "via3", "metal4")
+        self.m3_rev_stack=("metal4", "via3", "metal3")
         
-        from tech import layer
-        if layer["polypin"] == layer["poly"]:
-            self.poly_pin_layer = "poly"
-        else:
-            self.poly_pin_layer = "polypin"
- 
-          
-        if layer["m1pin"] == layer["metal1"]:
-            self.m1_pin_layer = "metal1"
-        else:
-            self.m1_pin_layer = "m1pin"
-
-
-        if layer["m2pin"] == layer["metal2"]:
-            self.m2_pin_layer = "metal2"
-        else:
-            self.m2_pin_layer = "m2pin"
+    def m_pitch(self, metal):
+        """ These are some DRC constants for metal pitches used in many places in the compiler."""
         
-        if layer["m3pin"] == layer["metal3"]:
-            self.m3_pin_layer = "metal3"
-        else:
-            self.m3_pin_layer = "m3pin"
+        import contact
+        if metal =="m1":
+            contact=contact.m1m2   
+        if metal =="m2":
+            contact=contact.m2m3   
+        if metal =="m3":
+            contact=contact.m3m4   
 
-        if layer["m4pin"] == layer["metal4"]:
-            self.m4_pin_layer = "metal4"
-        else:
-            self.m4_pin_layer = "m4pin"
-
-        #self.label_dataType = "label_dataType"
-        #self.pin_dataType = "pin_dataType"
+        n=int(metal[-1])
         
+        metal_space=max(drc["metal{0}_to_metal{1}".format(n, n)],
+                        drc["metal{0}_to_metal{1}".format(n+1, n+1)])
+        contact_space=max(contact.width, contact.height)
+        
+        metal_pitch = metal_space + contact_space
+        return metal_pitch
+
+
+    def via_shift(self, via):
+        """ These are some DRC constants for co/via shift used in many places in the compiler."""
+        
+        import contact
+        if via =="co":
+            contact=contact.poly  
+        if via =="v1":
+            contact=contact.m1m2   
+        if via =="v2":
+            contact=contact.m2m3   
+        
+        shift=0.5*abs(contact.second_layer_height - contact.first_layer_height)
+        return shift
+
     def get_layout_pins(self,inst):
         """ Return a map of pin locations of the instance offset """
         

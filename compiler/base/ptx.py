@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -176,7 +180,7 @@ class ptx(design.design):
                                  height=self.poly_height,
                                  width=self.poly_width)
             self.add_layout_pin_center_rect(text="G",
-                                            layer=self.poly_pin_layer,
+                                            layer="poly",
                                             offset=self.poly_offset,
                                             height=self.poly_width,
                                             width=self.poly_width)
@@ -242,7 +246,7 @@ class ptx(design.design):
                       width=poly_width,
                       height=drc["minwidth_poly"])
         self.add_layout_pin(text="G",
-                            layer=self.poly_pin_layer,
+                            layer="poly",
                             offset=self.poly_offset,
                             width=drc["minwidth_poly"],
                             height=drc["minwidth_poly"])
@@ -267,7 +271,7 @@ class ptx(design.design):
                                             implant_type=implant_type,
                                             well_type=well_type)
             self.add_layout_pin_center_rect(text="S",
-                                            layer=self.m1_pin_layer,
+                                            layer="metal1",
                                             offset=pos,
                                             width=pin_width,
                                             height=pin_width)
@@ -279,7 +283,7 @@ class ptx(design.design):
                                             implant_type=implant_type,
                                             well_type=well_type)
             self.add_layout_pin_center_rect(text="D",
-                                            layer=self.m1_pin_layer,
+                                            layer="metal1",
                                             offset=pos,
                                             width=pin_width,
                                             height=pin_width)
@@ -342,7 +346,7 @@ class ptx(design.design):
 
             source_pin_offset=source_positions[0]+source_offset
             self.add_layout_pin_center_rect(text="S",
-                                            layer=self.m1_pin_layer,
+                                            layer="metal1",
                                             offset=source_pin_offset,
                                             width=self.m1_width,
                                             height=self.m1_width)
@@ -360,7 +364,7 @@ class ptx(design.design):
             
             drain_pin_offset=drain_positions[0]+drain_offset
             self.add_layout_pin_center_rect(text="D",
-                                            layer=self.m1_pin_layer,
+                                            layer="metal1",
                                             offset=drain_pin_offset,
                                             width=self.m1_width,
                                             height=self.m1_width)
@@ -424,7 +428,6 @@ class ptx(design.design):
 
         self.add_rect_center(layer="vt",
                              offset=vt_offset,
-                             layer_dataType = layer["vt_dataType"],
                              width=self.cell_vt_width,
                              height=self.cell_vt_height)
                       

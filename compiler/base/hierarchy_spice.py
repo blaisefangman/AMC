@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import debug
@@ -103,13 +107,12 @@ class spice(verilog.verilog):
             debug.info(3, "opening {0}".format(self.sp_file))
             f = open(self.sp_file)
             self.spice = f.readlines()
-            f.close()
             for i in range(len(self.spice)):
                 self.spice[i] = self.spice[i].rstrip(" \n")
 
             # find the correct subckt line in the file
             subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
-            subckt_line = list(filter(subckt.search, self.spice))[0]
+            subckt_line = filter(subckt.search, self.spice)[0]
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
         else:

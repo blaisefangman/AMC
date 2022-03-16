@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import design
@@ -188,7 +192,6 @@ class contact(design.design):
         extra_width =  self.first_layer_width  + 2*self.extra_enclose
         extra_height = self.first_layer_height + 2*self.extra_enclose
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
                       offset=extra_position,
                       width=extra_width,
                       height=extra_height)
@@ -200,4 +203,5 @@ active = contact(layer_stack=("active", "contact", "metal1"))
 poly = contact(layer_stack=("poly", "contact", "metal1"))
 m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
 m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
+m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
 

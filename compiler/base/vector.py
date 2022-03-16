@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import debug
@@ -18,12 +22,12 @@ class vector():
         """ init function support two init method"""
         # will take single input as a coordinate
         if y==None:
-            self.x = float(x[0])
-            self.y = float(x[1])
+            self.x = x[0]
+            self.y = x[1]
         #will take two inputs as the values of a coordinate
         else:
-            self.x = float(x)
-            self.y = float(y)
+            self.x = x
+            self.y = y
 
     def __str__(self):
         """ override print function output """

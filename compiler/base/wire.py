@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 from tech import drc
@@ -64,7 +68,7 @@ class wire(path):
         c_height = self.c.height
         
         from itertools import tee,islice
-        nwise = lambda g,n=2: list(zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n)))))
+        nwise = lambda g,n=2: zip(*(islice(g,i,None) for i,g in enumerate(tee(g,n))))
         threewise=nwise(self.position_list,3)
 
         for (a, offset, c) in list(threewise):
