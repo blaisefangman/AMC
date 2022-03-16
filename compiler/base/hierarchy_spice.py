@@ -112,7 +112,7 @@ class spice(verilog.verilog):
 
             # find the correct subckt line in the file
             subckt = re.compile("^.subckt {}".format(self.name), re.IGNORECASE)
-            subckt_line = filter(subckt.search, self.spice)[0]
+            subckt_line = list(filter(subckt.search, self.spice))[0]
             # parses line into ports and remove subckt
             self.pins = subckt_line.split(" ")[2:]
         else:

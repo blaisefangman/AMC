@@ -30,11 +30,11 @@ class pin_layout:
 
         # if it's a layer number look up the layer name. this assumes a unique layer number.
         layer_list =[]
-        for i in layer.values():
+        for i in list(layer.values()):
             layer_list.append(i[0])
         
         if type(layer_name_num)==int:
-            self.layer = layer.keys()[layer_list.index(layer_name_num)]
+            self.layer = list(layer.keys())[layer_list.index(layer_name_num)]
         else:
             self.layer=layer_name_num
         

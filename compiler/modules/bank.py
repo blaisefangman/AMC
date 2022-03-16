@@ -30,6 +30,7 @@ import contact
 from vector import vector
 from utils import ceil as util_ceil
 from data_ready import data_ready
+import importlib as imp
 
 class bank(design.design):
     """ Dynamically generate a single asynchronous bank with ctrl logic"""
@@ -41,7 +42,7 @@ class bank(design.design):
                     "hierarchical_decoder", "wordline_driver_array", "single_driver_array", 
                      "driver", "split_array", "merge_array","bank_control_logic", "pinv"]
         for mod_name in mod_list:
-            class_file = reload(__import__(mod_name))
+            class_file = imp.reload(__import__(mod_name))
             mod_class = getattr(class_file, mod_name)
             setattr (self, mod_name, mod_class)
 

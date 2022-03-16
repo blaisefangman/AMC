@@ -235,7 +235,7 @@ class path(geometry):
         geometry.__init__(self)
         self.name = "path"
         self.layerNumber = layerNumber
-        self.coordinates = map(lambda x: [x[0], x[1]], coordinates)
+        self.coordinates = [[x[0], x[1]] for x in coordinates]
         self.coordinates = vector(self.coordinates).snap_to_grid()
         self.path_width = path_width
 
