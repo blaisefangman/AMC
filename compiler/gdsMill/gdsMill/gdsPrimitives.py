@@ -23,7 +23,7 @@ class GdsBoundary:
         self.plex=""
         self.drawingLayer=""
         self.purposeLayer=""
-        self.dataType=None
+        self.dataType=""
         self.coordinates=""
 
 
@@ -35,7 +35,7 @@ class GdsPath:
         self.drawingLayer=""
         self.purposeLayer=""
         self.pathType=""
-        self.dataType=None
+        #self.dataType=""
         self.pathWidth=""
         self.coordinates=""
         

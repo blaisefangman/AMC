@@ -39,7 +39,7 @@ class write_complete_array(design.design):
 
         self.cols = columns
         self.w_size = word_size
-        self.w_per_row = columns / word_size
+        self.w_per_row = columns // word_size
         
         if self.w_per_row == 1:
             self.width = self.cols * self.wc.width 

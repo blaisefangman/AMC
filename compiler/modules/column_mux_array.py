@@ -22,7 +22,7 @@ class column_mux_array(design.design):
         self.columns = columns
         self.word_size = word_size
         self.name = name
-        self.words_per_row = self.columns / self.word_size
+        self.words_per_row = self.columns // self.word_size
         
         self.add_pins()
         self.create_layout()

@@ -493,7 +493,7 @@ class functional_test():
         spice_stderr.close()
 
         if (retcode > 1):
-            debug.error("Spice simulation error: " + cmd, -1)
+            debug.error("Spice simulation error: make", -1)
 
 
         filename="{0}{1}".format(OPTS.AMC_temp, "hsim.mt")

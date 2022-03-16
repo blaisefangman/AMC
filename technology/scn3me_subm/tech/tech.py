@@ -35,6 +35,7 @@ GDS["zoom"] = 0.5
 ##GDS Layer Map
 ###################################################
 
+'''
 # create the GDS layer map
 layer={} 
 layer["vt"]            = -1 
@@ -68,6 +69,39 @@ layer["boundary_dataType"]= 0
 layer["extra_layer"] = -1 #layer["hybrid"]
 layer["extra_layer_dataType"] = -1 #layer["hybrid_dataType"]
 layer[None]= -1
+'''
+layer={} 
+layer["pimplant"]       = 44
+layer["nimplant"]       = 45
+layer["m2pin"]          = 51
+layer["text"]           = 83 
+layer["poly"]           = 46 
+layer["vt"]            = -1 
+layer["pin_dataType"]    = 0
+layer["m4pin"]          = -1 
+layer["m3pin"]          = 62 
+layer["extra_layer"] = -1 #layer["hybrid"]
+layer["hybrid"]         = -1
+layer["via1"]           = 50 
+layer["via2"]           = 61 
+layer["boundary_dataType"]= 0
+layer["boundary"]       = 83
+layer["pwell"]          = 41 
+layer["hybrid_dataType"]= -1
+layer["label_dataType"]  = 0
+layer["polypin"]       = 46
+layer["vt_dataType"]= -1
+layer["metal4"]         = -1 
+layer["metal1"]         = 49 
+layer["active_contact"] = 48
+layer["metal3"]         = 62
+layer["metal2"]         = 51 
+layer["extra_layer_dataType"] = -1 #layer["hybrid_dataType"]
+layer["active"]         = 43 
+layer["nwell"]          = 42 
+layer[None]= -1
+layer["contact"]        = 47 
+layer["m1pin"]          = 49
 
 
 ###################################################

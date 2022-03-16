@@ -23,7 +23,7 @@ from math import log,sqrt,ceil
 import contact
 from vector import vector
 from utils import ceil as util_ceil
-import imp
+import importlib as imp
 
 
 class bank(design.design):
@@ -1464,7 +1464,7 @@ class bank(design.design):
 
                 for j in range(4):
                     pos1= mod2[j]
-                    pos2=vector(pos1.x-((j%2)-(j/2)+4)*self.m_pitch("m1")-(j%2)*self.m1_width, pos1.y)
+                    pos2=vector(pos1.x-((j%2)-(j // 2)+4)*self.m_pitch("m1")-(j%2)*self.m1_width, pos1.y)
                     pos3=vector(pos2.x, mod1[j].get_pin("out[0]").lc().y)
                     pos4=vector(mod1[j].rx(), pos3.y)
                     if abs(pos1.y-pos3.y) > self.m_pitch("m1"):

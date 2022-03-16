@@ -275,9 +275,6 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
     out_errors = len(stdouterrors)
 
-    print('Summary: ', summary_errors)
-    print('Out: ', out_errors)
-    print('Ext: ', ext_errors)
     total_errors = summary_errors + out_errors + ext_errors
     return total_errors
 

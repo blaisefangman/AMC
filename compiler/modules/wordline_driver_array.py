@@ -127,22 +127,24 @@ class wordline_driver_array(design.design):
             # output each OUT on the right
             for j in range(4):
                 if i%2:
-                    text = "out[{0}]".format(int(4*i+(3-j)))
+                    out_text = "out[{0}]".format(4*i+(3-j))
+                    in_text = "in[{0}]".format(4*i+(3-j))
                 else:
-                    text = "out[{0}]".format(int(4*i+j))
+                    out_text = "out[{0}]".format(4*i+j)
+                    in_text = "in[{0}]".format(4*i+j)
                 out_pin = wordline_driver_inst.get_pin("out{0}".format(j))
                 in_pin = wordline_driver_inst.get_pin("in{0}".format(j))
                 if (out_pin.layer=="metal1" or out_pin.layer=="m1pin"):
                     pin_width = self.m1_width
                 else:
                     pin_width = self.m3_width
-                self.add_layout_pin(text=text, 
+                self.add_layout_pin(text=out_text, 
                                     layer=out_pin.layer,
                                     offset= (self.width-pin_width, out_pin.by()),
                                     width=pin_width, 
                                     height=pin_width)
 
-                self.add_layout_pin(text="in[{0}]".format(int(4*i+j)), 
+                self.add_layout_pin(text=in_text, 
                                     layer=in_pin.layer,
                                     offset= in_pin.ll(),
                                     width=self.m1_width, 
