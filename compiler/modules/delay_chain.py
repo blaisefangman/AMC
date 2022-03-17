@@ -50,7 +50,7 @@ class delay_chain(design.design):
     def create_module(self):
         """ Generate a list of inverters"""
         
-        self.stage_size = int(ceil(self.num_inv/self.num_stage))
+        self.stage_size = int(ceil(self.num_inv//self.num_stage))
         
         if self.num_inv%self.num_stage == 0:
             self.num_even_stage = self.num_stage

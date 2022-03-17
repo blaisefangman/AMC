@@ -81,7 +81,7 @@ class bank(design.design):
         self.pow_width = 2*self.m_pitch("m1")
         
         via_pitch = drc["minwidth_via1"]+drc["via1_to_via1"]
-        self.num_via = int(ceil((self.pow_width+drc["via1_to_via1"]-2*drc["metal1_extend_via1"]) / via_pitch))
+        self.num_via = int(ceil((self.pow_width+drc["via1_to_via1"]-2*drc["metal1_extend_via1"]) // via_pitch))
         via1=contact.contact(layer_stack=("metal1", "via1", "metal2"), dimensions=[1,self.num_via])
         via2=contact.contact(layer_stack=("metal2", "via2", "metal3"), dimensions=[1,self.num_via])
         self.pow_width = max(via1.height, via2.height)
@@ -559,7 +559,6 @@ class bank(design.design):
                     self.add_path("metal1", [inp, pos])
                     self.add_via_center(self.m1_stack, pos)
 
-              
                 if self.two_level_bank:
                     y1=self.d_split_ary_inst[i].get_pin("en2_S").uy()
                     y2=self.d_split_ary_inst[i].get_pin("en1_S").uy()
