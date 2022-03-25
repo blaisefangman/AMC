@@ -33,7 +33,7 @@ class ptx(design.design):
         # a given name. I.e., you will over-write a design in GDS if one has and the other doesn't
         # have poly connected, for example.
         
-        name = "{0}_m{1}_w{2}_{3}".format(tx_type, mults, width, int(min_area))
+        name = "{0}_m{1}_w{2:.3g}_{3}".format(tx_type, mults, width, int(min_area))
         if connect_active:
             name += "_a"
         if connect_poly:
@@ -42,7 +42,7 @@ class ptx(design.design):
             name += "_c{}".format(num_contacts)
         
         # replace periods with underscore for newer spice compatibility
-        name=re.sub('\.','_',name)
+        name=re.sub(r'\.','_',name)
 
         design.design.__init__(self, name)
         debug.info(3, "create ptx structure {0}".format(name))
@@ -444,7 +444,16 @@ class ptx(design.design):
             extra_spice_info = ""
         
         self.spice_device="M{{0}} {{1}} {0} m={1} w={2}u l={3}u pd={4}u ps={4}u as={5}p ad={5}p {6}".format(
-                           spice[self.tx_type], self.mults, self.active_height, 
-                           drc["minwidth_poly"], perimeter_sd, area_sd, extra_spice_info)
+                           spice[self.tx_type], self.mults, spice_format_float(self.active_height), 
+                           spice_format_float(drc["minwidth_poly"]), spice_format_float(perimeter_sd), 
+                           spice_format_float(area_sd), extra_spice_info)
 
         self.spice.append("\n* ptx " + self.spice_device)
+
+def spice_format_float(f):
+    s = '{0:.3f}'.format(f)
+    if (s[-1] == '0'):
+        s = s[0:-1]
+    if (s[-1] == '0'):
+        s = s[0:-1]
+    return s
