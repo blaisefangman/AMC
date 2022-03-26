@@ -1,8 +1,12 @@
+############################################################################
+#
 # BSD 3-Clause License (See LICENSE.OR for licensing information)
 # Copyright (c) 2016-2019 Regents of the University of California 
 # and The Board of Regents for the Oklahoma Agricultural and 
 # Mechanical College (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
+#
+############################################################################
 
 
 import re
@@ -19,7 +23,7 @@ def relative_compare(value1,value2,error_tolerance=0.001):
 def parse_output(filename, key):
     """Parses a spice output file for a key value"""
     
-    full_filename="{0}{1}.mt".format(OPTS.AMC_temp, filename)
+    full_filename="{0}{1}.mt0".format(OPTS.AMC_temp, filename)
 
     try:
         f = open(full_filename, "r")

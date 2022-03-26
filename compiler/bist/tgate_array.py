@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -115,7 +121,7 @@ class tgate_array(design.design):
                           height=contact.well.height)
                           
             self.add_layout_pin(text=pin[i],
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=(self.tgate.width/2,y_off),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -132,17 +138,17 @@ class tgate_array(design.design):
         
         for i in range(self.size):
             self.add_layout_pin(text="in1{0}".format(i),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=self.tgate_off[i].get_pin("in1").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
             self.add_layout_pin(text="in2{0}".format(i),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=self.tgate_off[i].get_pin("in2").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
             self.add_layout_pin(text="out{0}".format(i),
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=self.tgate_off[i].get_pin("out").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -154,7 +160,7 @@ class tgate_array(design.design):
             y_off=self.tgate_off[self.size-1].uy() + self.tgate.width/2
             self.add_path("metal2", [off, (off.x, y_off)])
             self.add_layout_pin(text=pins[i],
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=(off.x-0.5*self.m2_width, y_off-self.m2_width),
                             width=self.m2_width,
                             height=self.m2_width)

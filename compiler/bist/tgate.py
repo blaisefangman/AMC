@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -206,7 +212,7 @@ class tgate(design.design):
                 (self.out.x-self.m1_width, self.out.y-0.5*self.m1_width)]
         for (pin,off) in zip(pins, offsets):
             self.add_layout_pin(text=pin,
-                                layer=self.m1_pin_layer,
+                                layer="metal1",
                                 offset=off,
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -215,7 +221,7 @@ class tgate(design.design):
         offsets=[(self.up_down_off.x, 0), (self.updown_boff.x, 0) ]
         for (pin,off) in zip(pins, offsets):
             self.add_layout_pin(text=pin,
-                                layer=self.m2_pin_layer,
+                                layer="metal2",
                                 offset=off,
                                 width=self.m2_width,
                                 height=self.m2_width)

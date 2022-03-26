@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -47,7 +53,7 @@ class data_pattern(design.design):
         self.add_layout_pins()
         
         self.width= self.nmos_inst[self.size-1].rx()-self.nmos_inst[0].lx()+\
-                    2*self.shift+self.pin_off+self.m_pitch("m1")
+                    self.shift+self.pin_off+self.m_pitch("m1")
         
         self.height= self.nmos.width+self.pmos.width+self.m_pitch("m1")
         if info["tx_dummy_poly"]:
@@ -64,10 +70,10 @@ class data_pattern(design.design):
     def create_modules(self):
         """ construct all the required modules """
         
-        self.nmos = ptx(tx_type="nmos", min_area = True)
+        self.nmos = ptx(tx_type="nmos", width=4*drc["minwidth_tx"], min_area = True)
         self.add_mod(self.nmos)
 
-        self.pmos = ptx(tx_type="pmos", min_area = True)
+        self.pmos = ptx(tx_type="pmos", width=4*drc["minwidth_tx"], min_area = True)
         self.add_mod(self.pmos)
         
         #This is a offset in x-direction for input pins
@@ -113,12 +119,12 @@ class data_pattern(design.design):
         if info["has_pwell"]:
             self.add_rect(layer="pwell",
                           offset=self.nmos_inst[self.size-1].lr(),
-                          width=2*self.shift,
+                          width=self.shift,
                           height=self.nmos.width)
         if info["has_pimplant"]:
             self.add_rect(layer="pimplant",
                           offset=self.nmos_inst[self.size-1].lr(),
-                          width=2*self.shift,
+                          width=self.shift,
                           height=self.pmos_inst[self.size-1].by()+self.implant_space)
                        
         xoff=self.well_enclose_active+contact.well.height
@@ -132,13 +138,13 @@ class data_pattern(design.design):
         #pwell contact
         if info["has_nwell"]:
             self.add_rect(layer="nwell",
-                          offset=self.pmos_inst[0].ll()-vector(0, 0.5*self.space),
-                          width=self.shift*(self.size+2),
+                          offset=self.pmos_inst[0].ll()-vector(2*self.m_pitch("m1"), 0.5*self.space),
+                          width=self.shift*(self.size+1)+2*self.m_pitch("m1"),
                           height=self.pmos.width+self.space)
         if info["has_nimplant"]:
              self.add_rect(layer="nimplant",
                            offset=self.pmos_inst[self.size-1].lr()+vector(0,self.implant_space),
-                           width=2*self.shift,
+                           width=self.shift,
                            height=self.nmos.width-self.implant_space)
                        
         xoff = self.well_enclose_active+contact.well.height
@@ -157,7 +163,6 @@ class data_pattern(design.design):
         shift=vector(contact.well.height+self.extra_enclose,self.extra_enclose)
         for off in [self.nwell_co_off-shift, self.pwell_co_off-shift]:
             self.add_rect(layer="extra_layer",
-                          layer_dataType = layer["extra_layer_dataType"],
                           offset=off,
                           width= extra_width,
                           height= extra_height)
@@ -222,7 +227,6 @@ class data_pattern(design.design):
         vt_height = ceil(self.pmos.width) + ceil(self.nmos.width) + self.space
         self.add_rect(layer="vt",
                       offset=vt_offset,
-                      layer_dataType = layer["vt_dataType"],
                       width=self.shift*self.size,
                       height=vt_height)
 
@@ -234,7 +238,7 @@ class data_pattern(design.design):
             pin_off=(self.pmos_inst[i].get_pin("S").uc().x-0.5*self.m2_width, 
                      self.pmos_inst[0].uy()+self.m_pitch("m1")-self.m2_width)
             self.add_layout_pin(text="out{0}".format(i),
-                                layer=self.m2_pin_layer,
+                                layer="metal2",
                                 offset=pin_off,
                                 width=self.m2_width,
                                 height=self.m2_width)
@@ -249,12 +253,12 @@ class data_pattern(design.design):
         self.add_via_center(self.m1_stack, gnd_off, rotate=90)
         
         self.add_layout_pin(text="vdd",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=(vdd_off.x-0.5*self.m2_width, 0),
                             width=self.m2_width,
                             height=self.m2_width)
         self.add_layout_pin(text="gnd",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=(gnd_off.x-0.5*self.m2_width, 0),
                             width=self.m2_width,
                             height=self.m2_width)
@@ -276,7 +280,7 @@ class data_pattern(design.design):
         
         
         self.add_layout_pin(text="enable",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(data1_off.x-2*self.m_pitch("m1"),data1_off.y-0.5*self.m1_width ),
                             width=self.m1_width,
                             height=self.m1_width)

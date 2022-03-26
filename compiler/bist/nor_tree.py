@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -134,7 +140,7 @@ class nor_tree(design.design):
         
         in0_off=(module.lx()-self.m_pitch("m1")-0.5*self.m2_width,-self.m_pitch("m1"))
         self.add_layout_pin(text="in0",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=in0_off,
                             width=self.m2_width,
                             height=self.m2_width)
@@ -151,7 +157,7 @@ class nor_tree(design.design):
                 
                 in_off=(module.lx()-(i+2)*self.m_pitch("m1")-0.5*self.m2_width,-self.m_pitch("m1"))
                 self.add_layout_pin(text="in{0}".format(i+1),
-                                     layer=self.m2_pin_layer,
+                                     layer="metal2",
                                      offset=in_off,
                                      width=self.m2_width,
                                      height=self.m2_width)
@@ -166,7 +172,7 @@ class nor_tree(design.design):
                 
                 in_off=(xoff-0.5*self.m2_width,-self.m_pitch("m1"))
                 self.add_layout_pin(text="in{0}".format(i+1),
-                                    layer=self.m2_pin_layer,
+                                    layer="metal2",
                                     offset=in_off,
                                     width=self.m2_width,
                                     height=self.m2_width)
@@ -187,7 +193,7 @@ class nor_tree(design.design):
         else:
             nor_Z_off= self.nor_inst[self.size-3].get_pin("Z")
         self.add_layout_pin(text="out",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=nor_Z_off.ll(),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -196,12 +202,12 @@ class nor_tree(design.design):
         nor_vdd_off= module.get_pin("vdd").ll()
         nor_gnd_off= module.get_pin("gnd").ll()
         self.add_layout_pin(text="vdd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=nor_vdd_off,
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
         self.add_layout_pin(text="gnd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=nor_gnd_off,
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)

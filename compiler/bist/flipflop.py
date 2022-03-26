@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -25,7 +31,7 @@ class flipflop(design.design):
     is a hand-made cell, so the layout and netlist should be available in
     the technology library."""
 
-    pin_names = ["in", "out", "out_bar", "clk", "vdd", "gnd"]
+    pin_names = ["in", "out", "out_bar", "clk", "rst0", "rst1", "vdd", "gnd"]
     (width,height) = utils.get_libcell_size("flipflop", GDS["unit"], layer["boundary"])
     pin_map = utils.get_libcell_pins(pin_names, "flipflop", GDS["unit"])
 

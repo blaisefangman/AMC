@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -26,7 +32,6 @@ from nand2 import nand2
 from nand3 import nand3
 from pinv import pinv
 from flipflop import flipflop
-from ptx import ptx
 from tgate_array import tgate_array
 from tech import info, layer, drc
 from utils import ceil
@@ -94,12 +99,6 @@ class lfsr(design.design):
         self.inv5 = pinv(size=5)
         self.add_mod(self.inv5)
         
-        self.pmos = ptx(tx_type="pmos", min_area = True, dummy_poly=False)
-        self.add_mod(self.pmos)
-
-        self.nmos = ptx(tx_type="nmos", min_area = False, dummy_poly=False)
-        self.add_mod(self.nmos)
-
     def setup_layout_constants(self):
         """ Setup layout offsets, spaces, etc """
 
@@ -107,9 +106,6 @@ class lfsr(design.design):
         self.gap= max(self.implant_space, self.well_space, 2*self.m_pitch("m1"))
         self.ygap= self.gap + self.m_pitch("m1")
         
-        #Thsi is to share Drain & Source contacts of initializer MOSes
-        self.nmos_overlap = self.nmos.get_pin("D").lx() - self.nmos.get_pin("S").lx()
-
     def compute_polynomials(self):
         """ Set the forward and reverse feedback polynomials for LFSRs. 
             reverse LFSR has to have a characteristic polynomial that is 
@@ -178,7 +174,6 @@ class lfsr(design.design):
         self.add_flipflops()
         self.add_nor_tree()
         self.add_xor_gates(self.forward, self.reverse)
-        self.add_init_moses()
         self.add_reset_test_gate()
         self.add_forward_reverse_selection_gates()
         self.add_tgate_array()
@@ -191,18 +186,12 @@ class lfsr(design.design):
         self.connect_nor_tree_to_xor(self.forward, self.reverse)
         self.connect_xor_to_ff(self.forward, self.reverse)
         self.add_layout_pins()
-        self.connect_pmos_to_ff()
-        self.connect_nmos_to_ff()
-        self.connect_pmos_to_reset_b()
-        self.connect_nmos_r_to_reset()
-        self.connect_nmos_f_to_init()
-        self.add_well_contacts()
         self.connect_reset_test_gate()
         self.connect_forward_gate()
-        self.connect_ff_to_out_pins()
         self.connect_tgate_array_to_ff()
         self.connect_tgate_array_to_up_down()
         self.connect_lfsr_complete_gates()
+        self.connect_ff_rst()
         self.connect_vdd_gnd()
     
     def add_flipflops(self):
@@ -215,8 +204,7 @@ class lfsr(design.design):
             self.ff_up[self.size-1-i]= self.add_inst(name="ff_up{0}".format(self.size-1-i),
                                                      mod=self.ff,
                                                      offset=(i*self.ff.width,0))
-            self.connect_inst(["Q_f{0}".format(self.size-i), "Q_f{0}".format(self.size-1-i), 
-                               "Q_bar_f{0}".format(self.size-1-i), "clk_forward", "vdd", "gnd"])
+            self.connect_inst(["Q_f{0}".format(self.size-i), "Q_f{0}".format(self.size-1-i), "fx{0}".format(i),"clk_f", "init", "vdd", "vdd", "gnd"])
             
         for i in range(self.size):
             #FFs for reverse lfsr
@@ -225,11 +213,9 @@ class lfsr(design.design):
                                            offset=(i*self.ff.width,0),
                                            mirror= "MX")
             if i == 0:
-                self.connect_inst(["Q_r{0}".format(self.size), "Q_r{0}".format(i), 
-                                   "Q_bar_r{0}".format(i), "clk_reverse", "vdd", "gnd"])
+                self.connect_inst(["Q_r{0}".format(self.size), "Q_r{0}".format(i), "rx{0}".format(i), "clk_r", "gnd", "reset_b", "vdd", "gnd"])
             else:
-                self.connect_inst(["Q_r{0}".format(i-1), "Q_r{0}".format(i), 
-                                   "Q_bar_r{0}".format(i), "clk_reverse", "vdd", "gnd"])
+                self.connect_inst(["Q_r{0}".format(i-1), "Q_r{0}".format(i), "rx{0}".format(i),"clk_r", "reset", "vdd", "vdd", "gnd"])
 
     def add_nor_tree(self):
         """ Place nor_tree """
@@ -281,64 +267,12 @@ class lfsr(design.design):
                 self.connect_inst(["Q_r{}".format(i), "u_d{}".format(n), "Q_r{}".format(self.size), "vdd", "gnd"])
             else:
                 self.connect_inst(["Q_r{}".format(i), "u_d{}".format(n), "u_d{}".format(n+1), "vdd", "gnd"])
-
-    
-    def add_init_moses(self):
-        """ Add initialize transistors to set the values of FFs at reset and when LFSR flips"""
-        
-        #PMOS for first reverse FF to set to vdd
-        x_off=-(self.size+5)*self.m_pitch("m1")
-        y_off= self.xor_down[1].by()
-        self.nmos_r={}
-        self.nmos_f={}
-        self.init_pmos = self.add_inst(name="init_pmos_r0",mod=self.pmos,
-                                       offset=(x_off, y_off),rotate=90)
-        self.connect_inst(["Q_r0", "reset_b", "vdd", "vdd"])
-        
-        #NMOS for reverse FFs to set to gnd
-        for i in range(2*(self.size-1)-1):
-            x_off= self.init_pmos.rx()
-            y_off=self.init_pmos.uy()+i*self.nmos_overlap + 4*self.well_extend_active
-            self.nmos_r[i] = self.add_inst(name="init_nmos_r{0}".format(i),mod=self.nmos,
-                                           offset=(x_off, y_off),rotate=90)
-            if i%2:
-                self.connect_inst(["gnd", "reset", "Q_r{0}".format(i+1-int((i-1)/2)), "gnd"])
-            else:
-                self.connect_inst(["Q_r{0}".format(i+1-int(i/2)), "reset", "gnd", "gnd"])
-    
-        #NMOS for forward FFs to set to gnd
-        for i in range(2*(self.size-1)):
-            x_off= self.init_pmos.rx()
-            y_off=max(self.nmos_r[2*(self.size-1)-2].uy(),self.ff_down[0].by())+i*self.nmos_overlap
-            
-            if info["tx_dummy_poly"]:
-                y_off = y_off+self.poly_space
-            self.nmos_f[i] = self.add_inst(name="init_nmos_f{0}".format(i),mod=self.nmos,
-                                           offset=(x_off, y_off),rotate=90)
-            if i%2:
-                self.connect_inst(["gnd", "init", "Q_f{0}".format(i-int((i-1)/2)), "gnd"])
-            else:
-                self.connect_inst(["Q_f{0}".format(i-int(i/2)), "init", "gnd", "gnd"])
-    
-        if info["tx_dummy_poly"]:
-            self.dummy_poly=[]
-            self.dummy_poly.append(self.init_pmos.ll()+vector(0, 0))
-            self.dummy_poly.append(self.init_pmos.ul() -vector(0, self.poly_width))
-            self.dummy_poly.append(self.nmos_r[0].ll()+vector(0, 0))
-            self.dummy_poly.append(self.nmos_r[2*(self.size-1)-2].ul() -vector(0, self.poly_width))
-            self.dummy_poly.append(self.nmos_f[2*(self.size-1)-1].ul() -vector(0, self.poly_width))
-            self.dummy_poly.append(self.nmos_f[0].ll()+vector(0, 0))
-            for i in self.dummy_poly:
-                self.add_rect(layer="poly",
-                              offset=i,
-                              height=self.poly_width,
-                              width=ceil(drc["minarea_poly_merge"]/self.poly_width))
     
     def add_reset_test_gate(self):
         """ Add AND gate to gate clk with test signal"""
         
-        x_off= self.init_pmos.rx()-self.nand2.width-self.inv.width
-        y_off= self.nmos_f[2*(self.size-1)-1].uy()+self.well_space+self.m_pitch("m1")+self.inv.height
+        x_off= -self.nand2.width-self.inv.width-9*self.m_pitch("m2")
+        y_off= -3*self.inv.height
         
         self.reset_inv = self.add_inst(name="reset_inv",mod=self.inv,
                                        offset=(x_off, y_off),mirror="MX")
@@ -367,8 +301,8 @@ class lfsr(design.design):
         """ Add AND gates for forward/reverse selection"""
         
         #2 input nand + inv for forward lfsr
-        x_off= self.init_pmos.rx() - self.nand2.width - self.inv5.width
-        y_off= self.test_inv.uy()+self.nand2.height+self.well_space+contact.m1m2.width+self.m_pitch("m1")
+        x_off= self.reset_inv.lx()
+        y_off= self.test_inv.uy()+self.inv.height+3*self.m_pitch("m1")
         
         self.forward_nand = self.add_inst(name="forward_nand", mod=self.nand2,
                                           offset=(x_off, y_off), mirror="MX")
@@ -377,7 +311,7 @@ class lfsr(design.design):
         self.forward_inv = self.add_inst(name="forward_inv", mod=self.inv5,
                                          offset=(x_off+self.nand2.width, y_off),
                                          mirror="MX")
-        self.connect_inst(["z_forward1", "clk_forward", "vdd", "gnd"])
+        self.connect_inst(["z_forward1", "clk_f", "vdd", "gnd"])
 
         #2 input nand + inv for reverse lfsr
         x_off= self.forward_nand.lx()
@@ -394,7 +328,7 @@ class lfsr(design.design):
         
         self.reverse_inv = self.add_inst(name="reverse_inv", mod=self.inv5,
                                          offset=(x_off+self.nand2.width, y_off))
-        self.connect_inst(["z_reverse1", "clk_reverse", "vdd", "gnd"])
+        self.connect_inst(["z_reverse1", "clk_r", "vdd", "gnd"])
     
     def add_tgate_array(self):
         """ Add array of T gates for forward/reverse output selection"""
@@ -481,14 +415,14 @@ class lfsr(design.design):
         #connections for forward lfsr
         max_xoff = self.ff_up[self.size-1].get_pin("out").lx()
         for i in range(self.size):
-            y_off = self.ff_up[i].uy()+(i+1)*self.m_pitch("m2")
+            y_off = self.ff_up[i].uy()+(i+2)*self.m_pitch("m2")
             x_off = self.tgate_xoff+(1+2*self.size-2*i)*self.m_pitch("m2")
             self.add_path("metal3", [(max_xoff, y_off ), (x_off, y_off)])
             self.add_via_center(self.m2_stack, (x_off+0.5*contact.m2m3.width, y_off)) 
 
         #connections for reverse lfsr
         for i in range(self.size):
-            y_off = self.ff_down[i].by()-(i+1)*self.m_pitch("m2")
+            y_off = self.ff_down[i].by()-(i+2)*self.m_pitch("m2")
             x_off = self.tgate_xoff+(2*i+1+3)*self.m_pitch("m2")
             self.add_path("metal3", [(max_xoff, y_off ), (x_off, y_off)])
             self.add_via_center(self.m2_stack, (x_off+0.5*contact.m2m3.width, y_off)) 
@@ -522,7 +456,7 @@ class lfsr(design.design):
         self.yoff_f={}
         #connections for forward lfsr
         for i in range(self.size):
-            self.yoff_f[self.size-1-i] = self.ff_up[i].uy()+(i+1)*self.m_pitch("m2")
+            self.yoff_f[self.size-1-i] = self.ff_up[i].uy()+(i+2)*self.m_pitch("m2")
             pos1= (0, self.yoff_f[self.size-1-i] )
             pos2= (self.ff.width*self.size, self.yoff_f[self.size-1-i])
             self.add_path("metal3", [pos1, pos2])
@@ -539,7 +473,7 @@ class lfsr(design.design):
         self.yoff_r={}
         #connections for reverse lfsr
         for i in range(self.size):
-            self.yoff_r[i] = self.ff_down[i].by()-(i+1)*self.m_pitch("m2")
+            self.yoff_r[i] = self.ff_down[i].by()-(i+2)*self.m_pitch("m2")
             self.add_path("metal3", [(0, self.yoff_r[i] ), (self.ff.width*self.size, self.yoff_r[i])])
             
             if i < self.size-1:
@@ -647,22 +581,30 @@ class lfsr(design.design):
         k = len(reverse)-1
         pin = self.xor_up[k].get_pin("Z")
         pos1=vector(pin.rx()+0.5*self.m2_width, pin.uc().y)
-        pos2=vector(pos1.x,self.ff_up[self.size-1].uy()+(self.size+1)*self.m_pitch("m2"))
-        pos3=vector(self.ff_up[self.size-1].lx()-self.m_pitch("m1"), pos2.y)
-        pos4=self.ff_up[self.size-1].get_pin("in").lc()+vector(self.m_pitch("m1"),0) 
+        pos2=vector(pos1.x,self.ff_up[self.size-1].uy()+(self.size+2)*self.m_pitch("m2"))
+        pos3=vector(self.ff_up[self.size-1].lx()-2*self.m_pitch("m1"), pos2.y)
+        pos4=self.ff_up[self.size-1].get_pin("in").lc()
         self.add_wire(self.m2_rev_stack, [pos1, pos2, pos3, pos4])
         self.add_via_center(self.m1_stack, (pos1.x, pos1.y-0.5*self.m1_width-self.via_shift("v1")))
         self.add_via_center(self.m2_stack, pos4, rotate=90)
+        self.add_via_center(self.m1_stack, pos4, rotate=90)
+        self.add_rect_center(layer="metal2", offset=pos4, 
+                             width=contact.m2m3.height, 
+                             height=2*ceil(self.m2_minarea/contact.m2m3.height))
 
         #connections for reverse lfsr
         pin = self.xor_down[k].get_pin("Z")
         pos1=vector(pin.rx()+0.5*self.m2_width, pin.uc().y)
-        pos2=vector(pos1.x,self.ff_down[0].by()-(self.size+1)*self.m_pitch("m2"))
+        pos2=vector(pos1.x,self.ff_down[0].by()-(self.size+2)*self.m_pitch("m2"))
         pos3=vector(self.ff_down[0].lx()-self.m_pitch("m1"), pos2.y)
         pos4=self.ff_down[0].get_pin("in").lc()+vector(self.m_pitch("m1"),0)
         self.add_wire(self.m2_rev_stack, [pos1, pos2, pos3, pos4])
         self.add_via_center(self.m1_stack, (pos1.x, pos1.y-0.5*self.m1_width-self.via_shift("v1")))
         self.add_via_center(self.m2_stack, pos4, rotate=90)
+        self.add_via_center(self.m1_stack, pos4, rotate=90)
+        self.add_rect_center(layer="metal2", offset=pos4, 
+                             width=contact.m2m3.height, 
+                             height=2*ceil(self.m2_minarea/contact.m2m3.height))
 
         
     def add_layout_pins(self):
@@ -682,7 +624,7 @@ class lfsr(design.design):
             self.add_via_center(self.m1_stack , (x_off+(i+1)*self.m_pitch("m2"), y_off))
             off=(x_off+(i+1)*self.m_pitch("m2")-0.5*self.m2_width, self.max_yoff-self.m2_width)
             self.add_layout_pin(text="addr{0}".format(i), 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=off,
                                 width=self.m2_width,
                                 height=self.m2_width)
@@ -692,7 +634,7 @@ class lfsr(design.design):
         pin =self.nor2_inst[self.size-2].get_pin("Z")
         self.add_path("metal1", [pin.lc(), (self.max_xoff, pin.lc().y)])
         self.add_layout_pin(text="done", 
-                                layer=self.m1_pin_layer, 
+                                layer="metal1", 
                                 offset=(self.max_xoff-self.m1_width, pin.by()),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -701,14 +643,14 @@ class lfsr(design.design):
         pin=["reset", "up_down", "vdd", "gnd"]
         self.ctrl_xoff={}
         for i in range(4):
-            self.ctrl_xoff[i] = x_off = self.reverse_inv1.lx()-(i+2)* self.m_pitch("m1")
+            self.ctrl_xoff[i] = x_off = self.reverse_inv1.lx()-(i+4)* self.m_pitch("m1")
             self.add_path("metal2",[(x_off,self.xor_down[1].by()), 
-                                    (x_off, self.max_yoff)] )
+                                    (x_off, self.max_yoff+self.m_pitch("m1"))] )
 
         for i in range(3):
             pin_off=(self.ctrl_xoff[i+1]-0.5*self.m2_width, self.max_yoff-self.m2_width)
             self.add_layout_pin(text=pin[i+1], 
-                                layer=self.m2_pin_layer, 
+                                layer="metal2", 
                                 offset=pin_off,
                                 width=self.m2_width,
                                 height=self.m2_width)
@@ -718,19 +660,19 @@ class lfsr(design.design):
         pos1= (self.ctrl_xoff[3], pos2.y)
         self.add_path("metal1", [pos1,pos2])
         self.add_layout_pin(text="reset", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=(self.ctrl_xoff[3], self.reset_inv.get_pin("A").by()),
                             width=self.m1_width,
                             height=self.m1_width)
 
         self.add_layout_pin(text="test", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=(self.ctrl_xoff[3], self.test_nand.get_pin("A").by()),
                             width=self.m1_width,
                             height=self.m1_width)
         
         self.add_layout_pin(text="clk", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1", 
                             offset=(self.ctrl_xoff[3],self.test_nand.get_pin("B").by()),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -740,242 +682,9 @@ class lfsr(design.design):
         for i in range(2):
             self.ctrl_xoff[i+4] = x_off = self.tgate_xoff+(i+1)* self.m_pitch("m1")
             pos1=(x_off,self.xor_down[1].by())
-            pos2=(x_off, self.max_yoff+contact.m1m2.width)
+            pos2=(x_off, self.max_yoff+self.m_pitch("m1"))
             self.add_path(layer="metal2",coordinates=[pos1,pos2], width=contact.m1m2.width )
 
-
-    def connect_pmos_to_ff(self):
-        """ Connect initial pmos to flipflop inputs"""
-        
-        self.out_xoff={}
-        height1 = max(self.nmos_r[2*(self.size-1)-2].uy(), self.ff_down[0].by())-self.m_pitch("m2")
-        height2 = max(self.nmos_f[2*(self.size-1)-1].uy(), self.nor_tree_up.by())
-        for i in range(self.size):
-            self.out_xoff[i]= x_off = -(i+4)* self.m_pitch("m1")
-            self.add_path("metal2",[(x_off, self.xor_down[1].by()), 
-                                    (x_off, height1)], width=contact.m1m2.width)
-            self.add_path("metal2",[(x_off, self.nmos_f[0].by()), 
-                                    (x_off, height2)], width=contact.m1m2.width)
-        
-        #First reverse ff is initialized with vdd
-        pin=self.init_pmos.get_pin("S").lc()
-        self.add_path ("metal1", [pin, (self.out_xoff[0], pin.y)])
-        self.add_via_center(self.m1_stack,(self.out_xoff[0], pin.y))
-        pin=self.init_pmos.get_pin("D").lc()
-        self.add_path ("metal1", [pin, (self.ctrl_xoff[2], pin.y)])
-        self.add_via_center(self.m1_stack,(self.ctrl_xoff[2], pin.y))
-
-
-    def connect_nmos_to_ff(self):
-        """ Connect initial nmos to flipflop inputs"""
-        
-        #second to last reverse ffs are initialized with gnd
-        for i in range(2*(self.size-1)-1):
-            if i%2:
-                pin=self.nmos_r[i].get_pin("D").lc()
-                self.add_path ("metal1", [pin, (self.out_xoff[int((i-1)/2)+2], pin.y)])
-                self.add_via_center(self.m1_stack,(self.out_xoff[int((i-1)/2)+2], pin.y) )
-                pin=self.nmos_r[i].get_pin("S").lc()
-                self.add_path ("metal1", [pin, (self.ctrl_xoff[3], pin.y)])
-                self.add_via_center(self.m1_stack,(self.ctrl_xoff[3], pin.y) )
-            
-            else: 
-                pin=self.nmos_r[i].get_pin("S").lc()
-                self.add_path ("metal1", [pin, (self.out_xoff[int(i/2)+1], pin.y)])
-                self.add_via_center(self.m1_stack,(self.out_xoff[int(i/2)+1], pin.y) )
-                pin=self.nmos_r[i].get_pin("D").lc()
-                self.add_path ("metal1", [pin, (self.ctrl_xoff[3], pin.y)])
-                self.add_via_center(self.m1_stack,(self.ctrl_xoff[3], pin.y) )
-        
-        #first to last forward ffs are initialized with gnd
-        for i in range(2*(self.size-1)):
-            if i%2:
-                pin=self.nmos_f[i].get_pin("D").lc()
-                self.add_path ("metal1", [pin, (self.out_xoff[int((i-1)/2)+1], pin.y)])
-                self.add_via_center(self.m1_stack,(self.out_xoff[int((i-1)/2)+1], pin.y))
-                pin=self.nmos_f[i].get_pin("S").lc()
-                self.add_path ("metal1", [pin, (self.ctrl_xoff[3], pin.y)])
-                self.add_via_center(self.m1_stack,(self.ctrl_xoff[3], pin.y))
-            
-            else: 
-                pin=self.nmos_f[i].get_pin("S").lc()
-                self.add_path ("metal1", [pin, (self.out_xoff[int(i/2)], pin.y)])
-                self.add_via_center(self.m1_stack,(self.out_xoff[int(i/2)], pin.y) )
-                pin=self.nmos_f[i].get_pin("D").lc()
-                self.add_path ("metal1", [pin, (self.ctrl_xoff[3], pin.y)])
-                self.add_via_center(self.m1_stack,(self.ctrl_xoff[3], pin.y) )
-
-
-    def connect_pmos_to_reset_b(self):
-        """ Connect gate of initial pmos to reset_b"""
-        
-        pos1 = self.reset_inv.get_pin("Z").lc()
-        pos2 = vector(pos1.x+self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.init_pmos.by())
-        pos4 = vector(self.init_pmos.lx()-self.m_pitch("m1")-self.poly_space+contact.poly.height, 
-                      pos3.y-2*contact.poly.width+0.5*self.m1_width)
-        self.add_wire (self.m1_stack, [pos1, pos2, pos3, pos4])
-
-        pos3=vector(pos2.x, self.reset_inv.uy()+self.m_pitch("m1"))
-        pos6=self.test_nand.get_pin("C").lc()
-        pos4=vector(self.forward_nand.lx()-self.m_pitch("m1"), pos3.y)
-        pos5=vector(pos4.x,pos6.y)
-        self.add_wire (self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
-
-        pos1=pin=self.init_pmos.get_pin("G").lc()
-        pos2=vector(self.init_pmos.lx()-self.m_pitch("m1")-self.poly_space, pos1.y)
-        pos22=vector(pos2.x, self.init_pmos.get_pin("G").uc().y)
-        pos3= vector(pos2.x, self.init_pmos.by()-2*contact.poly.width)
-        pos6 = vector(pos3.x+0.5*contact.poly.first_layer_height+self.via_shift("co"), pos3.y)
-        
-        
-        self.add_path("poly", [pos1, pos2])
-        self.add_path("poly", [pos22, pos3], width =contact.poly.first_layer_height )
-        self.add_contact(self.poly_stack, pos6, rotate=90)
-        self.add_via(self.m1_stack, (pos6.x+contact.m1m2.height, pos6.y), rotate=90)
-        self.add_rect(layer="metal2", 
-                      offset=pos3, 
-                      width=ceil(self.m2_minarea/contact.m1m2.width), 
-                      height=contact.m1m2.width)
-        
-        
-    def connect_nmos_r_to_reset(self):
-        """ Connect gates of all initial reverse nmoses to reset input"""
-        
-        self.x_off = self.nmos_r[0].lx()-2*self.m_pitch("m1")-self.well_enclose_active
-        for i in range(2*(self.size-1)-1):
-            pin=self.nmos_r[i].get_pin("G").lc()
-            self.add_path ("poly", [pin, (self.x_off, pin.y)])
-       
-        
-        pos1=(self.x_off, self.nmos_r[2*(self.size-1)-2].get_pin("G").uc().y)
-        pos2=(self.x_off, self.nmos_r[0].by()+drc["extra_to_poly"])
-        self.add_path ("poly", [pos1,pos2], width=contact.poly.first_layer_height)
-        
-        #add poly_contact at gate and connect gate to reset rail
-        y_off=self.nmos_r[0].by()+drc["extra_to_poly"]
-        pos1=(self.x_off-0.5*contact.poly.width, y_off+0.5*contact.poly.height)
-        pos2=(self.ctrl_xoff[0], y_off+0.5*contact.poly.height)
-        self.add_path ("metal1", [pos1,pos2])
-        self.add_contact(self.poly_stack, 
-                        (self.x_off-0.5*contact.poly.first_layer_height, y_off-self.via_shift("co")))
-        self.add_via_center(self.m1_stack, pos2)
-        
-
-    def connect_nmos_f_to_init(self):
-        """ Connect gates of all initial forward nmoses to init pin"""
-        
-        #connect all the gates together with poly
-        self.x_off = self.nmos_f[0].lx()-2*self.m_pitch("m1")-self.well_enclose_active
-        for i in range(2*(self.size-1)):
-            pin=self.nmos_f[i].get_pin("G").lc()
-            self.add_path ("poly", [pin, (self.x_off, pin.y)])
-        
-        pos1=(self.x_off, self.nmos_f[2*(self.size-1)-1].get_pin("G").uc().y)
-        pos2=(self.x_off, self.nmos_f[0].by()+drc["extra_to_poly"])
-        self.add_path ("poly", [pos1,pos2], width=contact.poly.first_layer_height)
-        
-        #add poly_contact at gate and connect gate to reset rail
-        xoff= self.x_off-0.5*contact.poly.first_layer_height
-        y_off=self.nmos_f[0].by()+drc["extra_to_poly"]
-        self.add_contact(self.poly_stack, (xoff, y_off-self.via_shift("co")))
-        pos1=self.init_inv.get_pin("Z").lc()
-        pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.reset_inv.by()-self.m_pitch("m1"))
-        pos4=vector(self.reset_inv.rx()-self.m_pitch("m1"), pos3.y)
-        pos5=vector(pos4.x, y_off+0.5*contact.poly.height)
-        pos6=vector(self.x_off, pos5.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos6])
-
-    def add_well_contacts(self):
-        """ Add both nwell and pwell contacts with implant layer"""
-
-        
-        #add implant and well layers for initial nmos & pmos and well contacts
-        x_shift = self.x_off-self.m_pitch("m1")-2*self.implant_enclose_poly
-        width = self.init_pmos.rx() - x_shift + self.implant_enclose_poly
-
-        width3=self.init_pmos.height+ self.implant_enclose_poly  + 2*self.m_pitch("m1")
-        width2 = width - width3
-        off0= vector(x_shift, self.init_pmos.by() - 2*self.m_pitch("m1"))
-        off1= vector(off0.x, self.init_pmos.uy()+self.well_extend_active+drc["extra_to_poly"])
-        off2 =vector(off0.x, self.nmos_r[0].by())
-        off3 =vector(off0.x, self.init_pmos.by() - 2*self.m_pitch("m1"))
-        off4 =vector(self.init_pmos.lx()-2*self.m_pitch("m1"), self.init_pmos.by() - 2*self.m_pitch("m1")) 
-        
-        height0=self.init_pmos.uy()+self.well_extend_active-self.init_pmos.by() + 2*self.m_pitch("m1")+drc["extra_to_poly"]
-        height1=self.nmos_f[2*(self.size-1)-1].uy() - self.init_pmos.uy()-self.well_extend_active+drc["extra_to_poly"]
-        height2=self.nmos_f[2*(self.size-1)-1].uy() - self.nmos_r[0].by()+2*drc["extra_to_poly"]
-        height3=self.nmos_r[0].by()-self.init_pmos.uy()-drc["extra_to_poly"]-self.well_extend_active
-        
-        if info["has_nwell"]:
-            self.add_rect(layer="nwell", offset=off0, width = width, height=height0)
-        
-        if info["has_pwell"]:
-            self.add_rect(layer="pwell", offset=off1, width = width, height=height1)
-        
-        if info["has_nimplant"]:
-            self.add_rect(layer="nimplant", offset=off2, width = width, height=height2)
-            self.add_rect(layer="nimplant", offset=off3, width = width2, height=height0)
-
-        if info["has_pimplant"]:
-            self.add_rect(layer="pimplant", offset=off1, width = width, height=height3)
-            self.add_rect(layer="pimplant", offset=off4, width=width3, height=height0)
-        
-        #add well contact for nmoses
-        pcontact_off = self.init_pmos.ul()+vector(0, 2*self.well_extend_active)
-        self.add_contact(("active", "contact", "metal1"), pcontact_off, rotate=90)
-
-        #add well contact for pmos
-        ncontact_off = vector(off0.x+self.well_enclose_active, self.init_pmos.by())
-        self.add_contact(("active", "contact", "metal1"), ncontact_off)
-        
-        #add  active layer for min_arae active rule
-        pactive_off = pcontact_off-vector(contact.active.height, 0)
-        nactive_off = ncontact_off
-        self.add_rect(layer="active", 
-                      offset=pactive_off, 
-                      width=ceil(self.active_minarea/contact.active.width), 
-                      height=contact.active.width)
-        self.add_rect(layer="active", 
-                      offset=nactive_off, 
-                      width=contact.active.width, 
-                      height=ceil(self.active_minarea/contact.active.width))
-
-        self.add_rect(layer="extra_layer", 
-                      layer_dataType = layer["extra_layer_dataType"], 
-                      offset=off1, 
-                      width=width, 
-                      height=height3-drc["extra_to_poly"])
-        self.add_rect(layer="extra_layer", 
-                      layer_dataType = layer["extra_layer_dataType"], 
-                      offset=off0, 
-                      width=width-width3, 
-                      height=height0)
-
-        vt_offset=self.init_pmos.ll()-vector(0, 2*self.m_pitch("m1"))
-        vt_height = self.pmos.width+2*self.m_pitch("m1")+drc["extra_to_poly"]
-        self.add_rect(layer="vt",
-                      offset=vt_offset,
-                      layer_dataType = layer["vt_dataType"],
-                      width=self.pmos.height,
-                      height=vt_height)
-        self.add_rect(layer="vt",
-                      offset=self.nmos_r[0].ll(),
-                      layer_dataType = layer["vt_dataType"],
-                      width=self.nmos.height,
-                      height=self.nmos_f[2*(self.size-1)-1].uy()-self.nmos_r[0].by())
-        
-        #connect pwell contact to gnd
-        pos1=vector(self.init_pmos.lx(), self.init_pmos.uy()+2*self.well_extend_active+0.5*self.m1_width)
-        pos2=vector(self.ctrl_xoff[3], pos1.y)
-        self.add_path ("metal1", [pos1, pos2], width=contact.m1m2.width)
-        self.add_via_center(self.m1_stack, pos2)
-        
-        #connect nwell contact to vdd
-        pos1 = vector(nactive_off.x+0.5*self.m1_width,nactive_off.y)
-        pos2 = vector(pos1.x, self.init_pmos.get_pin("D").uy())
-        self.add_path ("metal1", [pos1, pos2], width=contact.m1m2.width)
 
     def connect_reset_test_gate(self):
         """ Connect terminals of test gate to corresponding input"""
@@ -1001,11 +710,11 @@ class lfsr(design.design):
         ff= [self.ff_up[0], self.ff_down[self.size-1]]
         for i in range(2):
             pos1 = mod[i].get_pin("B").lc()
-            pos2=(pos1.x-self.m_pitch("m1"), pos1.y)
+            pos2=(pos1.x-3*self.m_pitch("m1"), pos1.y)
             self.add_path ("metal1", [pos1, pos2])
             self.add_via_center(self.m1_stack, pos2)
 
-        pos1=self.reverse_nand.get_pin("B").lc()-vector(self.m_pitch("m1"),0)
+        pos1=self.reverse_nand.get_pin("B").lc()-vector(3*self.m_pitch("m1"),0)
         pos2=vector(pos1.x, self.forward_nand.by() - self.m_pitch("m1"))
         pos4 =self.test_inv.get_pin("Z").lc()
         pos3 = vector(pos4.x+self.m_pitch("m1"), pos2.y)
@@ -1022,10 +731,11 @@ class lfsr(design.design):
         pos1=self.reverse_inv1.get_pin("Z").lc()
         pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
         pos3=vector(pos2.x, self.reverse_inv1.by()-self.m_pitch("m1"))
-        pos4=vector(self.reverse_nand.get_pin("A").uc().x, pos3.y)
-        pos5=self.reverse_nand.get_pin("A").uc()
+        pos4=vector(self.reverse_nand.get_pin("A").lx()-2*self.m_pitch("m1"), pos3.y)
         pos6=self.init_nand.get_pin("A").lc()
         self.add_wire(self.m1_stack, [pos1,pos2,pos3,pos4,pos6])
+        pos5=self.reverse_nand.get_pin("A").lc()-vector(2*self.m_pitch("m1"),0)
+        self.add_path("metal1", [pos5, self.reverse_nand.get_pin("A").lc()])
         self.add_via_center(self.m1_stack, pos5)
         
         #connect input B of init_nand to done
@@ -1033,14 +743,14 @@ class lfsr(design.design):
         pos1=vector(pin.rx(), pin.lc().y)
         pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
         pos3=vector(pos2.x, self.max_yoff+3*self.m_pitch("m1"))
-        pos4=vector(self.forward_nand.lx()-6*self.m_pitch("m1"), pos3.y)
+        pos4=vector(self.forward_nand.lx()-8*self.m_pitch("m1"), pos3.y)
         pos5=self.init_nand.get_pin("B").lc()
         self.add_wire(self.m1_stack, [pos1,pos2,pos3,pos4,pos5])
 
         mod= [self.forward_inv, self.reverse_inv]
         for i in range(2):
             pos3 = mod[i].get_pin("Z").lc()
-            pos4=vector(-(i+2)*self.m_pitch("m1"), pos3.y)
+            pos4=vector(mod[i].rx()+(i+1)*self.m_pitch("m1"), pos3.y)
             pos5=vector(pos4.x, ff[i].get_pin("clk").lc().y)
             pos6=ff[i].get_pin("clk").lc()
             if (pos3.y - pos5.y < 2*self.m_pitch("m1")):
@@ -1053,33 +763,10 @@ class lfsr(design.design):
         self.add_path ("metal1", [self.reverse_nand.get_pin("Z").lc(), 
                                   self.reverse_inv.get_pin("A").lc()])    
 
-    def connect_ff_to_out_pins(self):
-        """ Connect flipflop inputs to output pins"""
-        
-        #reverse lfsr
-        for i in range(self.size-1, -1, -1):
-            x_off=-(4+i)*self.m_pitch("m1")
-            y_off=self.ff_down[0].by()-(i+1)*self.m_pitch("m2")
-            self.add_path("metal3", [(self.ff_down[self.size-1].rx(), y_off), (x_off,y_off)])
-            self.add_via_center(self.m2_stack, (x_off,y_off))
-        
-        #forward lfsr
-        for i in range(self.size-2, -1, -1):
-            x_off=-(5+i)*self.m_pitch("m1")
-            y_off=self.ff_up[0].uy()+(self.size-1-i)*self.m_pitch("m2")
-            self.add_path("metal3", [(self.ff_up[self.size-2].rx(), y_off), (x_off,y_off)])
-            self.add_via_center(self.m2_stack, (x_off,y_off))
-
-        x_off=-4*self.m_pitch("m1")
-        y_off=self.ff_up[0].uy()+self.size*self.m_pitch("m2")
-        self.add_path("metal3", [(self.ff_up[self.size-1].rx(), y_off), (x_off,y_off)])
-        self.add_via_center(self.m2_stack, (x_off,y_off))
-
     def connect_vdd_gnd(self):
         """ Connect gnd and vdd of all gate to vdd/gnd input pins"""
         
         pins=["vdd", "gnd"]
-        
         modules1=[self.reset_inv, self.test_nand, self.init_nand, 
                   self.forward_nand, self.reverse_nand, self.reverse_inv1]
         for mod in modules1:
@@ -1157,3 +844,72 @@ class lfsr(design.design):
             self.add_wire(self.m1_stack, [(x_off3, y_off1) , (x_off3, y_off2) , 
                                           (x_off2, y_off2), (x_off2, y_off1)])
             
+    def connect_ff_rst(self):
+        
+        #connect rst0 of ff_up to init
+        xpos1=-3*self.m_pitch("m1")
+        xpos2=self.ff_down[self.size-1].rx()
+        yoff_up=self.ff_up[0].uy()+self.m_pitch("m1")
+        yoff_down=self.ff_down[0].by()-self.m_pitch("m1")
+       
+        pos1=vector(xpos2, yoff_up)
+        pos2=vector(xpos1, yoff_up)
+        pos5= self.init_inv.get_pin("Z")
+        pos3=vector(xpos1, max(self.init_inv.uy(), self.ff_down[0].get_pin("clk").uy())+self.m_pitch("m1"))
+        pos4=vector(pos5.rx()+self.m1_space, pos3.y)
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5.lc()])
+        
+        #connect rst0 of ff_down to reset
+        pos1=vector(xpos2, yoff_down)
+        pos2=vector(xpos1, yoff_down)
+        pos3=vector(xpos1, self.reset_inv.by()-self.m_pitch("m1"))
+        pos4=vector(self.reset_inv.lx()-4*self.m_pitch("m1"), pos3.y)
+        pos5=vector(pos4.x,self.reset_inv.get_pin("A").lc().y)
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5])
+        
+        for i in range(self.size):
+            rst1_pin = self.ff_up[i].get_pin("rst1")
+            vdd_pin = self.ff_up[i].get_pin("vdd")
+            xpos1=rst1_pin.lx()+self.m_pitch("m1")
+            self.add_path("metal2", [(xpos1, rst1_pin.lc().y), (xpos1, vdd_pin.lc().y)])
+            self.add_via_center(self.m1_stack, (xpos1, rst1_pin.lc().y), rotate=90)
+            self.add_via_center(self.m1_stack, (xpos1, vdd_pin.lc().y), rotate=90)
+            
+            rst0_pin = self.ff_up[i].get_pin("rst0")
+            xpos0=rst0_pin.lx()+2*self.m_pitch("m1")
+            self.add_path("metal2", [(xpos0, rst0_pin.lc().y), (xpos0, yoff_up)])
+            self.add_via_center(self.m1_stack, (xpos0, rst0_pin.lc().y), rotate=90)
+            self.add_via_center(self.m1_stack, (xpos0, yoff_up), rotate=90)
+        
+        
+        for i in range(1,self.size):
+            rst1_pin = self.ff_down[i].get_pin("rst1")
+            vdd_pin = self.ff_down[i].get_pin("vdd")
+            xpos1=rst1_pin.lx()+self.m_pitch("m1")
+            self.add_path("metal2", [(xpos1, rst1_pin.lc().y), (xpos1, vdd_pin.lc().y)])
+            self.add_via_center(self.m1_stack, (xpos1, rst1_pin.lc().y), rotate=90)
+            self.add_via_center(self.m1_stack, (xpos1, vdd_pin.lc().y), rotate=90)
+
+            rst0_pin = self.ff_down[i].get_pin("rst0")
+            xpos0=rst0_pin.lx()+2*self.m_pitch("m1")
+            self.add_path("metal2", [(xpos0, rst0_pin.lc().y), (xpos0, yoff_down)])
+            self.add_via_center(self.m1_stack, (xpos0, rst0_pin.lc().y), rotate=90)
+            self.add_via_center(self.m1_stack, (xpos0, yoff_down), rotate=90)
+            
+        rst0_pin = self.ff_down[0].get_pin("rst0")
+        gnd_pin = self.ff_down[0].get_pin("gnd")
+        xpos0=rst0_pin.lx()+self.m2_space
+        self.add_path("metal2", [(xpos0, rst0_pin.lc().y), (xpos0, gnd_pin.lc().y)])
+        self.add_via_center(self.m1_stack, (xpos0, rst0_pin.lc().y), rotate=90)
+        self.add_via_center(self.m1_stack, (xpos0, gnd_pin.lc().y), rotate=90)
+
+        pos1 = self.ff_down[0].get_pin("rst1").lc()
+        pos2=vector(-4*self.m_pitch("m1"), pos1.y)
+        pos3=vector(pos2.x, self.reset_inv.get_pin("Z").lc().y)
+        pos4=self.reset_inv.get_pin("Z").lc()
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
+        
+        pos5= vector(pos2.x, self.test_nand.uy()+self.m_pitch("m1"))
+        pos6=vector(self.test_nand.lx()-self.m_pitch("m1"), pos5.y)
+        pos7 = self.test_nand.get_pin("C").lc()
+        self.add_wire(self.m1_stack, [pos2, pos5, pos6, pos7])

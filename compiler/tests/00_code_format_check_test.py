@@ -67,11 +67,12 @@ def check_file_format_tab(file_name):
     f = open(file_name, "r+b")
     key_positions = []
     for num, line in enumerate(f, 1):
-        if '\t' in line:
+        if b'\t' in line:
             key_positions.append(num)
     if len(key_positions) > 0:
         debug.info(0, '\nFound ' + str(len(key_positions)) + ' tabs in ' +
                    str(file_name) + ' (line ' + str(key_positions[0]) + ')')
+    f.close()
     return len(key_positions)
 
 
@@ -85,11 +86,11 @@ def check_print_output(file_name):
     line = re.sub(r'#.*', '', line)
     # skip doc string comments
     line=re.sub(r'\"\"\"[^\"]*\"\"\"', '', line, flags=re.S|re.M)
-    count = len(re.findall("\s*print\s+", line))
-    count2 = len(re.findall("\s*.print\s+", line))
+    count = len(re.findall(r"\s*print\s+", line))
+    count2 = len(re.findall(r"\s*.print\s+", line))
     if (count-count2) > 0:
         debug.info(0, "\nFound " + str(count-count2) + " _print_ calls " + str(file_name))
-
+    file.close()
     return(count)
 
 

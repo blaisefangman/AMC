@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -92,7 +98,7 @@ class frequency_divider(design.design):
         self.ff_div=self.add_inst(name="ff_div",
                                   mod=self.ff,
                                   offset=self.clk_inv.lr()+vector(3*self.m_pitch("m1"), 0))
-        self.connect_inst(["a", "clk_div", "a", "clk", "vdd", "gnd"])
+        self.connect_inst(["a", "clk_div", "a", "clk", "reset", "vdd", "vdd", "gnd"])
         
         self.div_inv=self.add_inst(name="div_inv",
                                    mod=self.inv1,
@@ -101,15 +107,31 @@ class frequency_divider(design.design):
         
         self.ff_clk2=self.add_inst(name="ff_clk2",
                                   mod=self.ff,
-                                  offset=self.div_inv.lr()+vector(2*self.m_pitch("m1"), 0))
-        self.connect_inst(["clk_div_b", "clk2", "clk1", "clk", "vdd", "gnd"])
+                                  offset=self.div_inv.lr()+vector(3*self.m_pitch("m1"), 0))
+        self.connect_inst(["clk_div_b", "clk2", "clk1", "clk", "reset", "vdd", "vdd", "gnd"])
         
         self.ff_clk3=self.add_inst(name="ff_clk3",
                                   mod=self.ff,
                                   offset=self.ff_clk2.ul()+vector(0, self.ff.height),
                                   mirror="MX")
-        self.connect_inst(["clk_div", "clk3", "clk3_b", "clk", "vdd", "gnd"])
+        self.connect_inst(["clk_div", "clk3", "clkx", "clk", "reset", "vdd", "vdd", "gnd"])
 
+        for mod in [self.ff_div, self.ff_clk2, self.ff_clk3]:
+            rst=mod.get_pin("rst1")
+            xoff=rst.lx()+self.m_pitch("m1")
+            power=mod.get_pin("vdd")
+            self.add_path("metal2", [(xoff, power.lc().y), (rst.lx()+self.m2_space, rst.lc().y)])
+            self.add_via_center(self.m1_stack, (xoff, rst.lc().y), rotate=90)
+            self.add_via_center(self.m1_stack, (xoff, power.lc().y), rotate=90)
+            
+            rst0 = mod.get_pin("rst0")
+            pos1= vector(rst0.lc().x-self.m_pitch("m1"), rst0.lc().y)
+            pos2=vector(pos1.x, -self.m_pitch("m1"))
+            pos3=vector(self.rst_inv.lx()-self.m_pitch("m1"), pos2.y)
+            pos5=self.rst_inv.get_pin("A")
+            pos4=vector(pos3.x, pos5.lc().y)
+            self.add_wire(self.m1_stack, [rst0.lc(), pos1, pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos3, pos4, pos5.lc()])
 
     def connect_modules(self):
         """ make connections for input and outputs of ff_div, ff_clk2 and ff_clk3  """
@@ -121,11 +143,11 @@ class frequency_divider(design.design):
 
 
         #connect clk to input clk of ff_div
-        pos1= self.clk_inv.get_pin("Z").lc()
-        pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
+        pos1= self.clk_inv.get_pin("Z")
+        pos2=vector(pos1.rx()+self.m_pitch("m1"), pos1.lc().y)
         pos4=self.ff_div.get_pin("clk").lc()
         pos3=vector(pos2.x, pos4.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
+        self.add_wire(self.m1_stack, [pos1.lc(), pos2, pos3, pos4])
         
         #connect input and out_bar of ff_div together
         pos1=self.ff_div.get_pin("in").lc()
@@ -180,7 +202,7 @@ class frequency_divider(design.design):
                           width=self.m2_width,
                           height=self.ff_clk3.uy())
             self.add_layout_pin(text=pins[i],
-                                layer=self.m2_pin_layer,
+                                layer="metal2",
                                 offset=off,
                                 width=self.m2_width,
                                 height=self.m2_width)
@@ -217,7 +239,7 @@ class frequency_divider(design.design):
         pos1=vector(self.min_xoff, pos2.y)
         self.add_path("metal1", [pos1,pos2])
         self.add_layout_pin(text="reset",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=pos1-vector(0, 0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -228,18 +250,18 @@ class frequency_divider(design.design):
         self.add_path("metal2", [pos1,pos2])
         self.add_via(self.m1_stack, pos2+vector(0.5*contact.m1m2.height, 0), rotate=90)
         self.add_layout_pin(text="in",
-                            layer=self.m2_pin_layer,
+                            layer="metal2",
                             offset=pos1-vector(0.5*self.m1_width,0),
                             width=self.m2_width,
                             height=self.m2_width)
 
         #clk pin
         pos1=vector(self.min_xoff, self.clk_inv.uy()+2*self.m_pitch("m1"))
-        pos2=vector(self.clk_inv.rx()-self.m1_space-0.5*self.m2_width, pos1.y)
+        pos2=vector(self.clk_inv.rx()-2*self.m1_space-0.5*self.m2_width, pos1.y)
         pos3=vector(pos2.x, self.clk_inv.get_pin("Z").by())
         self.add_wire(self.m1_stack, [pos1,pos2,pos3])
         self.add_layout_pin(text="clk",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=pos1-vector(0, 0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -251,7 +273,7 @@ class frequency_divider(design.design):
         pos3=vector(pos2.x, pos4.y)
         self.add_wire(self.m1_stack, [pos1,pos2,pos3, pos4])
         self.add_layout_pin(text="clk1",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=pos1-vector(0, 0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -263,7 +285,7 @@ class frequency_divider(design.design):
         pos3=vector(pos2.x, pos4.y)
         self.add_wire(self.m1_stack, [pos1,pos2,pos3, pos4])
         self.add_layout_pin(text="clk2",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=pos1-vector(0, 0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -274,7 +296,7 @@ class frequency_divider(design.design):
         pos3=vector(pos2.x, pos4.y)
         self.add_wire(self.m1_stack, [pos1,pos2,pos3, pos4])
         self.add_layout_pin(text="clk3",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=pos1-vector(0, 0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)

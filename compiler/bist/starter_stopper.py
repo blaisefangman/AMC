@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 import design
@@ -20,7 +26,6 @@ import contact
 import math
 from tech import layer, info, drc
 from vector import vector
-from delay_chain import delay_chain
 from nand2 import nand2
 from pinv import pinv
 from ptx import ptx
@@ -359,14 +364,12 @@ class starter_stopper(design.design):
         extra_width = self.well_width-self.extra_enclose
         extra_off= (self.pmos1.rx()+self.extra_enclose,yoff)
         self.add_rect(layer="extra_layer",
-                      layer_dataType = layer["extra_layer_dataType"],
                       offset=extra_off,
                       width= extra_width,
                       height= 2*self.nand2.height+contact.m1m2.width)
         
         self.add_rect(layer="vt",
                       offset=self.nmos1.ll(),
-                      layer_dataType = layer["vt_dataType"],
                       width=self.pmos1.rx()-self.nmos1.lx(),
                       height=self.nmos2.uy()-self.nmos1.by())
 
@@ -380,7 +383,7 @@ class starter_stopper(design.design):
         
         #reset pin to input of inv
         self.add_layout_pin(text="reset",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=self.inv_inst.get_pin("A").ll(),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -392,7 +395,7 @@ class starter_stopper(design.design):
         self.add_path("metal1", [(self.starter_inst.lx(), pos1.y), 
                                  (self.starter_inst.lx()+1.5*self.m_pitch("m1"), pos1.y)])
         self.add_layout_pin(text="in",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(self.starter_inst.lx(), pos1.y-0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -404,7 +407,7 @@ class starter_stopper(design.design):
         self.add_path("metal1", [(self.starter_inst.lx(), pos1.y), 
                                    (self.starter_inst.lx()+1.5*self.m_pitch("m1"), pos1.y)])
         self.add_layout_pin(text="test",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(self.starter_inst.lx(), pos1.y-0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -413,7 +416,7 @@ class starter_stopper(design.design):
         pos1=self.nand2_inst.get_pin("A").lc()
         self.add_path("metal1", [(self.starter_inst.lx(), pos1.y), pos1])
         self.add_layout_pin(text="finish",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(self.starter_inst.lx(), pos1.y-0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -422,7 +425,7 @@ class starter_stopper(design.design):
         pos1=self.pmos1.get_pin("S").lc()
         self.add_path("metal1", [pos1, (self.pmos1.rx()+self.m_pitch("m1"), pos1.y)])
         self.add_layout_pin(text="out",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=(self.pmos1.rx()+self.m_pitch("m1")-self.m1_width, 
                                     pos1.y-0.5*self.m1_width),
                             width=self.m1_width,
@@ -434,7 +437,7 @@ class starter_stopper(design.design):
         self.add_wire(self.m1_stack, [pos1, (self.starter_inst.rx()+self.m_pitch("m1"), pos1.y),
                                       (self.starter_inst.rx()+self.m_pitch("m1"), pos2.y), pos2])
         self.add_layout_pin(text="vdd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=self.starter_inst.get_pin("vdd").ll(),
                             width=self.m2_width,
                             height=self.m2_width)
@@ -444,7 +447,7 @@ class starter_stopper(design.design):
         self.add_wire(self.m1_stack, [pos1, (self.starter_inst.rx()+2*self.m_pitch("m1"), pos1.y),
                                       (self.starter_inst.rx()+2*self.m_pitch("m1"), pos2.y), pos2])
         self.add_layout_pin(text="gnd",
-                            layer=self.m1_pin_layer,
+                            layer="metal1",
                             offset=self.starter_inst.get_pin("gnd").ll(),
                             width=self.m2_width,
                             height=self.m2_width)
