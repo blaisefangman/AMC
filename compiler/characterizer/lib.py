@@ -11,8 +11,8 @@
 
 import os,sys,re
 import debug
-import charutils
-import functional_test
+from . import charutils
+from . import functional_test
 import tech
 import numpy as np
 from globals import OPTS
@@ -182,9 +182,9 @@ class lib():
         
         # check that the length is a multiple or give an error!
         debug.check(len(values)%length == 0,"Values are not a multiple of the length. Cannot make a full array.")
-        rounded_values = map(charutils.round_time,values)
+        rounded_values = list(map(charutils.round_time,values))
         split_values = [rounded_values[i:i+length] for i in range(0, len(rounded_values), length)]
-        formatted_rows = map(self.create_list,split_values)
+        formatted_rows = list(map(self.create_list,split_values))
         formatted_array = ",\\\n".join(formatted_rows)
         return formatted_array
     
@@ -428,6 +428,6 @@ class lib():
                 d = functional_test.functional_test(size, corner, name, self.sram.w_per_row, 
                                                     self.sram.num_rows, load ,slew)
                 q = d.result
-                for k,v in q.items():
+                for k,v in list(q.items()):
                     char_data[k].append(v)
         return char_data
