@@ -313,7 +313,7 @@ class sync_interface_ctrl(design.design):
         self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
         
         self.add_layout_pin(text="clk_b", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1",
                             offset=(self.width-self.m1_width, pos4.y-0.5*self.m1_width), 
                             width=self.m1_width,
                             height=self.m1_width)
@@ -364,7 +364,7 @@ class sync_interface_ctrl(design.design):
                           height=self.height-yoff)
             
             self.add_layout_pin(text=name, 
-                               layer=self.m1_pin_layer, 
+                               layer="metal1",
                                offset=(-3*self.m_pitch("m1"),yoff), 
                                width=self.m1_width,
                                height=self.m1_width)
@@ -379,7 +379,7 @@ class sync_interface_ctrl(design.design):
         self.add_via(self.m1_stack, off, rotate=90)
         
         self.add_layout_pin(text="rack", 
-                            layer=self.m1_pin_layer, 
+                            layer="metal1",
                             offset=pos3-vector(self.m1_width, 0.5*self.m1_width), 
                             width=self.m1_width,
                             height=self.m1_width)
@@ -400,7 +400,7 @@ class sync_interface_ctrl(design.design):
                           width=self.width-off.x,
                           height=self.m1_width)
             self.add_layout_pin(text=name, 
-                               layer=self.m1_pin_layer, 
+                               layer="metal1",
                                offset=(self.width-self.m1_width, off.y), 
                                width=self.m1_width,
                                height=self.m1_width)
@@ -414,7 +414,7 @@ class sync_interface_ctrl(design.design):
         self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
         
         self.add_layout_pin(text="din_en",  
-                            layer=self.m1_pin_layer, 
+                            layer="metal1",
                             offset=(self.width-self.m1_width, pos4.y-0.5*self.m1_width), 
                             width=self.m1_width,
                             height=self.m1_width)
@@ -440,14 +440,14 @@ class sync_interface_ctrl(design.design):
             pos2= (self.din_en.width, mod_gnd[i].get_pin("gnd").lc().y)
             self.add_path("metal1",[pos1, pos2], width=contact.m1m2.width)
             self.add_layout_pin(text="gnd", 
-                                layer=self.m1_pin_layer, 
+                                layer="metal1",
                                 offset=mod_gnd[i].get_pin("gnd").ll(), 
                                 width=contact.m1m2.width,
                                 height=contact.m1m2.width)
         
         for i in range(len(mod_vdd)):
             self.add_layout_pin(text="vdd", 
-                                layer=self.m1_pin_layer, 
+                                layer="metal1",
                                 offset=mod_vdd[i].get_pin("vdd").ll(), 
                                 width=contact.m1m2.width,
                                 height=contact.m1m2.width)

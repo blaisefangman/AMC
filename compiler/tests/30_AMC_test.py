@@ -53,6 +53,8 @@ class AMC_test(AMC_test):
                       num_subanks=OPTS.num_subanks, 
                       branch_factors=OPTS.branch_factors, 
                       bank_orientations=OPTS.bank_orientations, 
+                      mask=OPTS.mask,
+                      power_gate=OPTS.power_gate,
                       name="sram2")
 
 

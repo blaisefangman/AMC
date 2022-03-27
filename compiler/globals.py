@@ -73,6 +73,12 @@ def parse_args():
     # Alias SCMOS to AMI 0.5um
     if OPTS.tech_name == "scmos":
         OPTS.tech_name = "scn3me_subm"
+    if OPTS.tech_name == "tsmc65":
+        OPTS.tech_name = "tsmc65nm"
+    if OPTS.tech_name == "st28_gold":
+        OPTS.tech_name = "cmos28fdsoi_gold"
+    if OPTS.tech_name == "st28":
+        OPTS.tech_name = "cmos28fdsoi"
 
     return (options, args)
 
@@ -89,7 +95,7 @@ def print_banner():
     print('\033[30m'+'\033[107m'+"|===="+" ".center(70)                      +"====|"+ '\033[0m')
     print('\033[30m'+'\033[107m'+"|===="+'\033[1m' +name.center(70)+'\033[0m'+'\033[30m'+'\033[107m'+"====|"+ '\033[0m')
     print('\033[30m'+'\033[107m'+"|===="+" ".center(70)                      +"====|"+ '\033[0m')
-    print('\033[30m'+'\033[107m'+"|===="+"version 1.0, 2018-2019".center(70) +"====|"+ '\033[0m')
+    print('\033[30m'+'\033[107m'+"|===="+"version 1.0, 2018-2022".center(70) +"====|"+ '\033[0m')
     print('\033[30m'+'\033[107m'+"|===="+" ".center(70)                      +"====|"+ '\033[0m')
     print('\033[30m'+'\033[107m'+"|===="+"Computer Systems Lab".center(70)   +"====|"+ '\033[0m')
     print('\033[30m'+'\033[107m'+"|===="+"Yale University".center(70)        +"====|"+ '\033[0m')
@@ -102,8 +108,6 @@ def check_versions():
     # check that we are not using version 3 and at least 2.7
     major_python_version = sys.version_info.major
     minor_python_version = sys.version_info.minor
-    #if not (major_python_version == 2 and minor_python_version >= 7):
-    #    debug.error("Python 2.7 is required.",-1)
     if not (major_python_version == 3 and minor_python_version >= 5):
         debug.error("Python 3.5 is required.",-1)
 

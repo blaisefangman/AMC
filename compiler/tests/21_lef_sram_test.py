@@ -22,6 +22,8 @@ class lef_test(AMC_test):
                       num_subanks=4, 
                       branch_factors=(1,4),
                       bank_orientations=("H", "H"),
+                      mask=False,
+                      power_gate=True,
                       name="sram3")
                       
         gdsfile = s.name + ".gds"

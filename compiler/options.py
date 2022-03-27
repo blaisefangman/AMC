@@ -31,7 +31,7 @@ class options(optparse.Values):
     check_lvsdrc = True
     
     # Variable to select the variant of spice
-    spice_name = "hsim"
+    spice_name = "finesim"
     
     # Should we print out the banner at startup
     print_banner = True
@@ -63,5 +63,3 @@ class options(optparse.Values):
 
     #Add the synchronous interface
     add_sync_interface = False
-
-
