@@ -643,6 +643,7 @@ class functional_test():
         # Load the file into a buffer for performance
         sp = open(filename, "r")
         self.spice = sp.readlines()
+        sp.close()
         for i in range(len(self.spice)):
             self.spice[i] = self.spice[i].rstrip(" \n")
         self.sp_buffer = self.spice
@@ -659,6 +660,7 @@ class functional_test():
         self.sp_buffer = new_buffer
         sp = open(edited_spfile, "w")
         sp.write("\n".join(self.sp_buffer))
+        sp.close()
         
 
     def create_buffer(self, size=[2,2], beta=2):

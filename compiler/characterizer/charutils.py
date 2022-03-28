@@ -31,6 +31,7 @@ def parse_output(filename, key):
         debug.error("Unable to open spice output file: {0}".format(full_filename),1)
     
     contents = f.read()
+    f.close()
     val = re.search(r"{0}\s*=\s*(-?\d+.?\d*[e]?[-+]?[0-9]*\S*)\s+.*".format(key), contents)
     
     if val != None:
