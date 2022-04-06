@@ -224,7 +224,7 @@ def setup_paths():
 
     # Add all of the subdirs to the python path
     # characterizer is a module and doesn't need to be added
-    for subdir in ["gdsMill", "tests", "modules", "base", "bist", "sync_interface"]:
+    for subdir in ["gdsMill", "tests", "modules", "base", "bist"]:
         full_path = "{0}/{1}".format(AMC_HOME, subdir)
         debug.check(os.path.isdir(full_path),
                     "$AMC_HOME/{0} does not exist: {1}".format(subdir,full_path))
