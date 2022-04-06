@@ -1,3 +1,7 @@
+######################################################################
+#
+#Copyright (c) 2018-2021 Samira Ataei
+#
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 2
@@ -12,6 +16,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor,
 # Boston, MA  02110-1301, USA. (See LICENSE for licensing information)
+#
+######################################################################
 
 
 """ SRAM Compiler
@@ -58,29 +64,20 @@ print("For .lib file: set the \"characterize = True\" in options.py, invoke Syno
 start_time = datetime.datetime.now()
 print_time("Start",start_time)
 
-# import SRAM test generation
-if OPTS.add_sync_interface:
-    import sync_sram
-    
-    s = sync_sram.sync_sram(word_size=OPTS.word_size,
-                            words_per_row=OPTS.words_per_row, 
-                            num_rows=OPTS.num_rows, 
-                            num_subanks=OPTS.num_subanks, 
-                            branch_factors=OPTS.branch_factors, 
-                            bank_orientations=OPTS.bank_orientations, 
-                            name=OPTS.name)
+total_size=(OPTS.words_per_row * OPTS.num_rows * OPTS.num_subanks * OPTS.branch_factors[0] * OPTS.branch_factors[1])
+
+if OPTS.power_gate:
+    import power_gate_sram
+    s = power_gate_sram.power_gate_sram(word_size=OPTS.word_size,
+                                        words_per_row=OPTS.words_per_row, 
+                                        num_rows=OPTS.num_rows, 
+                                        num_subanks=OPTS.num_subanks, 
+                                        branch_factors=OPTS.branch_factors, 
+                                        bank_orientations=OPTS.bank_orientations,
+                                        mask=OPTS.mask, 
+                                        name="sram_{0}_{1}".format(OPTS.word_size, total_size))
 
     s.save_output()
-    
-    if OPTS.create_bist:
-        import bist
-        
-        b = bist.bist(addr_size=s.addr_size, 
-                      data_size=OPTS.word_size, 
-                      delay = 0, 
-                      async_bist=False)
-
-        b.save_output()
 
 else:
     import sram
@@ -89,21 +86,20 @@ else:
                   num_rows=OPTS.num_rows, 
                   num_subanks=OPTS.num_subanks, 
                   branch_factors=OPTS.branch_factors, 
-                  bank_orientations=OPTS.bank_orientations, 
-                  name=OPTS.name)
+                  bank_orientations=OPTS.bank_orientations,
+                  mask=OPTS.mask, 
+                  power_gate=OPTS.power_gate,  
+                  name="sram_{0}_{1}".format(OPTS.word_size, total_size))
 
     s.save_output()
     
-    if OPTS.create_bist:
-        import bist
-        
-        b = bist.bist(addr_size=s.addr_size, 
-                      data_size=OPTS.word_size, 
-                      delay = OPTS.bist_delay, 
-                      async_bist=True)
+if OPTS.create_bist:
+    import bist
+    b = bist.bist(addr_size=s.addr_size, 
+                  data_size=OPTS.word_size, 
+                  delay = OPTS.bist_delay)
 
-        b.save_output()
-
+    b.save_output()
 
 OPTS.check_lvsdrc = True
 
