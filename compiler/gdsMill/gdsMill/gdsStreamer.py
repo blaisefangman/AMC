@@ -6,7 +6,7 @@ class GdsStreamer:
     """
     def __init__(self, workingDirectory = "."):
         self.workingDirectory = os.path.abspath(workingDirectory)
-    
+
     def createStreamOutTemplate(self, sourceLibraryName, sourceCellName, gdsDestinationPath):
         templateFile = open(self.workingDirectory+"/partStreamOut.tmpl","w")
         templateFile.write("streamOutKeys = list(nil\n")
@@ -70,7 +70,7 @@ class GdsStreamer:
         templateFile = open(self.workingDirectory+"/partStreamIn.tmpl","w")
         templateFile.write("streamInKeys = list(nil\n")
         templateFile.write("'runDir			\".\"\n")
-        templateFile.write("'inFile		\""+inputGdsPath+"\"\n")    
+        templateFile.write("'inFile		\""+inputGdsPath+"\"\n")
         templateFile.write("'primaryCell		\"\"\n")
         templateFile.write("'libName		\""+sourceLibraryName+"\"\n")
         templateFile.write("'techFileName		\"\"\n")
@@ -88,7 +88,7 @@ class GdsStreamer:
         templateFile.write("'convertNode	\"ignore\"\n")
         templateFile.write("'keepPcell	nil\n")
         templateFile.write("'replaceBusBitChar	nil\n")
-        templateFile.write("'skipUndefinedLPP	nil\n")        
+        templateFile.write("'skipUndefinedLPP	nil\n")
         templateFile.write("'ignoreBox	        nil\n")
         templateFile.write("'mergeUndefPurposToDrawing	nil\n")
         templateFile.write("'reportPrecision	nil\n")
@@ -109,10 +109,10 @@ class GdsStreamer:
         templateFile.write("'propSeparator		\",\"\n")
         templateFile.write("'userSkillFile		\"\"\n")
         templateFile.write("'rodDir			\"\"\n")
-        templateFile.write("'refLibOrder			\"\"\n")        
+        templateFile.write("'refLibOrder			\"\"\n")
         templateFile.write(")\n")
         templateFile.close()
-        
+
     def streamFromCadence(self, cadenceLibraryContainerPath, libraryName, cellName, outputPath):
         #change into the cadence directory
         outputPath = os.path.abspath(outputPath)
@@ -126,13 +126,13 @@ class GdsStreamer:
         while 1:
             line = worker.readline()
             if not line: break  #this means sim is finished so jump out
-            #else: print line   #for debug only
+            #else: print(line)   #for debug only
         worker.close()
         #now remove the template file
         os.remove(self.workingDirectory+"/partStreamOut.tmpl")
         #and go back to whever it was we started from
         os.chdir(currentPath)
-        
+
     def streamToCadence(self,cadenceLibraryContainerPath, libraryName, inputPath):
         #change into the cadence directory
         inputPath = os.path.abspath(inputPath)
@@ -146,7 +146,7 @@ class GdsStreamer:
         while 1:
             line = worker.readline()
             if not line: break  #this means sim is finished so jump out
-            #else: print line   #for debug only
+            #else: print(line)   #for debug only
         worker.close()
         #now remove the template file
         os.remove(self.workingDirectory+"/partStreamIn.tmpl")
