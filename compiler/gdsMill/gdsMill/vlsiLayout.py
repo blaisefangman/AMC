@@ -237,7 +237,7 @@ class VlsiLayout:
         del transformPath[-1]
         return
     
-    def initialize(self):
+    def initialize(self, special_purposes={}):
         self.deduceHierarchy()
         #self.traverseTheHierarchy()
         self.populateCoordinateMap()    
