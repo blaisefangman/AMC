@@ -1,83 +1,105 @@
-############################################################################
+# See LICENSE for licensing information.
 #
-# BSD 3-Clause License (See LICENSE.OR for licensing information)
-# Copyright (c) 2016-2019 Regents of the University of California 
-# and The Board of Regents for the Oklahoma Agricultural and 
-# Mechanical College (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-############################################################################
 
-
-import debug
 import math
 import tech
 
+
 class vector():
-    """ This is the vector class to represent the coordinate vector. It makes the coordinate 
-        operations easy and short so the code is concise. It needs to override several operators to  
-        support concise vector operations, output, and other more complex data structures like lists.
     """
-    def __init__(self, x, y=None):
+    This is the vector class to represent the coordinate
+    vector. It makes the coordinate operations easy and short
+    so the code is concise.
+    It needs to override several operators to support
+    concise vector operations, output, and other more complex
+    data structures like lists.
+    """
+    def __init__(self, x, y=0):
         """ init function support two init method"""
         # will take single input as a coordinate
-        if y==None:
-            self.x = x[0]
-            self.y = x[1]
+        if isinstance(x, (list,tuple,vector)):
+            self.x = float(x[0])
+            self.y = float(x[1])
         #will take two inputs as the values of a coordinate
         else:
-            self.x = x
-            self.y = y
+            self.x = float(x)
+            self.y = float(y)
+        self._hash = hash((self.x,self.y))
 
     def __str__(self):
         """ override print function output """
-        return "["+str(self.x)+","+str(self.y)+"]"
+        return "v["+str(self.x)+","+str(self.y)+"]"
 
     def __repr__(self):
         """ override print function output """
-        return "["+str(self.x)+","+str(self.y)+"]"
+        return "v["+str(self.x)+","+str(self.y)+"]"
 
     def __setitem__(self, index, value):
-        """ override setitem function can set value by vector[index]=value """
-        
+        """
+        override setitem function
+        can set value by vector[index]=value
+        """
         if index==0:
-            self.x=value
+            self.x=float(value)
         elif index==1:
-            self.y=value
+            self.y=float(value)
         else:
-            self.x=value[0]
-            self.y=value[1] 
+            self.x=float(value[0])
+            self.y=float(value[1])
 
     def __getitem__(self, index):
-        """ override getitem function can get value by value=vector[index] """
-        
+        """
+        override getitem function
+        can get value by value=vector[index]
+        """
         if index==0:
             return self.x
         elif index==1:
             return self.y
         else:
-            return self                
+            return self
 
     def __add__(self, other):
-        """ Override + function (left add) Can add by vector(x1,y1)+vector(x2,y2) """
+        """
+        Override + function (left add)
+        Can add by vector(x1,y1)+vector(x2,y2)
+        """
         return vector(self.x + other[0], self.y + other[1])
 
 
     def __radd__(self, other):
-        """ Override + function (right add) """
-        
+        """
+        Override + function (right add)
+        """
         if other == 0:
             return self
         else:
             return self.__add__(other)
 
     def __sub__(self, other):
-        """ Override - function (left) """
+        """
+        Override - function (left)
+        """
         return vector(self.x - other[0], self.y - other[1])
 
     def __rsub__(self, other):
-        """ Override - function (right) """
+        """
+        Override - function (right)
+        """
         return vector(other[0]- self.x, other[1] - self.y)
+
+    def __hash__(self):
+        """
+        Override - function (hash)
+        Note: This assumes that you DON'T CHANGE THE VECTOR or it will
+        break things.
+        """
+        return self._hash
 
     def snap_to_grid(self):
         self.x = self.snap_offset_to_grid(self.x)
@@ -85,8 +107,10 @@ class vector():
         return self
 
     def snap_offset_to_grid(self, offset):
-        """ Changes the coordinate to match the grid settings """
-        grid = tech.drc["grid"]  
+        """
+        Changes the coordinate to match the grid settings
+        """
+        grid = tech.drc["grid"]
         # this gets the nearest integer value
         off_in_grid = int(round(round((offset / grid), 2), 0))
         offset = off_in_grid * grid
@@ -111,17 +135,23 @@ class vector():
         return vector(self.y*x_factor,self.x*y_factor)
 
     def floor(self):
-        """ Override floor function """
+        """
+        Override floor function
+        """
         return vector(int(math.floor(self.x)),int(math.floor(self.y)))
 
     def ceil(self):
-        """ Override ceil function """
+        """
+        Override ceil function
+        """
         return vector(int(math.ceil(self.x)),int(math.ceil(self.y)))
 
     def round(self):
-        """ Override round function """
+        """
+        Override round function
+        """
         return vector(int(round(self.x)),int(round(self.y)))
-    
+
     def __eq__(self, other):
         """Override the default Equals behavior"""
         if isinstance(other, self.__class__):
