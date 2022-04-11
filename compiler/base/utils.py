@@ -64,7 +64,7 @@ def auto_measure_libcell(pin_list, name, units, layer):
     [cell["width"], cell["height"]] = measure_result
 
     for pin in pin_list:
-        (name, layer, boundary)=cell_vlsi.getPinShapeByLabel(str(pin))        
+        (layer, boundary)=cell_vlsi.getPinShapeByLabel(str(pin))        
         cell[str(pin)] = pin_center(boundary)
     return cell
 
@@ -98,10 +98,10 @@ def get_libcell_pins(pin_list, name, units):
         cell[str(pin)]=[]
         label_list=cell_vlsi.getPinShapeByLabel(str(pin))
         for label in label_list:
-            (name, layer, boundary)=label
+            (layer, boundary)=label
             rect = pin_rect(boundary)
             # this is a list because other cells/designs may have must-connect pins
-            cell[str(pin)].append(pin_layout(pin, rect, layer, tech.GDS["pin_dataType"], tech.GDS["label_dataType"]))
+            cell[str(pin)].append(pin_layout(pin, rect, layer))
     return cell
 
 

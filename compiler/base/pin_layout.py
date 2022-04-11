@@ -1,46 +1,88 @@
-############################################################################
+# See LICENSE for licensing information.
 #
-# BSD 3-Clause License (See LICENSE.OR for licensing information)
-# Copyright (c) 2016-2019 Regents of the University of California 
-# and The Board of Regents for the Oklahoma Agricultural and 
-# Mechanical College (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-############################################################################
-
-
 import debug
-from tech import GDS
+from tech import GDS, drc
 from vector import vector
-from tech import layer
+from tech import layer#, layer_indices
+import math
+
 
 class pin_layout:
-    """ A class to represent a rectangular design pin. It is limited to a single shape. """
+    """
+    A class to represent a rectangular design pin. It is limited to a
+    single shape.
+    """
 
-    def __init__(self, name, rect, layer_name_num, pin_dataType, label_dataType):
+    def __init__(self, name, rect, layer_name_pp):
         self.name = name
         # repack the rect as a vector, just in case
         if type(rect[0])==vector:
-            self.rect = rect
+            self._rect = rect
         else:
-            self.rect = [vector(rect[0]),vector(rect[1])]
+            self._rect = [vector(rect[0]),vector(rect[1])]
         # snap the rect to the grid
-        self.rect = [x.snap_to_grid() for x in self.rect]
+        self._rect = [x.snap_to_grid() for x in self.rect]
         
+        debug.check(self.width() > 0, "Zero width pin.")
+        debug.check(self.height() > 0, "Zero height pin.")
 
-        # if it's a layer number look up the layer name. this assumes a unique layer number.
-        layer_list =[]
-        for i in list(layer.values()):
-            layer_list.append(i[0])
-        
-        if type(layer_name_num)==int:
-            self.layer = list(layer.keys())[layer_list.index(layer_name_num)]
+        # These are the valid pin layers
+        # valid_layers = {x: layer[x] for x in layer_indices.keys()}
+        valid_layers = layer
+
+        # if it's a string, use the name
+        if type(layer_name_pp) == str:
+            self._layer = layer_name_pp
+        # else it is required to be a lpp
         else:
-            self.layer=layer_name_num
-        
-        self.pin_dataType=pin_dataType
-        self.label_dataType=label_dataType
+            for (layer_name, lpp) in valid_layers.items():
+                if not lpp:
+                    continue
+                if self.same_lpp(layer_name_pp, lpp):
+                    self._layer = layer_name
+                    break
 
+            else:
+                try:
+                    from tech import layer_override
+                    from tech import layer_override_name
+                    if layer_override[name]:
+                        self.lpp = layer_override[name]
+                        self.layer = "pwellp"
+                        self._recompute_hash()
+                        return
+                except:
+                    debug.error("Layer {} is not a valid routing layer in the tech file.".format(layer_name_pp), -1)
+        
+        self.lpp = layer[self.layer]
+        self._recompute_hash()
+
+    @property
+    def layer(self):
+        return self._layer
+
+    @layer.setter
+    def layer(self, l):
+        self._layer = l
+        self._recompute_hash()
+
+    @property
+    def rect(self):
+        return self._rect
+
+    @rect.setter
+    def rect(self, r):
+        self._rect = r
+        self._recompute_hash()
+
+    def _recompute_hash(self):
+        """ Recompute the hash for our hash cache """
+        self._hash = hash(repr(self))
 
     def __str__(self):
         """ override print function output """
@@ -200,16 +242,70 @@ class pin_layout:
         
         debug.info(4, "writing pin (" + str(self.layer) + "):" 
                    + str(self.width()) + "x" + str(self.height()) + " @ " + str(self.ll()))
-        newLayout.addBox(layerNumber=layer[self.layer],
-                         dataType=self.pin_dataType,
+
+        # Try to use the pin layer if it exists, otherwise
+        # use the regular layer
+        try:
+            (pin_layer_num, pin_purpose) = layer[self.layer + "p"]
+        except KeyError:
+            (pin_layer_num, pin_purpose) = layer[self.layer]
+        (layer_num, purpose) = layer[self.layer]
+
+        # Try to use a global pin purpose if it exists,
+        # otherwise, use the regular purpose
+        try:
+            from tech import pin_purpose as global_pin_purpose
+            pin_purpose = global_pin_purpose
+        except ImportError:
+            pass
+
+        try:
+            from tech import label_purpose
+            try:
+                from tech import layer_override_purpose
+                if pin_layer_num in layer_override_purpose:
+                    layer_num = layer_override_purpose[pin_layer_num][0]
+                    label_purpose = layer_override_purpose[pin_layer_num][1]
+            except:
+                pass
+        except ImportError:
+            label_purpose = purpose
+
+        newLayout.addBox(layerNumber=layer_num,
+                         dataType=purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
                          height=self.height(),
                          center=False)
+
+        # Draw a second pin shape too if it is different
+        if not self.same_lpp((pin_layer_num, pin_purpose), (layer_num, purpose)):
+            newLayout.addBox(layerNumber=pin_layer_num,
+                             purposeNumber=pin_purpose,
+                             offsetInMicrons=self.ll(),
+                             width=self.width(),
+                             height=self.height(),
+                             center=False)
+        # Add the text in the middle of the pin.
+        # This fixes some pin label offsetting when GDS gets
+        # imported into Magic.
+        try:
+            zoom = GDS["zoom"]
+        except KeyError:
+            zoom = None
         newLayout.addText(text=self.name,
-                          layerNumber=layer[self.layer],
-                          purposeNumber=self.label_dataType,
+                          layerNumber=layer_num,
+                          purposeNumber=label_purpose,
                           offsetInMicrons=self.ll(),
-                          magnification=GDS["zoom"],
+                          magnification=zoom,
                           rotate=None)
     
+    def same_lpp(self, lpp1, lpp2):
+        """
+        Check if the layers and purposes are the same.
+        Ignore if purpose is a None.
+        """
+        if lpp1[1] == None or lpp2[1] == None:
+            return lpp1[0] == lpp2[0]
+
+        return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]

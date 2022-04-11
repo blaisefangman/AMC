@@ -202,9 +202,11 @@ class Gds2writer:
             else:
                 drawingLayer = struct.pack(">h",thisBoundary.drawingLayer)
             self.writeRecord(idBits+drawingLayer)
-        if(thisBoundary.dataType!=""):
-            idBits=b'\x0E\x02'#DataType
-            dataType = struct.pack(">h",thisBoundary.dataType)
+        if(thisBoundary.purposeLayer!=""):
+            idBits=b'\x0E\x02' # DataType
+            if type(thisBoundary.purposeLayer)!=int:
+                import pdb; pdb.set_trace()
+            dataType = struct.pack(">h",thisBoundary.purposeLayer)
             self.writeRecord(idBits+dataType)
         if(thisBoundary.coordinates!=""):
             idBits=b'\x10\x03' # XY Data Points

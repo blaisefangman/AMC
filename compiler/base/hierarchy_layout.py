@@ -273,7 +273,7 @@ class layout(lef.lef):
         if layer[-1] in ["1", "2", "3", "4", "y"]:
             if  techlayer[layer][0]!= techlayer["{}pin".format(layer)][0]:
                 layer = "{}pin".format(layer)
-        new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer, pin_dataType, label_dataType)
+        new_pin = pin_layout(text, [offset,offset+vector(width,height)], layer)
 
         try:
             # Check if there's a duplicate!

@@ -199,16 +199,11 @@ class Gds2reader:
                     self.layoutObject.layerNumbersInUse += [drawingLayer]
                 if(self.debugToTerminal==1):
                     print("\t\tDrawing Layer: "+str(drawingLayer))
-            elif(idBits==b'\x16\x02'):  #Purpose
+            elif(idBits==b'\x0E\x02'):  #Purpose DATATYPE
                 purposeLayer = struct.unpack(">h",record[2:4])[0]
                 thisBoundary.purposeLayer=purposeLayer
                 if(self.debugToTerminal==1):
                     print("\t\tPurpose Layer: "+str(purposeLayer))
-            elif(idBits==b'\x0E\x02'):  #DataType
-                dataType = struct.unpack(">h",record[2:4])[0]
-                thisBoundary.dataType=dataType
-                if(self.debugToTerminal==1):
-                    print("\t\t\tData Type: "+str(dataType))
             elif(idBits==b'\x10\x03'):  #XY Data Points
                 numDataPoints = len(record)-2  #packed as XY coordinates 4 bytes each
                 thisBoundary.coordinates=[]
