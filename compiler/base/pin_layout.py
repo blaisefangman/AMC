@@ -272,7 +272,7 @@ class pin_layout:
             label_purpose = purpose
 
         newLayout.addBox(layerNumber=layer_num,
-                         dataType=purpose,
+                         purposeNumber=purpose,
                          offsetInMicrons=self.ll(),
                          width=self.width(),
                          height=self.height(),

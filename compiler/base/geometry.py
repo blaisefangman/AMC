@@ -338,7 +338,7 @@ class rectangle(geometry):
                    + str(self.width) + "x" + str(self.height) + " @ " + str(self.offset))
         if (self.width!=0 and self.height!=0):
             newLayout.addBox(layerNumber=self.layerNumber,
-                             dataType=self.layer_datatype,
+                             purposeNumber=self.layer_datatype,
                              offsetInMicrons=self.offset,
                              width=self.width,
                              height=self.height,
