@@ -16,6 +16,7 @@ class options(optparse.Values):
 
     # This is the technology directory.
     AMC_tech = ""
+    openram_tech = ""
     
     # This is the name of the technology.
     tech_name = "scn3me_subm"
