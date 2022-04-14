@@ -30,6 +30,26 @@ GDS["unit"]=(0.001,1e-6)
 GDS["zoom"] = 0.5
 
 ###################################################
+# Interconnect stacks
+###################################################
+poly_stack = ("poly", "poly_contact", "m1")
+active_stack = ("active", "active_contact", "m1")
+m1_stack = ("m1", "via1", "m2")
+m2_stack = ("m2", "via2", "m3")
+layer_indices = {"poly": 0,
+                 "active": 0,
+                 "m1": 1,
+                 "m2": 2,
+                 "m3": 3}
+
+# The FEOL stacks get us up to m1
+feol_stacks = [poly_stack,
+                       active_stack]
+# The BEOL stacks are m1 and up
+beol_stacks = [m1_stack,
+               m2_stack]
+
+###################################################
 ##GDS Layer Map
 ###################################################
 
