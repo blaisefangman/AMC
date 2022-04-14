@@ -27,7 +27,7 @@ class path_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import path
+        import wire_path
         import tech
         import design
 
@@ -41,7 +41,7 @@ class path_test(AMC_test):
                          [0, 3 * min_space ],
                          [0, 6 * min_space ]]
         w = design.design("path_test0")
-        path.path(w,layer, position_list)
+        wire_path.wire_path(w,layer, position_list)
         self.local_drc_check(w)
 
 
@@ -58,7 +58,7 @@ class path_test(AMC_test):
                              [-1 * min_space, 0]]
         position_list  = [[x+min_space, y+min_space] for x,y in old_position_list]
         w = design.design("path_test1")
-        path.path(w,layer, position_list)
+        wire_path.wire_path(w,layer, position_list)
         self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_metal2"]
@@ -74,7 +74,7 @@ class path_test(AMC_test):
                              [-1 * min_space, 0]]
         position_list  = [[x-min_space, y-min_space] for x,y in old_position_list]
         w = design.design("path_test2")
-        path.path(w, layer, position_list)
+        wire_path.wire_path(w, layer, position_list)
         self.local_drc_check(w)
 
         min_space = 2 * tech.drc["minwidth_metal3"]
@@ -92,7 +92,7 @@ class path_test(AMC_test):
         # run on the reverse list
         position_list.reverse()
         w = design.design("path_test3")
-        path.path(w, layer, position_list)
+        wire_path.wire_path(w, layer, position_list)
         self.local_drc_check(w)
 
         # return it back to it's normal state

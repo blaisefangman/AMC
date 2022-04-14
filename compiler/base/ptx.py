@@ -15,7 +15,7 @@ import contact
 from tech import layer, drc, info, spice
 from vector import vector
 from contact import contact
-import path
+import wire_path
 import re
 from utils import round_to_grid
 from utils import ceil

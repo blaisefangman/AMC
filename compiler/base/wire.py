@@ -12,9 +12,9 @@
 from tech import drc
 import debug
 from contact import contact
-from path import path
+from wire_path import wire_path
 
-class wire(path):
+class wire(wire_path):
     """ 
     Object metal wire; given the layer type.  Add a wire of minimium metal width between 
     a set of points. The points should be rectilinear to control the bend points. If
