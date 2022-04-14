@@ -89,6 +89,26 @@ GDS["pin_dataType"]     = 0
 ##END GDS Layer Map
 ###################################################
 
+# Layer names for external PDKs
+layer_names = {}
+layer_names["active"]  = "active"
+layer_names["pwell"]   = "pwell"
+layer_names["nwell"]   = "nwell"
+layer_names["nimplant"]= "nimplant"
+layer_names["pimplant"]= "pimplant"
+layer_names["poly"]    = "poly" 
+layer_names["poly_contact"] = "poly_contact"
+layer_names["active_contact"] = "active_contact"
+layer_names["metal1"]      = "metal1"
+layer_names["via1"]    = "via1"
+layer_names["metal2"]      = "metal2"
+layer_names["via2"]    = "via2"
+layer_names["metal3"]      = "metal3"
+layer_names["via3"]    = "via3"
+layer_names["metal4"]      = "metal4"
+layer_names["text"]    = "text" 
+layer_names["boundary"]= "boundary"
+
 ###################################################
 ##DRC/LVS Rules Setup
 ###################################################

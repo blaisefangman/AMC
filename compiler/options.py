@@ -60,6 +60,8 @@ class options(optparse.Values):
     #run the charactrizer
     characterize = False
     
+    # Detailed or abstract LEF view
+    detailed_lef = True
 
     #Add the synchronous interface
     add_sync_interface = False
