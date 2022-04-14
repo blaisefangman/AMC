@@ -16,7 +16,6 @@ class options(optparse.Values):
 
     # This is the technology directory.
     AMC_tech = ""
-    openram_tech = ""
     
     # This is the name of the technology.
     tech_name = "scn3me_subm"
@@ -64,3 +63,6 @@ class options(optparse.Values):
 
     #Add the synchronous interface
     add_sync_interface = False
+
+    # When enabled, layout is not generated (and no DRC or LVS are performed)
+    netlist_only = False

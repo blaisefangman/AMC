@@ -149,7 +149,7 @@ class layout(lef.lef):
         layer_num = techlayer[layer][0]
         layer_dataType = techlayer[layer][1]
         if layer_num >= 0:
-            self.objs.append(geometry.rectangle(layer_num, offset, layer_dataType, width, height))
+            self.objs.append(geometry.rectangle((layer_num, layer_dataType), offset, width, height))
             return self.objs[-1]
         return None
 
@@ -161,7 +161,7 @@ class layout(lef.lef):
         layer_dataType = techlayer[layer][1]
         corrected_offset = offset - vector(0.5*width,0.5*height)
         if layer_num >= 0:
-            self.objs.append(geometry.rectangle(layer_num, corrected_offset, layer_dataType, width, height))
+            self.objs.append(geometry.rectangle((layer_num, layer_dataType), corrected_offset, width, height))
             return self.objs[-1]
         return None
 
@@ -478,21 +478,21 @@ class layout(lef.lef):
              Do not write the pins since they aren't obstructions. """
         
         if type(layer)==str:
-            layer_num = techlayer[layer][0]
+            lpp = techlayer[layer]
         else:
-            layer_num = layer
+            lpp = layer
             
         blockages = []
         for i in self.objs:
-            blockages += i.get_blockages(layer_num)
+            blockages += i.get_blockages(lpp)
         for i in self.insts:
-            blockages += i.get_blockages(layer_num)
+            blockages += i.get_blockages(lpp)
         # Must add pin blockages to non-top cells (SAMIRA)
         #if not top_level:
             #blockages += self.get_pin_blockages(layer_num)
         return blockages
 
-    def get_pin_blockages(self, layer_num):
+    def get_pin_blockages(self, lpp):
         """ Return the pin shapes as blockages for non-top-level blocks. """
         
         # We don't have a body contact in ptx, so just ignore it for now
@@ -508,7 +508,7 @@ class layout(lef.lef):
         for pin_name in pin_names:
             pin_list = self.get_pins(pin_name)
             for pin in pin_list:
-                if pin.layer==layer_num:
+                if pin.same_lpp(pin.lpp, lpp):
                     blockages += [pin.rect]
 
         return blockages

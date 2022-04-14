@@ -27,6 +27,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.sp_file = OPTS.AMC_tech + "sp_lib/" + name + ".sp"
 
         self.name = name
+        self.cell_name = name
         hierarchy_layout.layout.__init__(self, name)
         hierarchy_spice.spice.__init__(self, name)
 
