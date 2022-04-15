@@ -148,13 +148,12 @@ def run_drc(cell_name, gds_name):
         f = open(drc_runset['drcSummaryFile'], "r")
     except:
         debug.error("Unable to retrieve DRC results file. Is calibre set up?",1)
-    results = f.readlines()
+    results = f.read()
     f.close()
     # those lines should be the last 3
-    results = results[-3:]
-    geometries = int(re.split(r"\W+", results[0])[5])
-    rulechecks = int(re.split(r"\W+", results[1])[4])
-    errors = int(re.split(r"\W+", results[2])[5])
+    geometries = int(re.search(r"TOTAL Original Layer Geometries:\s+\d+ \((\d+)\)", results).group(1))
+    rulechecks = int(re.search(r"TOTAL DRC RuleChecks Executed:\s+(\d+)", results).group(1))
+    errors = int(re.search(r"TOTAL DRC Results Generated:\s+\d+ \((\d+)\)", results).group(1))
 
     # always display this summary
     if errors > 0:
