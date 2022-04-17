@@ -179,15 +179,6 @@ class instance(geometry):
         if OPTS.netlist_only:
             self.width = 0
             self.height = 0
-        """
-        else:
-            if mirror in ["R90", "R270"] or rotate in [90, 270]:
-                self.width = round_to_grid(mod.height)
-                self.height = round_to_grid(mod.width)
-            else:
-                self.width = round_to_grid(mod.width)
-                self.height = round_to_grid(mod.height)
-        """
         self.width = round_to_grid(mod.width)
         self.height = round_to_grid(mod.height)
         self.compute_boundary(offset, mirror, rotate)
