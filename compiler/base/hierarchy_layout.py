@@ -313,9 +313,7 @@ class layout(lef.lef):
         # add an instance of our path that breaks down into rectangles and contacts
         wire.wire(obj=self,
                   layer_stack=layers, 
-                  position_list=coordinates,
-                  vert_width=vert_width,
-                  horiz_width=horiz_width)
+                  position_list=coordinates)
 
     def add_contact(self, layers, offset, size=[1,1], mirror="R0", rotate=0, 
                    implant_type=None, well_type=None, add_extra_layer=None):

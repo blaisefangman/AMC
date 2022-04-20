@@ -13,8 +13,10 @@ import design
 import debug
 import utils
 from tech import info, drc, layer
+import tech
 from vector import vector
-
+from sram_factory import factory
+import sys
 
 class contact(design.design):
     """ Object for a contact shape with its conductor enclosures.
@@ -25,7 +27,7 @@ class contact(design.design):
         This is necessary to import layouts into Magic which requires the select to be in the same GDS
         hierarchy as the contact. """
         
-    def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None, add_extra_layer=None):
+    def __init__(self, layer_stack, dimensions=[1,1], implant_type=None, well_type=None, add_extra_layer=None, name=""):
         if implant_type or well_type:
             name = "{0}_{1}_{2}_{3}x{4}_{5}{6}".format(layer_stack[0],
                                                        layer_stack[1],
@@ -205,3 +207,14 @@ m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
 m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
 m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
 
+# Set up a static for each layer to be used for measurements
+for layer_stack in tech.layer_stacks:
+    (layer1, via, layer2) = layer_stack
+    cont = factory.create(module_type="contact",
+    layer_stack=layer_stack)
+    module = sys.modules[__name__]
+    # Also create a contact that is just the first layer
+    if layer1 == "poly" or layer1 == "active":
+        setattr(module, layer1 + "_contact", cont)
+    else:
+        setattr(module, layer1 + "_via", cont)
