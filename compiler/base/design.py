@@ -11,13 +11,14 @@
 
 import hierarchy_layout
 import hierarchy_spice
+import async_verilog
 import globals
 import debug
 import os
 from globals import OPTS
 from tech import drc, layer
 
-class design(hierarchy_spice.spice, hierarchy_layout.layout):
+class design(hierarchy_spice.spice, hierarchy_layout.layout, async_verilog.verilog):
     """ Design Class for all modules to inherit the base features.
         Class consisting of a set of modules and instances of these modules """
     name_map = []
@@ -29,7 +30,7 @@ class design(hierarchy_spice.spice, hierarchy_layout.layout):
         self.name = name
         self.cell_name = name
         hierarchy_layout.layout.__init__(self, name)
-        hierarchy_spice.spice.__init__(self, name)
+        hierarchy_spice.spice.__init__(self, name, self.cell_name)
 
         self.setup_drc_constants()
         
