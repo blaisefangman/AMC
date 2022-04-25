@@ -1096,10 +1096,10 @@ class multi_bank(design.design):
                     height= self.m3_width
                     stack= self.m2_stack
                     
-                ctrl_off= vector(self.v_ctrl_bus_pos[split_control_list[i]].x- 0.5*height, 
+                ctrl_off= vector(self.v_ctrl_bus_pos[split_control_list[i]].cx()- 0.5*height, 
                                  self.bank_inst[k].get_pin(control_pin_list[i]).uc().y- height)
                 ctrl_width=  self.bank_inst[k].get_pin(control_pin_list[i]).uc().x - \
-                             self.v_ctrl_bus_pos[split_control_list[i]].x
+                             self.v_ctrl_bus_pos[split_control_list[i]].cx()
                 self.add_rect(layer=layer, 
                               offset=ctrl_off, 
                               width=ctrl_width, 
@@ -1109,8 +1109,8 @@ class multi_bank(design.design):
         
         # select= vdd Connection
         if not self.two_level_bank:
-            sel_pos1=vector(self.v_ctrl_bus_pos["S"].x , self.v_ctrl_bus_pos["S"].y+self.m1_width)
-            sel_pos2=vector(self.v_ctrl_bus_pos["vdd"].x, self.v_ctrl_bus_pos["vdd"].y+self.m1_width)
+            sel_pos1=vector(self.v_ctrl_bus_pos["S"].cx(), self.v_ctrl_bus_pos["S"].by()+self.m1_width)
+            sel_pos2=vector(self.v_ctrl_bus_pos["vdd"].cx(), self.v_ctrl_bus_pos["vdd"].by()+self.m1_width)
             self.add_path("metal1", [sel_pos1, sel_pos2])
             self.add_via(self.m1_stack, (sel_pos1.x-0.5*self.m2_width, 
                          sel_pos1.y-0.5*self.m1_width-self.via_shift("v1")))
@@ -1417,8 +1417,8 @@ class multi_bank(design.design):
                                   width= self.dsplit_ary.width+2*self.pow_pitch+self.ctrl_mrg_cell.width, 
                                   height= self.m3_width)
 
-                din_pos_x= self.din1_bus_pos["din_split[{0}]".format(i)].x+self.data_bus_width
-                din_pos_y= self.din1_bus_pos["din_split[{0}]".format(i)].y
+                din_pos_x= self.din1_bus_pos["din_split[{0}]".format(i)].lx()+self.data_bus_width
+                din_pos_y= self.din1_bus_pos["din_split[{0}]".format(i)].cy()
                 self.add_wire(self.m1_stack, 
                               [(din_pos_x, din_pos_y), 
                               (din_pos_x+(i+1)*self.pitch,din_pos_y),
@@ -1471,8 +1471,8 @@ class multi_bank(design.design):
                                   width= self.dmerge_ary.width+self.ctrl_mrg_cell.width+2*self.pow_pitch, 
                                   height= self.m1_width)
 
-                    data_out_pos_x= self.dout1_bus_pos["dout_merge[{0}]".format(i)].x
-                    data_out_pos_y= self.dout1_bus_pos["dout_merge[{0}]".format(i)].y
+                    data_out_pos_x= self.dout1_bus_pos["dout_merge[{0}]".format(i)].lx()
+                    data_out_pos_y= self.dout1_bus_pos["dout_merge[{0}]".format(i)].cy()
                     self.add_wire(self.m1_stack, 
                                   [(data_out_pos_x, data_out_pos_y),
                                   (data_out_pos_x-(i+1)*self.pitch, data_out_pos_y),
@@ -1495,13 +1495,13 @@ class multi_bank(design.design):
 
             for i in range(self.w_size):
                 if self.num_banks == 2:
-                    data_out_pos_x= self.dout1_bus_pos["dout_merge[{0}]".format(i)].x+\
+                    data_out_pos_x= self.dout1_bus_pos["dout_merge[{0}]".format(i)].lx()+\
                                     self.data_bus_width
-                    data_out_pos_y= self.dout1_bus_pos["dout_merge[{0}]".format(i)].y
+                    data_out_pos_y= self.dout1_bus_pos["dout_merge[{0}]".format(i)].cy()
                 if self.num_banks == 4:
-                    data_out_pos_x= self.dout2_bus_pos["dout_merge[{0}]".format(i)].x+\
+                    data_out_pos_x= self.dout2_bus_pos["dout_merge[{0}]".format(i)].lx()+\
                                     self.data_bus_width
-                    data_out_pos_y= self.dout2_bus_pos["dout_merge[{0}]".format(i)].y
+                    data_out_pos_y= self.dout2_bus_pos["dout_merge[{0}]".format(i)].cy()
                 self.add_wire(self.m1_stack, [(data_out_pos_x, data_out_pos_y),
                              (data_out_pos_x+(i+1)*self.pitch, data_out_pos_y),
                              (data_out_pos_x+(i+1)*self.pitch, self.dmrgoff[i].y),
@@ -1545,7 +1545,7 @@ class multi_bank(design.design):
         # Connecting vertical addr bus to addr split cells
         for i in range(self.addr_size):
             addr_split_y_off= self.reset_off.y- (i+1)*self.pitch
-            addr_bus_pos= self.v_ctrl_bus_pos["addr_split[{0}]".format(self.addr_size-1-i)]
+            addr_bus_pos= self.v_ctrl_bus_pos["addr_split[{0}]".format(self.addr_size-1-i)].bc()
             addr_split_pos= self.addr_split_ary_inst.get_pin("Q[{0}]".format(self.addr_size-1-i)).uc()
             self.add_path("metal3", [addr_split_pos,(addr_split_pos[0],addr_split_y_off),
                          (addr_bus_pos[0],addr_split_y_off) ])
@@ -1569,7 +1569,7 @@ class multi_bank(design.design):
         
         for i in range(self.control_size):
             ctrl_split_y_off= self.reset_off.y- (i+1)*self.pitch
-            ctrl_bus_pos= self.v_ctrl_bus_pos[control_pin_list[i]]
+            ctrl_bus_pos= self.v_ctrl_bus_pos[control_pin_list[i]].bc()
             self.add_wire(self.m1_stack, [ctrl_pos[i]-vector(0, self.m2_width), (ctrl_pos[i].x,ctrl_split_y_off),
                           (ctrl_bus_pos[0],ctrl_split_y_off), ctrl_bus_pos]) 
 
@@ -1609,7 +1609,7 @@ class multi_bank(design.design):
                                 width= self.m1_width,
                                 height= self.m1_width)
                                 
-            pos1 = self.v_ctrl_bus_pos["sleep"]
+            pos1 = self.v_ctrl_bus_pos["sleep"].bc()
             pos2 = vector(self.v_bus_off.x-10*self.pitch+0.5*self.m2_width, pos1.y)
             pos3 = vector(pos2.x, offset.y+0.5*self.m1_width)
             pos4 = vector(pos2.x+0.5*width, pos3.y)
@@ -1685,7 +1685,7 @@ class multi_bank(design.design):
             pos4=vector(ctrl_pos.x, pos3.y)
             self.add_wire(self.m1_stack, [pos1.lc(),pos2, pos3, pos4])
 
-        ctrl_bus_pos= self.v_ctrl_bus_pos["rw_merge"]
+        ctrl_bus_pos= self.v_ctrl_bus_pos["rw_merge"].bc()
         pos1=self.ack_mrg_inst.get_pin("en2_M").lc()
         pos2=vector(pos1.x-6*self.pitch, pos1.y)
         pos3=vector(pos2.x, self.reset_off.y- 9*self.pitch)
@@ -1708,7 +1708,7 @@ class multi_bank(design.design):
                             0.5*self.m2_width,y_off-(1+i)*self.pitch)) 
             
             if self.orien == "V":
-                x_off =self.din1_bus_pos["din_split[0]"].x+self.data_bus_width
+                x_off =self.din1_bus_pos["din_split[0]"].lx()+self.data_bus_width
                 y_off= self.dsplit_ary_inst.by()
                 if self.mask:
                     index = 1+i+2*self.w_size
@@ -1734,7 +1734,7 @@ class multi_bank(design.design):
 
         
         # Connection S pin of split_merge_ctrl to select pin
-        sel_pos0= self.v_ctrl_bus_pos["S"]
+        sel_pos0= self.v_ctrl_bus_pos["S"].bc()
         sel_pos1= vector(sel_pos0.x, sel_pos0.y-self.pitch)
         sel_pos2=vector(self.reset_off.x-9*self.pitch-0.5*self.m2_width, sel_pos1.y)
         sel_pos3=vector(sel_pos2.x, self.addr_split_ary_inst.by()-4*self.pitch)
@@ -1749,7 +1749,7 @@ class multi_bank(design.design):
                      (self.reset_off.x+0.5*self.m2_width, self.reset_off.y-3*self.pitch),
                      (self.reset_off.x+0.5*self.m2_width, self.reset_off.y+self.pitch)])
 
-        spl_mrg_ack_merge= self.v_ctrl_bus_pos["ack_merge"]
+        spl_mrg_ack_merge= self.v_ctrl_bus_pos["ack_merge"].bc()
         self.add_wire(self.m1_stack, [(spl_mrg_ack_merge.x, spl_mrg_ack_merge.y),
                      (spl_mrg_ack_merge.x, self.reset_off.y-4*self.pitch),
                      (self.reset_off.x-6*self.pitch, self.reset_off.y-4*self.pitch),
@@ -1795,7 +1795,7 @@ class multi_bank(design.design):
                            en_data.lc()])
 
         if self.orien == "V":
-            x_off =self.din1_bus_pos["din_split[0]"].x+self.data_bus_width
+            x_off =self.din1_bus_pos["din_split[0]"].lx()+self.data_bus_width
             if self.mask:
                 index=5+2*self.w_size
             else:

@@ -51,6 +51,12 @@ beol_stacks = [m1_stack,
 
 layer_stacks = feol_stacks + beol_stacks
 
+preferred_directions = {"poly": "V",
+                        "active": "V",
+                        "metal1": "H",
+                        "metal2": "V",
+                        "metal3": "H"}
+
 ###################################################
 ##GDS Layer Map
 ###################################################

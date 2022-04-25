@@ -182,8 +182,6 @@ class pinv(design.design):
                       height =contact.m1m2.width)
         self.add_layout_pin(text="gnd",
                             layer="metal1",
-                            pin_dataType=None, 
-                            label_dataType=None,  
                             offset=vector(0,-0.5*contact.m1m2.width),
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)

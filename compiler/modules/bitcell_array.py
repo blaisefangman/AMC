@@ -169,11 +169,11 @@ class bitcell_array(design.design):
                                 height=wl_pin.height())
         
         # add vdd/gnd pin and label
-        if self.cell.get_pin("gnd").layer != self.cell.get_pin("vdd").layer:
+        if self.cell.get_pins("gnd")[0].layer != self.cell.get_pins("vdd")[0].layer:
             # With vdd and gnd on different layer --> vdd and gnd are perpendicular
         
             #Find which pin (vdd/gnd) is vertical
-            if self.cell.get_pin("gnd").layer == self.cell.get_pin("br").layer:
+            if self.cell.get_pins("gnd")[0].layer == self.cell.get_pin("br").layer:
                 self.v_pin = "gnd"
                 self.h_pin = "vdd"
 

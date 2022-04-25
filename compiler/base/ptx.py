@@ -179,7 +179,7 @@ class ptx(design.design):
                                  offset=self.poly_offset,
                                  height=self.poly_height,
                                  width=self.poly_width)
-            self.add_layout_pin_center_rect(text="G",
+            self.add_layout_pin_rect_center(text="G",
                                             layer="poly",
                                             offset=self.poly_offset,
                                             height=self.poly_width,
@@ -270,7 +270,7 @@ class ptx(design.design):
                                             size=(1, self.num_contacts),
                                             implant_type=implant_type,
                                             well_type=well_type)
-            self.add_layout_pin_center_rect(text="S",
+            self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=pos,
                                             width=pin_width,
@@ -282,7 +282,7 @@ class ptx(design.design):
                                             size=(1, self.num_contacts),
                                             implant_type=implant_type,
                                             well_type=well_type)
-            self.add_layout_pin_center_rect(text="D",
+            self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=pos,
                                             width=pin_width,
@@ -345,7 +345,7 @@ class ptx(design.design):
                                     end=source_positions[-1]+source_offset+end_offset)
 
             source_pin_offset=source_positions[0]+source_offset
-            self.add_layout_pin_center_rect(text="S",
+            self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=source_pin_offset,
                                             width=self.m1_width,
@@ -363,7 +363,7 @@ class ptx(design.design):
                                     end=drain_positions[-1]+drain_offset+end_offset)
             
             drain_pin_offset=drain_positions[0]+drain_offset
-            self.add_layout_pin_center_rect(text="D",
+            self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=drain_pin_offset,
                                             width=self.m1_width,

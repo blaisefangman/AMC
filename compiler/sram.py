@@ -593,6 +593,7 @@ class sram(design.design):
                                                 offset=self.din1_off,
                                                 names=data_in_names,
                                                 length=self.data_bus_width,
+                                                vertical=False,
                                                 make_pins=True)
         if self.mask:
             bm_names=["bm[{0}]".format(i) for i in range(self.w_size)]
@@ -601,6 +602,7 @@ class sram(design.design):
                                                offset=self.din1_off,
                                                names=bm_names,
                                                length=self.data_bus_width,
+                                               vertical=False,
                                                make_pins=True)
 
 
@@ -610,6 +612,7 @@ class sram(design.design):
                                                  offset=self.dout1_off,
                                                  names=data_out_names,
                                                  length=self.data_bus_width,
+                                                 vertical=False,
                                                  make_pins=True)
 
 
@@ -620,6 +623,7 @@ class sram(design.design):
                                               offset=self.reset1_off,
                                               names=reset_name,
                                               length=self.data_bus_width,
+                                              vertical=False,
                                               make_pins=True)
         if self.power_gate:
             self.H_ctrl_bus_pos = self.create_bus(layer="metal1",
@@ -627,6 +631,7 @@ class sram(design.design):
                                                   offset=self.sleep1_off,
                                                   names=["sleep"],
                                                   length=self.data_bus_width,
+                                                  vertical=False,
                                                   make_pins=True)
         
 
@@ -636,6 +641,7 @@ class sram(design.design):
                                                    offset=self.addr_bus_off,
                                                    names=addr_names,
                                                    length=self.data_bus_width,
+                                                   vertical=False,
                                                    make_pins=True))
         sel_names=["sel[{0}]".format(i) for i in range(self.num_obank)]
         self.H_ctrl_bus_pos.update(self.create_bus(layer="metal1",
@@ -643,6 +649,7 @@ class sram(design.design):
                                                    offset=self.sel_bus_off,
                                                    names=sel_names,
                                                    length=self.data_bus_width,
+                                                   vertical=False,
                                                    make_pins=True))
 
         for i in range(self.num_obank):
@@ -654,6 +661,7 @@ class sram(design.design):
                                                        vector(0,2*i*self.pitch),
                                                        names=self.bank_split_merge_input_names,
                                                        length=self.data_bus_width,
+                                                       vertical=False,
                                                        make_pins=True))
 
         bank_split_mrg_bus_names = ["pre_wack", "pre_rack", "rw_merge", "pre_ack", "ack_b"]
@@ -662,6 +670,7 @@ class sram(design.design):
                                                    offset=self.sm_ctrl_bus_off,
                                                    names=bank_split_mrg_bus_names,
                                                    length=self.data_bus_width,
+                                                   vertical=False,
                                                    make_pins=True))
 
 
@@ -671,6 +680,7 @@ class sram(design.design):
                                                    offset=self.ctrl_bus_off,
                                                    names=ctrl_names,
                                                    length=self.data_bus_width,
+                                                   vertical=False,
                                                    make_pins=True))
 
 
@@ -692,15 +702,19 @@ class sram(design.design):
                                                     pitch=self.pitch,
                                                     offset=self.din2_off,
                                                     names=data_in_names,
-                                                    length=self.data_bus_width)
+                                                    length=self.data_bus_width,
+                                                    vertical=False,
+                                                    make_pins=False)
             
             if self.mask:
                 bm_names=["data_in[{0}]".format(i) for i in range(self.w_size)]
                 self.bm2_bus_pos = self.create_bus(layer="metal3",
-                                                    pitch=self.pitch,
-                                                    offset=self.din2_off,
-                                                    names=bm_names,
-                                                    length=self.data_bus_width)
+                                                   pitch=self.pitch,
+                                                   offset=self.din2_off,
+                                                   names=bm_names,
+                                                   length=self.data_bus_width,
+                                                   vertical=False,
+                                                   make_pins=False)
             
 
             data_out_names=["data_out[{0}]".format(i) for i in range(self.w_size)]
@@ -708,65 +722,80 @@ class sram(design.design):
                                                      pitch=self.pitch,
                                                      offset=self.dout2_off,
                                                      names=data_out_names,
-                                                     length=self.data_bus_width)
+                                                     length=self.data_bus_width,
+                                                     vertical=False,
+                                                     make_pins=False)
            
             reset_name = ["reset"]
             self.H2_ctrl_bus_pos = self.create_bus(layer="metal1",
                                                    pitch=self.pitch,
                                                    offset=self.reset2_off,
                                                    names=reset_name,
-                                                   length=self.data_bus_width)
+                                                   length=self.data_bus_width,
+                                                   vertical=False,
+                                                   make_pins=False)
         
 
             if self.power_gate:
                 self.H2_ctrl_bus_pos = self.create_bus(layer="metal1",
-                                                  pitch=self.pitch,
-                                                  offset=self.sleep2_off,
-                                                  names=["sleep"],
-                                                  length=self.data_bus_width,
-                                                  make_pins=True)
+                                                       pitch=self.pitch,
+                                                       offset=self.sleep2_off,
+                                                       names=["sleep"],
+                                                       length=self.data_bus_width,
+                                                       vertical=False,
+                                                       make_pins=True)
 
             addr_names=["addr[{0}]".format(i) for i in range(self.addr_size)]
             self.H2_ctrl_bus_pos.update(self.create_bus(layer="metal1",
-                                                         pitch=self.pitch,
-                                                         offset=self.addr_bus2_off,
-                                                         names=addr_names,
-                                                         length=self.data_bus_width))
+                                                        pitch=self.pitch,
+                                                        offset=self.addr_bus2_off,
+                                                        names=addr_names,
+                                                        length=self.data_bus_width,
+                                                        vertical=False,
+                                                        make_pins=False))
 
             sel_names=["sel[{0}]".format(i) for i in range(self.num_obank)]
             self.H2_ctrl_bus_pos.update(self.create_bus(layer="metal1",
                                                         pitch=self.pitch,
                                                         offset=self.sel_bus2_off,
                                                         names=sel_names,
-                                                        length=self.data_bus_width))
+                                                        length=self.data_bus_width,
+                                                        vertical=False,
+                                                        make_pins=False))
 
             for i in range(self.num_obank):
                 self.bank_split_merge_input_names = ["ack{0}".format(i), 
                                                      "ack_b{0}".format(i)]
                 self.H2_ctrl_bus_pos.update(self.create_bus(layer="metal1",
-                                                       pitch=self.pitch,
-                                                       offset=self.split_merge_input2_off+\
-                                                       vector(0,2*i*self.pitch),
-                                                       names=self.bank_split_merge_input_names,
-                                                       length=self.data_bus_width))
+                                                            pitch=self.pitch,
+                                                            offset=self.split_merge_input2_off+\
+                                                            vector(0,2*i*self.pitch),
+                                                            names=self.bank_split_merge_input_names,
+                                                            length=self.data_bus_width,
+                                                            vertical=False,
+                                                            make_pins=False))
 
             bank_split_mrg_bus_names = ["pre_wack", "pre_rack", "rw_merge", "pre_ack", "ack_b"]
             self.H2_ctrl_bus_pos.update(self.create_bus(layer="metal1",
                                                         pitch=self.pitch,
                                                         offset=self.split_merge_ctrl_bus2_off,
                                                         names=bank_split_mrg_bus_names,
-                                                        length=self.data_bus_width))
+                                                        length=self.data_bus_width,
+                                                        vertical=False,
+                                                        make_pins=False))
 
 
             ctrl_names=["wack", "wreq",  "rreq", "rack", "ack", "rw", "w", "r"]
             self.H2_ctrl_bus_pos.update(self.create_bus(layer="metal1",
-                                                         pitch=self.pitch,
-                                                         offset=self.ctrl_bus2_off,
-                                                         names=ctrl_names,
-                                                         length=self.data_bus_width))
+                                                        pitch=self.pitch,
+                                                        offset=self.ctrl_bus2_off,
+                                                        names=ctrl_names,
+                                                        length=self.data_bus_width,
+                                                        vertical=False,
+                                                        make_pins=False))
 
     def route_outbanks(self):
-        """ Connect the inputs and outputs of each ouuer bank to horizontal busses """
+        """ Connect the inputs and outputs of each outer bank to horizontal busses """
 
         # Data Connections
         if (self.num_obank == 2):
@@ -981,7 +1010,7 @@ class sram(design.design):
         
             # sel Connections
             for k in range(self.num_obank):
-               yoff = self.H_ctrl_bus_pos["sel[{0}]".format(k)].y
+               yoff = self.H_ctrl_bus_pos["sel[{0}]".format(k)].cy()
                pin = self.inbank_inst[k].get_pin("S").ll()
                sel_off = vector(pin.x, yoff - 0.5*self.m1_width)
                sel_heigh =  pin.y - yoff + self.m1_width
@@ -995,7 +1024,7 @@ class sram(design.design):
             if self.power_gate:
                for k in range(self.num_obank):
                    pos1=self.inbank_inst[k].get_pin("sleep")
-                   yoff = self.H_ctrl_bus_pos["sleep"].y
+                   yoff = self.H_ctrl_bus_pos["sleep"].cy()
                    if k%2:
                        xoff=pos1.lx()-2*self.pitch                  
                    else:
@@ -1016,7 +1045,7 @@ class sram(design.design):
                                    "r", "ack{0}".format(k), "ack_b{0}".format(k), "ack_b", 
                                    "rw_merge", "rreq", "wreq", "rack"]
                 for i in range(len(split_list)):
-                    yoff = self.H_ctrl_bus_pos[split_ctrl_list[i]].y
+                    yoff = self.H_ctrl_bus_pos[split_ctrl_list[i]].cy()
                     pin = self.inbank_inst[k].get_pin(split_list[i]).ll()
                     split_off = vector(pin.x, yoff- 0.5*self.m1_width)
                     split_heigh =  pin.y - yoff + 0.5*self.m1_width
@@ -1073,7 +1102,7 @@ class sram(design.design):
                 ctrl_pin_list.extend(["ack{0}".format(k), "ack_b{0}".format(k)])
             for i in range(len(ctrl_pin_list)):
                 pin = self.out_sm_ctrl_inst.get_pin(ctrl_pin_list[i]).ll()
-                yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].y
+                yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].cy()
                 ctrl_off = vector(pin.x, yoff - 0.5*self.m1_width)
                 ctrl_heigh =  pin.y - yoff + 0.5*self.m1_width
                 self.add_rect(layer="metal2", 
@@ -1142,9 +1171,9 @@ class sram(design.design):
                 for i in range(2):
                     pin = self.inbank_inst[k+2*i].get_pin("S").ll()
                     if k%2:
-                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].y-0.5*self.m1_width)
+                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-0.5*self.m1_width)
                     else:
-                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].y-self.m1_width)
+                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-self.m1_width)
                     heigh =  pin.y - off.y
                     self.add_rect(layer="metal2", 
                               offset=off, 
@@ -1278,9 +1307,9 @@ class sram(design.design):
                 ctrl_pin_list.extend(["ack{0}".format(k), "ack_b{0}".format(k)])
             for i in range(len(ctrl_pin_list)):
                 pin = self.out_sm_ctrl_inst.get_pin(ctrl_pin_list[i]).ll()
-                yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].y
+                yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].cy()
                 ctrl_off = vector(pin.x, yoff- 0.5*self.m1_width)
-                ctrl2_off = vector(ctrl_off.x, self.H2_ctrl_bus_pos[ctrl_pin_list[i]].y- 0.5*self.m1_width)
+                ctrl2_off = vector(ctrl_off.x, self.H2_ctrl_bus_pos[ctrl_pin_list[i]].cy()- 0.5*self.m1_width)
                 ctrl_heigh =  pin.y -  yoff + 0.5*self.m1_width
 
                 self.add_rect(layer="metal2", 
