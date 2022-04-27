@@ -1,182 +1,378 @@
-############################################################################
+# See LICENSE for licensing information.
 #
-# BSD 3-Clause License (See LICENSE.OR for licensing information)
-# Copyright (c) 2016-2019 Regents of the University of California 
-# and The Board of Regents for the Oklahoma Agricultural and 
-# Mechanical College (acting for and on behalf of Oklahoma State University)
+# Copyright (c) 2016-2021 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
 # All rights reserved.
 #
-############################################################################
-
-
-import hierarchy_layout
-import hierarchy_spice
-import async_verilog
-import lef
-import globals
-import debug
-import os
+from hierarchy_design import hierarchy_design
+import utils
+import contact
+from tech import GDS, layer
+from tech import preferred_directions
+from tech import cell_properties as props
 from globals import OPTS
-from tech import drc, layer, amc_layer_names
+import re
+import debug
 
-class design(hierarchy_spice.spice, hierarchy_layout.layout, async_verilog.verilog, lef.lef):
-    """ Design Class for all modules to inherit the base features.
-        Class consisting of a set of modules and instances of these modules """
-    name_map = []
 
-    def __init__(self, name):
-        self.gds_file = OPTS.AMC_tech + "gds_lib/" + name + ".gds"
-        self.sp_file = OPTS.AMC_tech + "sp_lib/" + name + ".sp"
+class design(hierarchy_design):
+    """
+    This is the same as the hierarchy_design class except it contains
+    some DRC/layer constants and analytical models for other modules to reuse.
+    """
 
-        self.name = name
-        self.cell_name = name
-        hierarchy_layout.layout.__init__(self, name, self.cell_name)
-        hierarchy_spice.spice.__init__(self, name, self.cell_name)
-        lef.lef.__init__(self, amc_layer_names)
+    def __init__(self, name, cell_name=None, prop=None):
+        # This allows us to use different GDS/spice circuits for hard cells instead of the default ones
+        # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
+        # depending on the number of ports.
 
-        self.setup_drc_constants()
-        
-        # Check if the name already exists, if so, give an error
-        # because each reference must be a unique name.
-        # These modules ensure unique names or have no changes if they
-        # aren't unique
-        ok_list = ["<class 'split.split'>",
-                   "<class 'split.split2'>",
-                   "<class 'merge.merge'>",
-                   "<class 'bitcell.bitcell'>",
-                   "<class 'contact.contact'>",
-                   "<class 'ptx.ptx'>",
-                   "<class 'pinv.pinv'>",
-                   "<class 'nand2.nand2'>",
-                   "<class 'nor2.nor2'>",
-                   "<class 'nand3.nand3'>",
-                   "<class 'nor3.nor3'>",
-                   "<class 'single_driver.single_driver'>",
-                   "<class 'driver.driver'>",
-                   "<class 'flipflop.flipflop'>",
-                   "<class 'xor2.xor2'>",
-                   "<class 'hierarchical_predecode2x4.hierarchical_predecode2x4'>",
-                   "<class 'hierarchical_predecode3x8.hierarchical_predecode3x8'>"]
-        if name not in design.name_map:
-            design.name_map.append(name)
-        elif str(self.__class__) in ok_list:
-            pass
-        else:
-            debug.error("Duplicate layout reference name {0} of class {1}. GDS2 requires names be unique.".format(name,self.__class__),-1)
-        
-    def setup_drc_constants(self):
-        """ These are some DRC constants used in many places in the compiler."""
-        
+        if name in props.names:
+            if type(props.names[name]) is list:
+                num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports - 1
+                cell_name = props.names[name][num_ports]
+            else:
+                cell_name = props.names[name]
+
+        elif not cell_name:
+            cell_name = name
+        super().__init__(name, cell_name)
+
+        # This means it is a custom cell.
+        # It could have properties and not be a hard cell too (e.g. dff_buf)
+        if prop and prop.hard_cell:
+            # The pins get added from the spice file, so just check
+            # that they matched here
+            debug.check(prop.port_names == self.pins,
+                        "Custom cell pin names do not match spice file:\n{0} vs {1}".format(prop.port_names, self.pins))
+            self.add_pin_indices(prop.port_indices)
+            self.add_pin_names(prop.port_map)
+            self.add_pin_types(prop.port_types)
+
+
+            (width, height) = utils.get_libcell_size(self.cell_name,
+                                                     GDS["unit"],
+                                                     layer[prop.boundary_layer])
+            self.pin_map = utils.get_libcell_pins(self.pins,
+                                                  self.cell_name,
+                                                  GDS["unit"])
+
+            # Convert names back to the original names
+            # so that copying will use the new names
+            for pin_name in self.pin_map:
+                for index1, pin in enumerate(self.pin_map[pin_name]):
+                    self.pin_map[pin_name][index1].name = self.get_original_pin_name(pin.name)
+
+            self.width = width
+            self.height = height
+
+        if OPTS.mode == "sync":
+            self.setup_multiport_constants()
+
+            try:
+                from tech import power_grid
+                self.supply_stack = power_grid
+            except ImportError:
+                # if no power_grid is specified by tech we use sensible defaults
+                # Route a M3/M4 grid
+                self.supply_stack = self.m3_stack
+
+    def check_pins(self):
+        for pin_name in self.pins:
+            pins = self.get_pins(pin_name)
+            for pin in pins:
+                print(pin_name, pin)
+
+    @classmethod
+    def setup_drc_constants(design):
+        """
+        These are some DRC constants used in many places
+        in the compiler.
+        """
+        design.well_extend_active = None
+        design.well_enclose_active = None
+
+        # Make some local rules for convenience
         from tech import drc
-        
-        self.minwidth_tx = drc["minwidth_tx"]
-        self.minlength_tx = drc["minlength_channel"]
-        self.well_width = drc["minwidth_well"]
-        self.active_width = drc["minwidth_active"]
-        self.poly_width = drc["minwidth_poly"]
-        self.m1_width = drc["minwidth_metal1"]
-        self.m2_width = drc["minwidth_metal2"]
-        self.m3_width = drc["minwidth_metal3"]
-        self.via1_width = drc["minwidth_via1"]
-        self.contact_width = drc["minwidth_contact"]
-        self.well_space = drc["well_to_well"]
-        self.implant_space = drc["implant_to_implant"]
-        self.poly_space = drc["poly_to_poly"]
-        self.poly_minarea = drc["minarea_poly"]        
-        self.m1_space = drc["metal1_to_metal1"]
-        self.m2_space = drc["metal2_to_metal2"]        
-        self.m3_space = drc["metal3_to_metal3"]
-        self.active_minarea= drc["minarea_active"]
-        self.m1_minarea = drc["minarea_metal1"]
-        self.m2_minarea = drc["minarea_metal2"]
-        self.m3_minarea = drc["minarea_metal3"]
-        self.well_minarea = drc["minarea_well"]
-        self.well_enclose_active = drc["well_enclosure_active"]
-        self.implant_enclose_active = drc["implant_enclosure_active"]
-        self.implant_enclose_body_active = drc["implant_enclosure_body_active"]
-        self.implant_enclose_poly = drc["implant_enclosure_poly"]
-        self.metal3_enclosure_via2 = drc["metal3_enclosure_via2"]
-        self.active_to_body_active = drc["active_to_body_active"]
-        self.active_to_active = drc["active_to_active"]
-        self.active_extend_contact = drc["active_extend_contact"]
-        self.active_enclose_contact = drc["active_enclosure_contact"]
-        self.active_enclose_gate = drc["active_enclosure_gate"]
-        self.poly_to_active = drc["poly_to_active"]
-        self.poly_extend_active = drc["poly_extend_active"]
-        self.poly_enclose_contact = drc["poly_enclosure_contact"]
-        self.contact_to_gate = drc["contact_to_gate"]
-        self.m1_enclose_contact = drc["metal1_enclosure_contact"]
-        self.m1_extend_contact = drc["metal1_extend_contact"]
-        self.well_extend_active = drc["well_extend_active"]
-        self.extra_minarea = drc["minarea_extra_layer"]
-        self.extra_enclose = drc["extra_layer_enclosure"]
-        
-        self.poly_stack=("poly", "contact", "metal1")
-        self.m1_stack=("metal1", "via1", "metal2")
-        self.m1_rev_stack=("metal2", "via1", "metal1")
-        self.m2_stack=("metal2", "via2", "metal3")
-        self.m2_rev_stack=("metal3", "via2", "metal2")
-        self.m3_stack=("metal3", "via3", "metal4")
-        self.m3_rev_stack=("metal4", "via3", "metal3")
-        
-    def m_pitch(self, metal):
-        """ These are some DRC constants for metal pitches used in many places in the compiler."""
-        
-        import contact
-        if metal =="m1":
-            contact=contact.m1m2   
-        if metal =="m2":
-            contact=contact.m2m3   
-        if metal =="m3":
-            contact=contact.m3m4   
+        for rule in drc.keys():
+            # Single layer width rules
+            match = re.search(r"minwidth_(.*)", rule)
+            if match:
+                if match.group(1) == "active_contact":
+                    setattr(design, "contact_width", drc(match.group(0)))
+                else:
+                    setattr(design, match.group(1) + "_width", drc(match.group(0)))
 
-        n=int(metal[-1])
-        
-        metal_space=max(drc["metal{0}_to_metal{1}".format(n, n)],
-                        drc["metal{0}_to_metal{1}".format(n+1, n+1)])
-        contact_space=max(contact.width, contact.height)
-        
-        metal_pitch = metal_space + contact_space
-        return metal_pitch
+            # Single layer area rules
+            match = re.search(r"minarea_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
 
+            # Single layer spacing rules
+            match = re.search(r"(.*)_to_(.*)", rule)
+            if match and match.group(1) == match.group(2):
+                setattr(design, match.group(1) + "_space", drc(match.group(0)))
+            elif match and match.group(1) != match.group(2):
+                if match.group(2) == "poly_active":
+                    setattr(design, match.group(1) + "_to_contact",
+                            drc(match.group(0)))
+                else:
+                    setattr(design, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_enclose_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
+            else:
+                match = re.search(r"(.*)_enclose", rule)
+                if match:
+                    setattr(design, match.group(0), drc(match.group(0)))
+
+            match = re.search(r"(.*)_extend_(.*)", rule)
+            if match:
+                setattr(design, match.group(0), drc(match.group(0)))
+
+        # Create the maximum well extend active that gets used
+        # by cells to extend the wells for interaction with other cells
+        from tech import layer
+        if design.well_extend_active is None:
+            design.well_extend_active = 0
+            if "nwell" in layer:
+                design.well_extend_active = max(design.well_extend_active, design.nwell_extend_active)
+            if "pwell" in layer:
+                design.well_extend_active = max(design.well_extend_active, design.pwell_extend_active)
+
+        if design.well_enclose_active is None:
+            # The active offset is due to the well extension
+            if "pwell" in layer:
+                design.pwell_enclose_active = drc("pwell_enclose_active")
+            else:
+                design.pwell_enclose_active = 0
+            if "nwell" in layer:
+                design.nwell_enclose_active = drc("nwell_enclose_active")
+            else:
+                design.nwell_enclose_active = 0
+            # Use the max of either so that the poly gates will align properly
+            design.well_enclose_active = max(design.pwell_enclose_active,
+                                           design.nwell_enclose_active,
+                                           design.active_space)
+
+        # These are for debugging previous manual rules
+        if False:
+            print("poly_width", design.poly_width)
+            print("poly_space", design.poly_space)
+            print("m1_width", design.m1_width)
+            print("m1_space", design.m1_space)
+            print("m2_width", design.m2_width)
+            print("m2_space", design.m2_space)
+            print("m3_width", design.m3_width)
+            print("m3_space", design.m3_space)
+            print("m4_width", design.m4_width)
+            print("m4_space", design.m4_space)
+            print("active_width", design.active_width)
+            print("active_space", design.active_space)
+            print("contact_width", design.contact_width)
+            print("poly_to_active", design.poly_to_active)
+            print("poly_extend_active", design.poly_extend_active)
+            print("poly_to_contact", design.poly_to_contact)
+            print("active_contact_to_gate", design.active_contact_to_gate)
+            print("poly_contact_to_gate", design.poly_contact_to_gate)
+            print("well_enclose_active", design.well_enclose_active)
+            print("implant_enclose_active", design.implant_enclose_active)
+            print("implant_space", design.implant_space)
+            import sys
+            sys.exit(1)
+
+    @classmethod
+    def setup_layer_constants(design):
+        """
+        These are some layer constants used
+        in many places in the compiler.
+        """
+
+        from tech import layer_indices
+        import tech
+        for layer_id in layer_indices:
+            key = "{}_stack".format(layer_id)
+
+            # Set the stack as a local helper
+            try:
+                layer_stack = getattr(tech, key)
+                setattr(design, key, layer_stack)
+            except AttributeError:
+                pass
+
+            key = "{}_rev_stack".format(layer_id)
+
+            # Set the reverse stack as a local helper
+            try:
+                layer_stack = getattr(tech, key)
+                setattr(design, key, layer_stack)
+            except AttributeError:
+                pass
+
+            # Skip computing the pitch for non-routing layers
+            if layer_id in ["active", "nwell"]:
+                continue
+
+            # Add the pitch
+            setattr(design,
+                    "{}_pitch".format(layer_id),
+                    design.compute_pitch(layer_id, True))
+
+            # Add the non-preferrd pitch (which has vias in the "wrong" way)
+            setattr(design,
+                    "{}_nonpref_pitch".format(layer_id),
+                    design.compute_pitch(layer_id, False))
+
+        if False:
+            from tech import preferred_directions
+            print(preferred_directions)
+            from tech import layer_indices
+            for name in layer_indices:
+                if name == "active":
+                    continue
+                try:
+                    print("{0} width {1} space {2}".format(name,
+                                                           getattr(design, "{}_width".format(name)),
+                                                           getattr(design, "{}_space".format(name))))
+
+                    print("pitch {0} nonpref {1}".format(getattr(design, "{}_pitch".format(name)),
+                                                         getattr(design, "{}_nonpref_pitch".format(name))))
+                except AttributeError:
+                    pass
+            import sys
+            sys.exit(1)
 
     def via_shift(self, via):
         """ These are some DRC constants for co/via shift used in many places in the compiler."""
-        
         import contact
         if via =="co":
-            contact=contact.poly  
+            contact=contact.poly
         if via =="v1":
-            contact=contact.m1m2   
+            contact=contact.m1m2
         if via =="v2":
-            contact=contact.m2m3   
-        
+            contact=contact.m2m3
         shift=0.5*abs(contact.second_layer_height - contact.first_layer_height)
         return shift
 
-    def get_layout_pins(self,inst):
-        """ Return a map of pin locations of the instance offset """
-        
-        # find the instance
-        for i in self.insts:
-            if i.name == inst.name:
-                break
+    @staticmethod
+    def compute_pitch(layer, preferred=True):
+
+        """
+        This is the preferred direction pitch
+        i.e. we take the minimum or maximum contact dimension
+        """
+        from tech import drc
+        import contact
+        if layer =="metal1":
+            contact=contact.m1m2
+        elif layer =="metal2":
+            contact=contact.m2m3
+        elif layer =="metal3":
+            contact=contact.m3m4
         else:
-            debug.error("Couldn't find instance {0}".format(inst_name),-1)
-        inst_map = inst.mod.pin_map
-        return inst_map
+            return 0
+        n=int(layer[-1])
+        metal_space=max(drc["metal{0}_to_metal{1}".format(n, n)],
+                drc["metal{0}_to_metal{1}".format(n+1, n+1)])
+        contact_space=max(contact.width, contact.height)
+        metal_pitch = metal_space + contact_space
+        return metal_pitch
+        """
+        # Find the layer stacks this is used in
+        from tech import layer_stacks
+        pitches = []
+        for stack in layer_stacks:
+            # Compute the pitch with both vias above and below (if they exist)
+            if stack[0] == layer:
+                pitches.append(design.compute_layer_pitch(stack, preferred))
+            if stack[2] == layer:
+                pitches.append(design.compute_layer_pitch(stack[::-1], True))
 
-    def __str__(self):
-        """ override print function output """
-        
-        return "design: " + self.name
+        return max(pitches)
+        """
 
-    def __repr__(self):
-        """ override print function output """
-        text="( design: " + self.name + " pins=" + str(self.pins) + " " + str(self.width) + "x" + str(self.height) + " )\n"
-        for i in self.objs:
-            text+=str(i)+",\n"
-        for i in self.insts:
-            text+=str(i)+",\n"
-        return text
-     
+    @staticmethod
+    def get_preferred_direction(layer):
+        return preferred_directions[layer]
+
+    @staticmethod
+    def compute_layer_pitch(layer_stack, preferred):
+
+        (layer1, via, layer2) = layer_stack
+        try:
+            if layer1 == "poly" or layer1 == "active":
+                contact1 = getattr(contact, layer1 + "_contact")
+            else:
+                contact1 = getattr(contact, layer1 + "_via")
+        except AttributeError:
+            contact1 = getattr(contact, layer2 + "_via")
+
+        if preferred:
+            if preferred_directions[layer1] == "V":
+                contact_width = contact1.first_layer_width
+            else:
+                contact_width = contact1.first_layer_height
+        else:
+            if preferred_directions[layer1] == "V":
+                contact_width = contact1.first_layer_height
+            else:
+                contact_width = contact1.first_layer_width
+        layer_space = getattr(design, layer1 + "_space")
+
+        #print(layer_stack)
+        #print(contact1)
+        pitch = contact_width + layer_space
+
+        return utils.round_to_grid(pitch)
+
+    def setup_multiport_constants(self):
+        """
+        These are contants and lists that aid multiport design.
+        Ports are always in the order RW, W, R.
+        Port indices start from 0 and increment.
+        A first RW port will have clk0, csb0, web0, addr0, data0
+        A first W port (with no RW ports) will be: clk0, csb0, addr0, data0
+
+        """
+        total_ports = OPTS.num_rw_ports + OPTS.num_w_ports + OPTS.num_r_ports
+
+        # These are the read/write port indices.
+        self.readwrite_ports = []
+        # These are the read/write and write-only port indices
+        self.write_ports = []
+        # These are the write-only port indices.
+        self.writeonly_ports = []
+        # These are the read/write and read-only port indices
+        self.read_ports = []
+        # These are the read-only port indices.
+        self.readonly_ports = []
+        # These are all the ports
+        self.all_ports = list(range(total_ports))
+
+        # The order is always fixed as RW, W, R
+        port_number = 0
+        for port in range(OPTS.num_rw_ports):
+            self.readwrite_ports.append(port_number)
+            self.write_ports.append(port_number)
+            self.read_ports.append(port_number)
+            port_number += 1
+        for port in range(OPTS.num_w_ports):
+            self.write_ports.append(port_number)
+            self.writeonly_ports.append(port_number)
+            port_number += 1
+        for port in range(OPTS.num_r_ports):
+            self.read_ports.append(port_number)
+            self.readonly_ports.append(port_number)
+            port_number += 1
+
+    def analytical_power(self, corner, load):
+        """ Get total power of a module  """
+        total_module_power = self.return_power()
+        for inst in self.insts:
+            total_module_power += inst.mod.analytical_power(corner, load)
+        return total_module_power
+
+design.setup_drc_constants()
+design.setup_layer_constants()
+

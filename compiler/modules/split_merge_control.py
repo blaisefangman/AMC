@@ -102,7 +102,7 @@ class split_merge_control(design.design):
     def setup_layout_offsets(self):
         """ Setup layout offsets, spaces, determine the size of vias etc """
         
-        self.pitch = max(self.m_pitch("m1"), self.m_pitch("m2"))
+        self.pitch = max(self.metal1_pitch, self.metal2_pitch)
         
         # This a an offset shift between gates to avoid short, well DRC, implant DRC
         self.off_shift= max(2*self.pitch, self.implant_space+contact.m1m2.width,
@@ -139,12 +139,12 @@ class split_merge_control(design.design):
         self.add_rect(layer ="metal2",
                       offset=pin_off,
                       width=self.horizontal_width,
-                      height=self.m2_width)
+                      height=self.metal2_width)
         self.add_layout_pin(text=pin_name,
                             layer ="metal2",
                             offset=pin_off,
-                            width=self.m2_width,
-                            height=self.m2_width)
+                            width=self.metal2_width,
+                            height=self.metal2_width)
 
     def add_layout_pins(self):
         """ Add all input and output Pins (Order of pins matters)"""
@@ -379,21 +379,21 @@ class split_merge_control(design.design):
         
         #This is the extra space needed to ensure DRC rules to the m1/m2 contacts
         m1m2_m2m3_fix= 0.5*(contact.m2m3.width - contact.m1m2.width)
-        #contact_xshift= 0.5*self.m2_width+m1m2_m2m3_fix
+        #contact_xshift= 0.5*self.metal2_width+m1m2_m2m3_fix
         contact_xshift=m1m2_m2m3_fix
-        contact_yshift= self.m1_space+contact.m2m3.height
+        contact_yshift= self.metal1_space+contact.m2m3.height
 
         self.add_path("metal3",[pin1, (pin1.x, pin2.y)])
-        self.add_via_center(self.m2_stack,(pin1.x-contact_xshift, pin2.y-m1m2_m2m3_fix+0.5*contact.m2m3.height-self.via_shift("v1")))
-        self.add_via_center(self.m2_stack,(pin1.x-contact_xshift, pin1.y-contact_yshift-self.via_shift("v1")))
+        self.add_via_center(self.metal2_stack,(pin1.x-contact_xshift, pin2.y-m1m2_m2m3_fix+0.5*contact.m2m3.height-self.via_shift("v1")))
+        self.add_via_center(self.metal2_stack,(pin1.x-contact_xshift, pin1.y-contact_yshift-self.via_shift("v1")))
 
     def cxn_gate_input(self, pin1, pin2):
         """ Connecting the input(s) of gates to coresponding rail with metal1
             Adding Via1 at the rail for connection """ 
         
-        self.add_path("metal1",[(pin1.x, pin1.y-self.m1_width), (pin1.x, pin2.y)],
-                      width=self.m1_width)
-        self.add_via_center(self.m1_stack,(pin1.x, pin2.y+0.5*self.m2_width))
+        self.add_path("metal1",[(pin1.x, pin1.y-self.metal1_width), (pin1.x, pin2.y)],
+                      width=self.metal1_width)
+        self.add_via_center(self.metal1_stack,(pin1.x, pin2.y+0.5*self.metal2_width))
 
 
     def route_bank_decoder(self):
@@ -407,13 +407,13 @@ class split_merge_control(design.design):
                 nand2_out_off= self.nand2_inst[i].get_pin("Z").uc()
                 nand2_A_off= self.nand2_inst[i].get_pin("A").uc()
                 nand2_vdd_off= vector(self.nand2_inst[i].get_pin("vdd").uc().x, 
-                                      self.nand2_inst[i].get_pin("vdd").uc().y+0.5*self.m1_width)
+                                      self.nand2_inst[i].get_pin("vdd").uc().y+0.5*self.metal1_width)
 
                 if i%2:
                     dec_out_off= self.dec_inst.get_pin("Z").uc()
                     inv_in_xoff= self.dec_inv_inst[i].get_pin("A").rx()
 
-                    self.add_wire(self.m1_rev_stack,
+                    self.add_wire(self.metal1_rev_stack,
                                   [dec_out_off,
                                   (dec_out_off.x,self.nand2_inst[i].uy()+(i+2)*self.pitch),
                                   (nand2_A_off.x,self.nand2_inst[i].uy()+(i+2)*self.pitch),
@@ -423,10 +423,10 @@ class split_merge_control(design.design):
                     inv_in_xoff= self.dec_inv_inst[i].get_pin("A").lx()
                     self.cxn_gate_input(self.dec_inst.get_pin("A").uc(),self.bank_addr_off[i])
                     
-                    self.add_via(self.m1_stack,(self.dec_inst.rx()+self.pitch-\
+                    self.add_via(self.metal1_stack,(self.dec_inst.rx()+self.pitch-\
                                                 0.5*contact.m1m2.width, self.bank_addr_off[i].y-self.via_shift("v1")))
 
-                    self.add_wire(self.m1_rev_stack,
+                    self.add_wire(self.metal1_rev_stack,
                                   [(dec_out_off.x+self.pitch, self.bank_addr_off[i].y),
                                   (dec_out_off.x+self.pitch, 
                                    self.nand2_inst[i].uy()+(i+2)*self.pitch),
@@ -439,7 +439,7 @@ class split_merge_control(design.design):
                 
                 self.cxn_gate_input(inv_out_off, self.bank_sel_off[i])
                 self.cxn_inv_output(nand2_B,self.S_offset)
-                self.add_via(self.m1_stack, (nand2_B.x-0.5*self.m1_width, nand2_B.y-self.via_shift("v1")))
+                self.add_via(self.metal1_stack, (nand2_B.x-0.5*self.metal1_width, nand2_B.y-self.via_shift("v1")))
                 self.add_rect_center(layer="metal2", 
                                      offset=nand2_B, 
                                      width=contact.m1m2.width, 
@@ -471,18 +471,18 @@ class split_merge_control(design.design):
                 nand2_B= self.nand2_inst[i].get_pin("B").uc()
                 inv_in_yoff= self.dec_inv_inst[i].get_pin("A").uc().y
                 nand2_vdd_off= vector(self.nand2_inst[i].get_pin("vdd").uc().x, 
-                                      self.nand2_inst[i].get_pin("vdd").uc().y+0.5*self.m1_width)
+                                      self.nand2_inst[i].get_pin("vdd").uc().y+0.5*self.metal1_width)
                 
                 self.add_path("metal1", [nand2_out_off,(inv_in_xoff, inv_in_yoff)])
                 self.cxn_gate_input(inv_out_off, self.bank_sel_off[i])
                 self.cxn_inv_output(nand2_B,self.S_offset)
-                self.add_via(self.m1_stack, (nand2_B.x-0.5*self.m1_width, nand2_B.y-self.via_shift("v1")))
+                self.add_via(self.metal1_stack, (nand2_B.x-0.5*self.metal1_width, nand2_B.y-self.via_shift("v1")))
                 self.add_rect_center(layer="metal2", 
                                      offset=nand2_B, 
                                      width=contact.m1m2.width, 
                                      height=2*self.pitch)
 
-                shift = (i+1)*self.pitch + self.m1_space
+                shift = (i+1)*self.pitch + self.metal1_space
                 self.add_path("metal1", [dec_out_off,  (dec_out_off.x, dec_out_off.y+shift),
                                         (nand2_A_off.x, dec_out_off.y+shift), nand2_A_off])
 

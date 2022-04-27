@@ -9,7 +9,7 @@
 ############################################################################
 
 
-import design
+import hierarchy_design
 import debug
 import utils
 from tech import info, drc, layer
@@ -18,7 +18,7 @@ from vector import vector
 from sram_factory import factory
 import sys
 
-class contact(design.design):
+class contact(hierarchy_design.hierarchy_design):
     """ Object for a contact shape with its conductor enclosures.
         Creates a contact array minimum active or poly enclosure and metal1 enclosure.
         This class has enclosure on multiple sides of the contact whereas via have extension 
@@ -42,7 +42,7 @@ class contact(design.design):
                                                 layer_stack[2],
                                                 dimensions[0],
                                                 dimensions[1])
-        design.design.__init__(self, name)
+        super().__init__(name,name)
         debug.info(4, "create contact object {0}".format(name))
 
         self.layer_stack = layer_stack
@@ -96,11 +96,11 @@ class contact(design.design):
         # DRC rules
         first_layer_minwidth = drc["minwidth_{0}".format(self.first_layer_name)]
         first_layer_minarea = drc["minarea_{0}".format(self.first_layer_name)]
-        first_layer_enclosure = drc["{0}_enclosure_{1}".format(self.first_layer_name, self.via_layer_name)]
+        first_layer_enclosure = drc["{0}_enclose_{1}".format(self.first_layer_name, self.via_layer_name)]
         first_layer_extend = drc["{0}_extend_{1}".format(self.first_layer_name, self.via_layer_name)]
         second_layer_minwidth = drc["minwidth_{0}".format(self.second_layer_name)]
         second_layer_minarea = drc["minarea_{0}".format(self.second_layer_name)]
-        second_layer_enclosure = drc["{0}_enclosure_{1}".format(self.second_layer_name, self.via_layer_name)]
+        second_layer_enclosure = drc["{0}_enclose_{1}".format(self.second_layer_name, self.via_layer_name)]
         second_layer_extend = drc["{0}_extend_{1}".format(self.second_layer_name, self.via_layer_name)]
 
         self.first_layer_horizontal_enclosure = max((first_layer_minwidth - self.contact_array_width)/2,
@@ -168,9 +168,9 @@ class contact(design.design):
     def create_implant_enclosures(self):
         """ Create the select layer only for well contact"""
         
-        implant_position = self.first_layer_position - 2*[self.implant_enclose_body_active]
-        implant_width =  self.first_layer_width  + 2*self.implant_enclose_body_active
-        implant_height = self.first_layer_height + 2*self.implant_enclose_body_active
+        implant_position = self.first_layer_position - 2*[drc("implant_enclose_body_active")]
+        implant_width =  self.first_layer_width  + 2*drc("implant_enclose_body_active")
+        implant_height = self.first_layer_height + 2*drc("implant_enclose_body_active")
         self.add_rect(layer="{}implant".format(self.implant_type),
                       offset=implant_position,
                       width=implant_width,
@@ -179,10 +179,13 @@ class contact(design.design):
     def create_well_enclosures(self):
         """ Create the well layer only for well contact"""
 
+        # Optionally implant well if layer exists
+        well_layer = "{}well".format(self.well_type)
+        self.well_enclose_active = drc("well_enclose_active")
         well_position = self.first_layer_position - [self.well_enclose_active]*2
         well_width =  self.first_layer_width  + 2*self.well_enclose_active
         well_height = self.first_layer_height + 2*self.well_enclose_active
-        self.add_rect(layer="{}well".format(self.well_type),
+        self.add_rect(layer=well_layer,
                       offset=well_position,
                       width=well_width,
                       height=well_height)

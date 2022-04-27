@@ -319,10 +319,10 @@ class ptx(design.design):
         # This is the distance that we must route up or down from the center
         # of the contacts to avoid DRC violations to the other contacts
         pin_offset = vector(0, 0.5*max(self.active_contact.height, self.active_contact.width) + \
-                               self.m1_space + 0.5*self.m1_width)
+                               self.metal1_space + 0.5*self.metal1_width)
         
         # This is the width of a m1 extend the ends of the pin
-        end_offset = vector(0.5*self.m1_width,0)
+        end_offset = vector(0.5*self.metal1_width,0)
 
         # drains always go to the MIDDLE of the cell, so top of NMOS, bottom of PMOS
         # so reverse the directions for NMOS compared to PMOS.
@@ -348,8 +348,8 @@ class ptx(design.design):
             self.add_layout_pin_rect_center(text="S",
                                             layer="metal1",
                                             offset=source_pin_offset,
-                                            width=self.m1_width,
-                                            height=self.m1_width)
+                                            width=self.metal1_width,
+                                            height=self.metal1_width)
 
         if len(drain_positions)>1:
             drain_offset = pin_offset.scale(drain_dir,drain_dir)
@@ -366,8 +366,8 @@ class ptx(design.design):
             self.add_layout_pin_rect_center(text="D",
                                             layer="metal1",
                                             offset=drain_pin_offset,
-                                            width=self.m1_width,
-                                            height=self.m1_width)
+                                            width=self.metal1_width,
+                                            height=self.metal1_width)
 
     def add_well_implant(self):
         """ Add an well and implant for the type of transistor. """
@@ -386,7 +386,7 @@ class ptx(design.design):
             
         if (self.mults>1 and self.connect_active):
             shift = 0.5*(self.active_contact.height-self.active_height)
-            m1_extend = shift+self.m1_space+self.m1_width-self.well_enclose_active
+            m1_extend = shift+self.metal1_space+self.metal1_width-self.well_enclose_active
             if m1_extend > 0: 
                 self.cell_well_height = self.cell_well_height + m1_extend 
                 

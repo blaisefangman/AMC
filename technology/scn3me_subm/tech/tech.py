@@ -6,6 +6,8 @@
 
 
 import os
+from custom_cell_properties import cell_properties
+from design_rules import *
 
 """ File containing the process technology parameters for SCMOS 3me, subm, 600nm. """
 
@@ -30,12 +32,21 @@ GDS["unit"]=(0.001,1e-6)
 GDS["zoom"] = 0.5
 
 ###################################################
+# Custom cell properties
+###################################################
+cell_properties = cell_properties()
+
+###################################################
 # Interconnect stacks
 ###################################################
 poly_stack = ("poly", "contact", "metal1")
 active_stack = ("active", "contact", "metal1")
-m1_stack = ("metal1", "via1", "metal2")
-m2_stack = ("metal2", "via2", "metal3")
+metal1_stack = ("metal1", "via1", "metal2")
+metal2_stack = ("metal2", "via2", "metal3")
+
+metal1_rev_stack = ("metal2", "via1", "metal1")
+metal2_rev_stack = ("metal3", "via2", "metal2")
+
 layer_indices = {"poly": 0,
                  "active": 0,
                  "metal1": 1,
@@ -46,8 +57,8 @@ layer_indices = {"poly": 0,
 feol_stacks = [poly_stack,
                        active_stack]
 # The BEOL stacks are m1 and up
-beol_stacks = [m1_stack,
-               m2_stack]
+beol_stacks = [metal1_stack,
+               metal2_stack]
 
 layer_stacks = feol_stacks + beol_stacks
 
@@ -128,7 +139,7 @@ parameter["beta"] = 2
 
 drclvs_home=os.environ.get("DRCLVS_HOME")
 
-drc={}
+drc = design_rules("scn3me_subm")
 #grid size is 1/2 a lambda
 drc["grid"]=0.15
 
@@ -169,7 +180,7 @@ drc["poly_extend_active"] = 0.6
 # ??
 drc["poly_to_polycontact"] = 1.2
 # Not a rule
-drc["active_enclosure_gate"] = 0.0
+drc["active_enclose_gate"] = 0.0
 # 3.2.a Minimum spacing over field poly
 drc["poly_to_field_poly"] = 0.9
 # 3.5 Minimum field poly to active 
@@ -187,7 +198,7 @@ drc["minwidth_active"] = 0.9
 # 2.2 Minimum spacing
 drc["active_to_active"] = 0.9
 # 2.3 Source/drain active to well edge 
-drc["well_enclosure_active"] = 1.8
+drc["well_enclose_active"] = 1.8
 # Reserved for asymmetric enclosures
 drc["well_extend_active"] = 1.8
 # Not a rule
@@ -195,7 +206,7 @@ drc["minarea_active"] = 0.0
 
 ### VT layer RULES ####
 #Not a rule
-drc["vt_enclosure_active"] = 0
+drc["vt_enclose_active"] = 0
 #Not a rule
 drc["vt_extend_active"] = 0
 #Not a rule
@@ -205,7 +216,7 @@ drc["minarea_vt"] = 0
 #Not a rule
 drc["minarea_extra_layer"] = 0
 #Not a rule
-drc["extra_layer_enclosure"] = 0
+drc["extra_layer_enclose"] = 0
 #Not a rule
 drc["extra_to_extra"] = 0
 #Not a rule
@@ -216,13 +227,13 @@ drc["extra_to_poly"] = 0
 # 4.1 Minimum select spacing to channel of transistor 
 drc["implant_to_channel"] = 0.9
 # 4.2 Minimum select overlap of active
-drc["implant_enclosure_active"] = 0.6
+drc["implant_enclose_active"] = 0.6
 # Not a rule
-drc["implant_enclosure_body_active"] = 0.6
+drc["implant_enclose_body_active"] = 0.6
 # 4.3 Minimum select overlap of contact  
-drc["implant_enclosure_contact"] = 0.3
+drc["implant_enclose_contact"] = 0.3
 # Not a rule
-drc["implant_enclosure_poly"] = 0
+drc["implant_enclose_poly"] = 0
 #Not a rule
 drc["implant_to_active"] = 0
 #Not a rule
@@ -244,11 +255,11 @@ drc["minwidth_contact"] = 0.6
 # 5.3 Minimum contact spacing
 drc["contact_to_contact"] = 0.9                    
 # 6.2.b Minimum active overlap 
-drc["active_enclosure_contact"] = 0.3
+drc["active_enclose_contact"] = 0.3
 # Reserved for asymmetric enclosure
 drc["active_extend_contact"] = 0.3
 # 5.2.b Minimum poly overlap 
-drc["poly_enclosure_contact"] = 0.3
+drc["poly_enclose_contact"] = 0.3
 # Reserved for asymmetric enclosures
 drc["poly_extend_contact"] = 0.3
 # Reserved for other technologies
@@ -264,11 +275,11 @@ drc["minwidth_m1pin"] = 0
 # 7.2 Minimum spacing 
 drc["metal1_to_metal1"] = 0.9
 # 7.3 Minimum overlap of any contact 
-drc["metal1_enclosure_contact"] = 0.3
+drc["metal1_enclose_contact"] = 0.3
 # Reserved for asymmetric enclosure
 drc["metal1_extend_contact"] = 0.3
 # 8.3 Minimum overlap by metal1 
-drc["metal1_enclosure_via1"] = 0.3                
+drc["metal1_enclose_via1"] = 0.3                
 # Reserve for asymmetric enclosures
 drc["metal1_extend_via1"] = 0.3
 # Not a rule
@@ -290,11 +301,11 @@ drc["metal2_to_metal2"] = 0.9
 # 9.3 Minimum overlap of via1 
 drc["metal2_extend_via1"] = 0.3
 # Reserved for asymmetric enclosures
-drc["metal2_enclosure_via1"] = 0.3
+drc["metal2_enclose_via1"] = 0.3
 # 14.3 Minimum overlap by metal2
 drc["metal2_extend_via2"] = 0.3
 # Reserved for asymmetric enclosures
-drc["metal2_enclosure_via2"] = 0.3
+drc["metal2_enclose_via2"] = 0.3
 # Not a rule
 drc["minarea_metal2"] = 0
 
@@ -314,11 +325,11 @@ drc["metal3_to_metal3"] = 0.9
 # 15.3 Minimum overlap of via 2
 drc["metal3_extend_via2"] = 0.6
 # Reserved for asymmetric enclosures
-drc["metal3_enclosure_via2"] = 0.6
+drc["metal3_enclose_via2"] = 0.6
 # Not a rule
 drc["metal3_extend_via3"] = 0
 # Not a rule
-drc["metal3_enclosure_via3"] = 0 
+drc["metal3_enclose_via3"] = 0 
 # Not a rule
 drc["minarea_metal3"] = 0
 
@@ -338,7 +349,7 @@ drc["metal4_to_metal4"] = 0
 # Not a rule
 drc["metal4_extend_via3"] = 0
 # Not a rule
-drc["metal4_enclosure_via3"] = 0
+drc["metal4_enclose_via3"] = 0
 # Not a rule
 drc["minarea_metal4"] = 0
 

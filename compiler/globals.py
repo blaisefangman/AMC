@@ -223,12 +223,17 @@ def setup_paths():
     debug.check(os.path.isdir(AMC_HOME),"$AMC_HOME does not exist: {0}".format(AMC_HOME))
 
     # Add all of the subdirs to the python path
-    # characterizer is a module and doesn't need to be added
-    for subdir in ["gdsMill", "tests", "modules", "base", "bist", "base/async"]:
+    # These subdirs are modules and don't need
+    # to be added: characterizer, verify
+    subdirlist = [item for item in os.listdir(AMC_HOME) if os.path.isdir(os.path.join(AMC_HOME, item))]
+    if OPTS.mode == "async":
+        subdirlist = subdirlist + ["base/async", "modules/async"]
+    for subdir in subdirlist:
         full_path = "{0}/{1}".format(AMC_HOME, subdir)
         debug.check(os.path.isdir(full_path),
-                    "$AMC_HOME/{0} does not exist: {1}".format(subdir,full_path))
-        sys.path.append("{0}".format(full_path)) 
+                "$OPENRAM_HOME/{0} does not exist: {1}".format(subdir, full_path))
+        if "__pycache__" not in full_path:
+            sys.path.append("{0}".format(full_path))
 
     if not OPTS.AMC_temp.endswith('/'):
         OPTS.AMC_temp += "/"

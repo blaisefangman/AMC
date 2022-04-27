@@ -48,8 +48,8 @@ class pull_up_pull_down(design.design):
         self.num_pmos = num_pmos
         self.nmos_size = nmos_size
         self.pmos_size = pmos_size
-        self.nmos_width = self.nmos_size*self.minwidth_tx
-        self.pmos_width = self.pmos_size*self.minwidth_tx
+        self.nmos_width = self.nmos_size*self.tx_width
+        self.pmos_width = self.pmos_size*self.tx_width
         self.vdd_pins = vdd_pins
         self.gnd_pins = gnd_pins
         
@@ -125,7 +125,7 @@ class pull_up_pull_down(design.design):
         self.overlap_offset = max(nmos_overlap_offset, pmos_overlap_offset)
 
         # This is for active-to-active of two cell that share the vdd/gnd rail
-        self.top_bottom_space = self.m1_space+contact.m1m2.width
+        self.top_bottom_space = self.metal1_space+contact.m1m2.width
         num_mos = max(self.num_nmos, self.num_pmos)
         mos_width= max(self.pmos.width,self.nmos.width)
         self.well_height = 2*self.top_bottom_space + (num_mos-1)*self.overlap_offset+ mos_width
@@ -171,14 +171,14 @@ class pull_up_pull_down(design.design):
         
         # This should be placed at the top of the NMOS well
         nwell_pos = vector(0,0)
-        nwell_width=max(self.nmos_inst[0].lx(), ceil(self.well_minarea/self.height))
-        if ceil(self.well_minarea/self.height)> self.nmos_inst[0].lx():
-            nwell_pos = vector(-(ceil(self.well_minarea/self.height)-self.nmos_inst[0].lx()),0)
+        nwell_width=max(self.nmos_inst[0].lx(), ceil(self.minarea_well/self.height))
+        if ceil(self.minarea_well/self.height)> self.nmos_inst[0].lx():
+            nwell_pos = vector(-(ceil(self.minarea_well/self.height)-self.nmos_inst[0].lx()),0)
         pimplant_pos = vector(self.pmos_inst[0].lx(),0)
         
         # This should be placed below the PMOS well
         pwell_pos = vector(self.nmos_inst[0].lx(),0)
-        pwell_width= self.nmos.height + ceil(self.active_minarea/contact.well.height) + \
+        pwell_width= self.nmos.height + ceil(self.minarea_active/contact.well.height) + \
                      drc["extra_to_poly"]+self.implant_enclose_body_active+self.well_enclose_active
         nimplant_pos = vector(self.nmos_inst[0].lx(),0)
 
@@ -269,7 +269,7 @@ class pull_up_pull_down(design.design):
         layer_stack = ("active", "contact", "metal1")
         nm_xoff = self.well_enclose_active
         nw_yoff = self.height - contact.well.height-\
-                 max(self.well_enclose_active, self.active_to_active-0.5*(self.active_to_active-contact.m1m2.width))
+                 max(self.well_enclose_active, self.active_space-0.5*(self.active_space-contact.m1m2.width))
         nw_contact_off=vector(nm_xoff, nw_yoff)  
                                                                   
         if info["has_nimplant"]:
@@ -309,21 +309,21 @@ class pull_up_pull_down(design.design):
                          add_extra_layer=info["well_contact_extra"])
         
         self.active_height = contact.well.width
-        self.active_width = ceil(self.active_minarea/self.active_height)
+        self.active_width = ceil(self.minarea_active/self.active_height)
         
         active_off1 = nw_contact_off-vector(0, self.active_height-contact.well.first_layer_width)
         metal_off1= nw_contact_off + vector(0,self.active_enclose_contact)
         metal_height1 = self.height -  nw_contact_off.y - self.active_enclose_contact
         pimplant_off = (0, 0)
         
-        extra_height1=extra_height2 = self.height - active_off1.y + self.extra_enclose
-        extra_width1=max (ceil(self.extra_minarea/extra_height1), 
-                          active_off1.x + self.active_width + self.extra_enclose)
+        extra_height1=extra_height2 = self.height - active_off1.y + self.extra_layer_enclose
+        extra_width1=max (ceil(self.minarea_extra_layer/extra_height1), 
+                          active_off1.x + self.active_width + self.extra_layer_enclose)
         extra_off1=(0, self.height-extra_height1)
 
         active_off2 = pw_contact_off
         metal_off2= (pw_contact_off.x, 0)
-        metal_height2 = pw_contact_off.y + self.active_enclose_contact+self.m1_width
+        metal_height2 = pw_contact_off.y + self.active_enclose_contact+self.metal1_width
         nimplant_off = (self.nmos_inst[0].rx(), 0)
         extra_off2=(self.nmos_inst[0].rx()+drc["extra_to_poly"],0)
         extra_width2=max (self.width-self.nmos_inst[0].rx()-drc["extra_to_poly"], extra_width1)
@@ -372,20 +372,20 @@ class pull_up_pull_down(design.design):
         for i in range(len(self.vdd_pins)):
             n=self.vdd_pins[i][0]
             j=int(self.vdd_pins[i][1:])
-            self.add_via_center(self.m1_stack, (self.pmos_inst[j].get_pin(n).uc().x,
+            self.add_via_center(self.metal1_stack, (self.pmos_inst[j].get_pin(n).uc().x,
                                                 self.pmos_inst[j].get_pin(n).lc().y), rotate=90)
         for i in range(len(self.gnd_pins)):
             n=self.gnd_pins[i][0]
             j=int(self.gnd_pins[i][1:])
-            self.add_via_center(self.m1_stack, (self.nmos_inst[j].get_pin(n).uc().x,
+            self.add_via_center(self.metal1_stack, (self.nmos_inst[j].get_pin(n).uc().x,
                                                 self.nmos_inst[j].get_pin(n).lc().y), rotate=90)            
 
-        self.add_via_center(self.m1_stack, (self.pmos_inst[0].get_pin("D").uc().x,
+        self.add_via_center(self.metal1_stack, (self.pmos_inst[0].get_pin("D").uc().x,
                                             self.height-0.5*contact.m1m2.width), rotate=90)
         self.add_path("metal2", [(self.pmos_inst[0].get_pin("D").uc().x,0), 
                                  (self.pmos_inst[0].get_pin("D").uc().x,self.height)])
         
-        self.add_via_center(self.m1_stack, (self.nmos_inst[0].get_pin("D").uc().x,
+        self.add_via_center(self.metal1_stack, (self.nmos_inst[0].get_pin("D").uc().x,
                                             0.5*contact.m1m2.width), rotate=90)
         self.add_path("metal2", [(self.nmos_inst[0].get_pin("D").uc().x,0), 
                                  (self.nmos_inst[0].get_pin("D").uc().x,self.height)])
@@ -398,8 +398,8 @@ class pull_up_pull_down(design.design):
             self.add_layout_pin(text="Dp{0}".format(i),
                                 layer="metal1",
                                 offset=pin_offset,
-                                width=self.m1_width,
-                                height=self.m1_width)
+                                width=self.metal1_width,
+                                height=self.metal1_width)
 
         for i in range(self.num_pmos):
             pin_offset = (self.pmos_inst[i].get_pin("G").lx(), 
@@ -413,8 +413,8 @@ class pull_up_pull_down(design.design):
         self.add_layout_pin(text="Sp0",
                             layer="metal1",
                              offset=self.pmos_inst[0].get_pin("S").ll(),
-                             width=self.m1_width,
-                             height=self.m1_width)
+                             width=self.metal1_width,
+                             height=self.metal1_width)
 
         #gate_pin_width = self.nmos_width + 2*self.poly_extend_active
         for i in range(self.num_nmos):
@@ -422,8 +422,8 @@ class pull_up_pull_down(design.design):
             self.add_layout_pin(text="Dn{0}".format(i),
                                 layer="metal1",
                                 offset=pin_offset,
-                                width=self.m1_width,
-                                height=self.m1_width)
+                                width=self.metal1_width,
+                                height=self.metal1_width)
 
 
         for i in range(self.num_nmos):
@@ -437,5 +437,5 @@ class pull_up_pull_down(design.design):
         self.add_layout_pin(text="Sn0",
                             layer="metal1",
                              offset=self.nmos_inst[0].get_pin("S").ll(),
-                             width=self.m1_width,
-                             height=self.m1_width)
+                             width=self.metal1_width,
+                             height=self.metal1_width)

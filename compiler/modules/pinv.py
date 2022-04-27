@@ -61,10 +61,10 @@ class pinv(design.design):
     def determine_tx_mults(self):
         """ Determines the number of fingers for the height constraint. """
         
-        min_tx = ptx(width=self.minwidth_tx, mults=1, tx_type="nmos")
+        min_tx = ptx(width=self.tx_width, mults=1, tx_type="nmos")
 
         # This is a active-to-active of a flipped cell of active-conatct to power-rail inside cell
-        top_bottom_space = max(self.active_to_active, 2*self.m1_space+contact.m1m2.width, self.poly_space)
+        top_bottom_space = max(self.active_space, 2*self.metal1_space+contact.m1m2.width, self.poly_space)
 
         # Determine the height left to the transistors for number of fingers calculation
         tx_height_available = self.height - top_bottom_space
@@ -82,8 +82,8 @@ class pinv(design.design):
 
         # We need to round the width to the grid or we will end up with LVS property mismatch
         # errors when fingers are not a grid length and get rounded in the offset geometry.
-        self.nmos_width = round_to_grid((self.nmos_size*self.minwidth_tx) / self.tx_mults)
-        self.pmos_width = round_to_grid((self.pmos_size*self.minwidth_tx) / self.tx_mults)
+        self.nmos_width = round_to_grid((self.nmos_size*self.tx_width) / self.tx_mults)
+        self.pmos_width = round_to_grid((self.pmos_size*self.tx_width) / self.tx_mults)
         
     def create_ptx(self):
         """ Create the PMOS and NMOS transistors. """
@@ -106,10 +106,10 @@ class pinv(design.design):
         """ Add PMOS and NMOS to the layout """
         
         # place PMOS right to nwell contact
-        well_width = util_ceil(self.well_minarea/(self.height+contact.m1m2.width))
+        well_width = util_ceil(self.minarea_well/(self.height+contact.m1m2.width))
         if self.tx_mults==1:
             x_off = max(self.well_enclose_active + contact.well.width + \
-                        self.implant_enclose_body_active+ self.m1_space+self.pmos.height, well_width)
+                        self.implant_enclose_body_active+ self.metal1_space+self.pmos.height, well_width)
         else:
             x_off = max(self.well_enclose_active + contact.well.width + \
                         self.implant_enclose_body_active + self.pmos.height+ self.poly_to_active, well_width)
@@ -149,7 +149,7 @@ class pinv(design.design):
                           height=self.height+contact.m1m2.width)
         
         pwell_width= self.nmos_inst.height + contact.well.width + self.well_enclose_active+ \
-                     max(self.implant_enclose_body_active, self.m1_space) + self.m1_space
+                     max(self.implant_enclose_body_active, self.metal1_space) + self.metal1_space
         if info["has_pwell"]:
             # This should cover pwell-contact and nmos
             pwell_pos = nimplant_pos= (self.nmos_inst.lx(),-0.5*contact.m1m2.width)
@@ -202,10 +202,10 @@ class pinv(design.design):
         layer_stack = ("active", "contact", "metal1")
         
         nwell_contact_offset=vector(self.well_enclose_active, 
-                                    self.height+0.5*contact.m1m2.width-max(self.well_enclose_active,self.active_to_active)-contact.well.height)
+                                    self.height+0.5*contact.m1m2.width-max(self.well_enclose_active,self.active_space)-contact.well.height)
 
         pwell_contact_offset= vector(self.nmos_inst.rx()+ \
-                                     max(self.implant_enclose_body_active, self.m1_space), 
+                                     max(self.implant_enclose_body_active, self.metal1_space), 
                                      self.well_enclose_active)
         
         if info["has_nwell"]:
@@ -233,7 +233,7 @@ class pinv(design.design):
         self.pwell_contact=self.add_contact(layer_stack, pwell_contact_offset, 
                                             implant_type=pimplant_type, well_type=pwell_type, add_extra_layer=info["well_contact_extra"])
         
-        self.active_height = self.active_minarea/contact.well.width
+        self.active_height = self.minarea_active/contact.well.width
         
         
         y_off1 = self.nmos_inst.get_pin("G").uy()+self.poly_to_active
@@ -248,14 +248,14 @@ class pinv(design.design):
         metal_off2= pwell_contact_offset.scale(1,0)
         metal_height2 = pwell_contact_offset.y
         nimplant_of = vector(self.nmos_inst.rx(), -0.5*contact.m1m2.width)
-        nimplant_width = contact.well.width+self.well_enclose_active+ self.m1_space+\
-                        max(self.implant_enclose_body_active, self.m1_space)
-        extra_width = contact.well.width+self.extra_enclose+self.well_enclose_active
-        extra_height = max(self.active_height+2*self.extra_enclose, 
-                           util_ceil(self.extra_minarea/extra_width),
-                           self.height+0.5*contact.m1m2.width-active_off1.y+self.extra_enclose)
+        nimplant_width = contact.well.width+self.well_enclose_active+ self.metal1_space+\
+                        max(self.implant_enclose_body_active, self.metal1_space)
+        extra_width = contact.well.width+self.extra_layer_enclose+self.well_enclose_active
+        extra_height = max(self.active_height+2*self.extra_layer_enclose, 
+                           util_ceil(self.minarea_extra_layer/extra_width),
+                           self.height+0.5*contact.m1m2.width-active_off1.y+self.extra_layer_enclose)
         extra_off1= vector(0, self.height+0.5*contact.m1m2.width-extra_height)
-        extra_off2= vector(active_off2.x-self.extra_enclose, -0.5*contact.m1m2.width)
+        extra_off2= vector(active_off2.x-self.extra_layer_enclose, -0.5*contact.m1m2.width)
 
         if nimplant_type:
             self.add_rect(layer="nimplant",
@@ -270,7 +270,7 @@ class pinv(design.design):
                           height=self.height+contact.m1m2.width)
 
         self.add_active_implant(nwell_contact_offset, active_off1, metal_off1, metal_height1, extra_width, extra_height, extra_off1)
-        self.add_active_implant(pwell_contact_offset, active_off2, metal_off2, metal_height2, extra_width+self.m1_space, self.height+contact.m1m2.width, extra_off2)
+        self.add_active_implant(pwell_contact_offset, active_off2, metal_off2, metal_height2, extra_width+self.metal1_space, self.height+contact.m1m2.width, extra_off2)
 
 
     def add_active_implant(self, well_off, active_off, metal_off, metal_height, extra_width, extra_height, extra_off):
@@ -283,7 +283,7 @@ class pinv(design.design):
         
         x_shift = max((self.active_width - self.contact_width)/2, self.active_enclose_contact)
         self.add_rect(layer="metal1",
-                      offset=metal_off+vector(x_shift-self.m1_enclose_contact,0),
+                      offset=metal_off+vector(x_shift-self.metal1_enclose_contact,0),
                       width=contact.well.second_layer_width,
                       height=metal_height)
         
@@ -297,18 +297,18 @@ class pinv(design.design):
 
         self.add_rect(layer="metal1",
                       offset=(self.nmos_inst.get_pin("S").lx(), 0),
-                      width=self.m1_width,
+                      width=self.metal1_width,
                       height=self.nmos_inst.get_pin("S").by())
 
         if self.tx_mults==1:
-            x_off = self.pmos_inst.get_pin("S").lc().x-self.m1_space-0.5*contact.m1m2.height
+            x_off = self.pmos_inst.get_pin("S").lc().x-self.metal1_space-0.5*contact.m1m2.height
             self.add_path("metal1",[self.pmos_inst.get_pin("S").lc(),
                                    (x_off, self.pmos_inst.get_pin("S").lc().y),
                                    (x_off, self.height)])
         else:
             self.add_rect(layer="metal1",
                           offset=self.pmos_inst.get_pin("S").ll(),
-                          width=self.m1_width,
+                          width=self.metal1_width,
                           height=self.height-self.pmos_inst.get_pin("S").by())
     
     def route_input(self):
@@ -322,10 +322,10 @@ class pinv(design.design):
 
         # Add the via to the cell midpoint along the gate
         if info["tx_dummy_poly"]:
-            shift =  max(self.m1_space, self.poly_space, self.poly_to_active)
+            shift =  max(self.metal1_space, self.poly_space, self.poly_to_active)
         
         else:
-            shift =  max(self.m1_space, self.poly_to_active)
+            shift =  max(self.metal1_space, self.poly_to_active)
         contact_offset = vector(self.pmos_inst.lx()-contact.poly.width - shift,
                                 nmos_gate_pos.by()-contact.poly.first_layer_height)
 
@@ -340,11 +340,11 @@ class pinv(design.design):
         self.add_layout_pin(text="A",
                             layer="metal1",
                             offset=(0,(self.height-contact.m1m2.width)/2),
-                            width=self.m1_width,
-                            height=self.m1_width)
+                            width=self.metal1_width,
+                            height=self.metal1_width)
         
         self.add_path("metal1",[(contact_offset.x+0.5*contact.poly.width, contact_offset.y), 
-                                (0,(self.height-contact.m1m2.width)/2+0.5*self.m1_width)])
+                                (0,(self.height-contact.m1m2.width)/2+0.5*self.metal1_width)])
 
     def route_output(self):
         """ Route the output (drains) together, routes output to edge. """
@@ -354,36 +354,36 @@ class pinv(design.design):
         nmos_drain_pos = self.nmos_inst.get_pin("D")
         pmos_drain_pos = self.pmos_inst.get_pin("D")
         mid_pos = vector(self.nmos_inst.lx(), nmos_drain_pos.lc().y)
-        output_offset = vector(self.width- 2*self.m1_space, nmos_drain_pos.lc().y)
+        output_offset = vector(self.width- 2*self.metal1_space, nmos_drain_pos.lc().y)
         
         # output pin at the edge of the cell in middle
-        output_pin_offset = vector(self.width-2*self.m1_space-contact.m1m2.width, 
+        output_pin_offset = vector(self.width-2*self.metal1_space-contact.m1m2.width, 
                                    nmos_drain_pos.by())
 
         
         self.add_path("metal1",[nmos_drain_pos.lc(), mid_pos, pmos_drain_pos.lc()], contact.active.second_layer_width)
         self.add_path("metal2",[(mid_pos.x, nmos_drain_pos.lc().y), output_offset])
-        self.add_via_center(self.m1_stack,(mid_pos.x, nmos_drain_pos.lc().y), rotate=90)
+        self.add_via_center(self.metal1_stack,(mid_pos.x, nmos_drain_pos.lc().y), rotate=90)
         via_off= vector(output_pin_offset.x, nmos_drain_pos.lc().y-0.5*contact.m1m2.width - self.via_shift("v1"))
-        self.add_via(self.m1_stack,via_off)
+        self.add_via(self.metal1_stack,via_off)
         
-        height=util_ceil(self.m1_minarea/contact.m1m2.first_layer_width)
-        minarea_yoff = max(self.pwell_contact.uy()+2*self.m1_space, via_off.y-0.5*height)
+        height=util_ceil(self.minarea_metal1/contact.m1m2.first_layer_width)
+        minarea_yoff = max(self.pwell_contact.uy()+2*self.metal1_space, via_off.y-0.5*height)
         self.add_rect(layer="metal1",
                       offset=(via_off.x, minarea_yoff),
                       width=contact.m1m2.first_layer_width,
                       height=height)
 
-        Z_off = (self.width-2*self.m1_space, nmos_drain_pos.lc().y-0.5*contact.m1m2.width)
+        Z_off = (self.width-2*self.metal1_space, nmos_drain_pos.lc().y-0.5*contact.m1m2.width)
         self.add_layout_pin(text="Z",
                             layer="metal1",
                             offset=Z_off,
-                            width=2*self.m1_space,
-                            height=self.m1_width)
+                            width=2*self.metal1_space,
+                            height=self.metal1_width)
         self.add_rect(layer="metal1",
                       offset=Z_off,
-                      width=2*self.m1_space,
-                      height=self.m1_width)
+                      width=2*self.metal1_space,
+                      height=self.metal1_width)
     
     def add_dummy_poly(self):
         

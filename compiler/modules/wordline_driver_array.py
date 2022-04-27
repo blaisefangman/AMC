@@ -38,7 +38,7 @@ class wordline_driver_array(design.design):
 
         self.rows = rows
         
-        self.x_offset0 = 6*self.m1_space
+        self.x_offset0 = 6*self.metal1_space
         self.width = self.x_offset0 + self.wordline_driver.width
         #each wordline driver drivers 4 wordline
         self.height = self.wordline_driver.height*(self.rows//4)
@@ -114,21 +114,21 @@ class wordline_driver_array(design.design):
             en_pin = wordline_driver_inst.get_pin("en")
             if en_pin.layer[0:6]=="metal1":
                 pin_layer = "metal1"
-                pin_width= self.m1_width
-                layer_stack = self.m1_stack
+                pin_width= self.metal1_width
+                layer_stack = self.metal1_stack
                 contact_height= contact.m1m2.height
                 
             else:
                 pin_layer = "metal3"
-                pin_width= self.m3_width
+                pin_width= self.metal3_width
                 layer_stack = self.m2_stack
                 contact_height= contact.m2m3.height
 
             self.add_rect(layer=pin_layer,
-                          offset= vector(2*self.m1_space, en_pin.by()),
-                          width=en_pin.lx()-2*self.m1_space,
+                          offset= vector(2*self.metal1_space, en_pin.by()),
+                          width=en_pin.lx()-2*self.metal1_space,
                           height=pin_width)
-            self.add_via(layer_stack,(2*self.m1_space+contact_height, en_pin.by()), rotate=90)
+            self.add_via(layer_stack,(2*self.metal1_space+contact_height, en_pin.by()), rotate=90)
 
 
             # output each OUT on the right
@@ -140,9 +140,9 @@ class wordline_driver_array(design.design):
                 out_pin = wordline_driver_inst.get_pin("out{0}".format(j))
                 in_pin = wordline_driver_inst.get_pin("in{0}".format(j))
                 if out_pin.layer[0:6]=="metal1":
-                    pin_width = self.m1_width
+                    pin_width = self.metal1_width
                 else:
-                    pin_width = self.m3_width
+                    pin_width = self.metal3_width
                 self.add_layout_pin(text=text, 
                                     layer=out_pin.layer[0:6],
                                     offset= (self.width-pin_width, out_pin.by()),
@@ -152,17 +152,17 @@ class wordline_driver_array(design.design):
                 self.add_layout_pin(text="in[{0}]".format(4*i+j), 
                                     layer=in_pin.layer[0:6],
                                     offset= in_pin.ll(),
-                                    width=self.m1_width, 
-                                    height=self.m1_width)
+                                    width=self.metal1_width, 
+                                    height=self.metal1_width)
 
         # Wordline enable connection
         self.add_rect(layer="metal2", 
-                      offset=[2*self.m1_space,0], 
-                      width=self.m2_width, 
+                      offset=[2*self.metal1_space,0], 
+                      width=self.metal2_width, 
                       height=self.height)
         en_pin=self.add_layout_pin(text="en", 
                                    layer="metal2", 
-                                   offset=[2*self.m1_space,0], 
-                                   width=self.m2_width, 
-                                   height=self.m2_width)
+                                   offset=[2*self.metal1_space,0], 
+                                   width=self.metal2_width, 
+                                   height=self.metal2_width)
 

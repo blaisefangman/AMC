@@ -50,7 +50,7 @@ class driver(design.design):
     def add_driver(self):
         """ Add nand2 + inv cells"""
         
-        self.x_offset1 = 7*self.m1_space
+        self.x_offset1 = 7*self.metal1_space
         self.x_offset2 = self.x_offset1 + self.nand2.width
         self.width = self.x_offset2 + self.inv.width
         
@@ -102,9 +102,9 @@ class driver(design.design):
             # en connection
             a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
-            clk_offset = vector(2*self.m1_space+0.5*contact.m1m2.height ,a_pos.y)
+            clk_offset = vector(2*self.metal1_space+0.5*contact.m1m2.height ,a_pos.y)
             self.add_segment_center(layer="metal1", start=clk_offset, end=a_pos)
-            self.add_via_center(self.m1_stack, clk_offset, rotate=90)
+            self.add_via_center(self.metal1_stack, clk_offset, rotate=90)
 
             # Nand2 out to inv input
             zr_pos = nand_inst.get_pin("Z").lc()
@@ -119,24 +119,24 @@ class driver(design.design):
             self.add_layout_pin(text="out[{0}]".format(row), 
                                 layer=out_pin.layer, 
                                 offset=out_pin.ll(),
-                                width=self.m1_width,
-                                height=self.m1_width)
+                                width=self.metal1_width,
+                                height=self.metal1_width)
 
             # connect the decoder input pin to nand2 B
             b_pin = nand_inst.get_pin("B")
             self.add_layout_pin(text="in[{0}]".format(row), 
                                 layer=out_pin.layer, 
                                 offset=b_pin.ll(), 
-                                width=self.m1_width,
-                                height=self.m1_width)
+                                width=self.metal1_width,
+                                height=self.metal1_width)
 
         # Wordline enable connection
         en_pin=self.add_rect(layer="metal2", 
-                             offset=[2*self.m1_space,0], 
-                             width=self.m2_width, 
+                             offset=[2*self.metal1_space,0], 
+                             width=self.metal2_width, 
                              height=self.height)
         en_pin=self.add_layout_pin(text="en", 
                                    layer="metal2", 
-                                   offset=[2*self.m1_space,0], 
-                                   width=self.m2_width, 
-                                   height=self.m2_width)
+                                   offset=[2*self.metal1_space,0], 
+                                   width=self.metal2_width, 
+                                   height=self.metal2_width)

@@ -31,10 +31,10 @@ class column_mux(design.design):
         self.bitcell = bitcell()
         
         # This is to avoid DRC violation with arrays above and below column_mux
-        self.pin_height = 5*self.m1_width
+        self.pin_height = 5*self.metal1_width
         self.width = self.bitcell.width
 
-        self.ptx_width = 2*self.minwidth_tx
+        self.ptx_width = 2*self.tx_width
         self.add_pin_list(["bl", "br", "bl_out", "br_out", "sel", "gnd"])
         
         self.create_layout()
@@ -56,9 +56,9 @@ class column_mux(design.design):
             first NMOS at left and second NMOS at right"""
         
         # If NMOS size if bigger than bicell_width use multi finger NMOS
-        n = int(math.floor((0.5* (self.bitcell.width-6*self.m1_space)) / self.minwidth_tx))
+        n = int(math.floor((0.5* (self.bitcell.width-6*self.metal1_space)) / self.tx_width))
         m = (self.ptx_width/n)
-        if m > self.minwidth_tx:
+        if m > self.tx_width:
             num_fing = int(math.ceil(self.ptx_width/n))
         else:
             num_fing = 1
@@ -152,7 +152,7 @@ class column_mux(design.design):
         
         self.add_rect_center(layer="metal1", 
                              offset=pin, 
-                             width=self.m1_minarea/contact.m1m2.width, 
+                             width=self.minarea_metal1/contact.m1m2.width, 
                              height=contact.m1m2.width)
     
     def connect_bitlines(self):
@@ -166,12 +166,12 @@ class column_mux(design.design):
         nmos2_s_pin = vector(self.nmos2.get_pin("S").uc().x, self.nmos2.get_pin("S").lc().y)
         nmos2_d_pin = vector(self.nmos2.get_pin("D").uc().x, self.nmos2.get_pin("D").lc().y)
         
-        self.add_via_center(self.m1_stack, nmos1_s_pin, rotate=90)
-        self.add_via_center(self.m1_stack, nmos1_d_pin+vector(0, contact.m1m2.width), rotate=90)
-        self.add_via_center(self.m1_stack, nmos2_s_pin, rotate=90)
-        self.add_via_center(self.m1_stack, nmos2_d_pin+vector(0, contact.m1m2.width), rotate=90)
+        self.add_via_center(self.metal1_stack, nmos1_s_pin, rotate=90)
+        self.add_via_center(self.metal1_stack, nmos1_d_pin+vector(0, contact.m1m2.width), rotate=90)
+        self.add_via_center(self.metal1_stack, nmos2_s_pin, rotate=90)
+        self.add_via_center(self.metal1_stack, nmos2_d_pin+vector(0, contact.m1m2.width), rotate=90)
         
-        shift=0.5*(self.m1_minarea/contact.m1m2.width)
+        shift=0.5*(self.minarea_metal1/contact.m1m2.width)
         self.add_m1_minarea(vector(self.nmos1.lx()+shift, nmos1_s_pin.y))
         self.add_m1_minarea(vector(self.nmos1.lx()+shift, nmos1_d_pin.y))
         self.add_m1_minarea(vector(self.nmos2.rx()-shift, nmos2_s_pin.y))
@@ -189,22 +189,22 @@ class column_mux(design.design):
     def add_gnd_rail(self):
         """ Add the gnd rails that span the whole cell"""
 
-        self.gnd_position = vector(0, self.nmos1.by()-self.m1_width)
+        self.gnd_position = vector(0, self.nmos1.by()-self.metal1_width)
         self.add_rect(layer="metal1", 
                        offset=self.gnd_position, 
                        width = self.width,
-                       height=self.m1_width)
+                       height=self.metal1_width)
         self.add_layout_pin(text="gnd", 
                             layer="metal1", 
                             offset=self.gnd_position,
-                            width = self.m1_width, 
-                            height=self.m1_width)
+                            width = self.metal1_width, 
+                            height=self.metal1_width)
         
     def add_well_contact(self):
         """ Add a well and implant over the whole cell. Also, add the pwell contact"""
         
         well_contact_offset = vector(self.well_enclose_active + contact.well.width, 
-                                     self.nmos1.by() - self.m1_width - contact.well.height)
+                                     self.nmos1.by() - self.metal1_width - contact.well.height)
         if info["has_pimplant"]:
             implant_type="p"
         else:
@@ -221,10 +221,10 @@ class column_mux(design.design):
                          well_type=well_type, 
                          add_extra_layer=info["well_contact_extra"])
         
-        active_width= self.active_minarea/contact.well.first_layer_height
+        active_width= self.minarea_active/contact.well.first_layer_height
         active_height = contact.well.first_layer_height
         active_offse= vector(self.well_enclose_active,  well_contact_offset.y+ \
-                      self.m1_extend_contact-self.active_extend_contact)
+                      self.metal1_extend_contact-self.active_extend_contact)
         self.add_rect(layer="active", 
                       offset=active_offse, 
                       width = active_width,
@@ -256,10 +256,10 @@ class column_mux(design.design):
                       height=self.nmos.width)
 
 
-        extra_height = active_height+2*self.extra_enclose
+        extra_height = active_height+2*self.extra_layer_enclose
         #extra_width = self.extra_minarea/ extra_height
         extra_width = self.width
-        extra_off= vector(0, active_offse[1]-self.extra_enclose)
+        extra_off= vector(0, active_offse[1]-self.extra_layer_enclose)
         self.add_rect(layer="extra_layer",
                       offset=extra_off,
                       width= extra_width,

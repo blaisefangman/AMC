@@ -78,8 +78,8 @@ class write_driver_array(design.design):
             
             self.connect_inst(temp)
             
-            bl_offset = vector(self.wd_inst[i].get_pin("bl").lx() , self.height-self.m2_width)
-            br_offset = vector(self.wd_inst[i].get_pin("br").lx() , self.height-self.m2_width)
+            bl_offset = vector(self.wd_inst[i].get_pin("bl").lx() , self.height-self.metal2_width)
+            br_offset = vector(self.wd_inst[i].get_pin("br").lx() , self.height-self.metal2_width)
             din_offset = self.wd_inst[i].get_pin("din").ll()
             bm_offset = self.wd_inst[i].get_pin("bm").ll()
 
@@ -87,24 +87,24 @@ class write_driver_array(design.design):
                                 layer=din_pin.layer, 
                                 offset=din_offset, 
                                 width=din_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
             self.add_layout_pin(text="bm[{0}]".format(i//self.words_per_row),
                                 layer=bm_pin.layer, 
                                 offset=bm_offset, 
                                 width=bm_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
                        
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer=bl_pin.layer, 
                                 offset=bl_offset, 
                                 width=bl_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
             
             self.add_layout_pin(text="br[{0}]".format(i), 
                                 layer=br_pin.layer, 
                                 offset=br_offset, 
                                 width=br_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
 
     def connect_rails(self):
 
@@ -116,7 +116,7 @@ class write_driver_array(design.design):
             self.add_rect(layer="metal1", 
                           offset=pin.ll().scale(0,1),
                           width=self.width, 
-                          height=self.m1_width)
+                          height=self.metal1_width)
             self.add_layout_pin(text=i, 
                                 layer=pin.layer, 
                                 offset=pin.ll().scale(0,1),

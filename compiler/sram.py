@@ -24,6 +24,8 @@ import sys
 import datetime
 import getpass
 import design
+import lef
+import async_verilog
 import debug
 import contact
 from math import log
@@ -32,9 +34,10 @@ from globals import OPTS, print_time
 from multi_bank import multi_bank
 from split_merge_control import split_merge_control
 from bitcell import bitcell
+from tech import amc_layer_names
 
    
-class sram(design.design):
+class sram(design.design, lef.lef, async_verilog.verilog):
     """ Dynamically generated two level multi-bank asynchronous SRAM. """
 
     def __init__(self, word_size, words_per_row, num_rows, num_subanks, 
@@ -43,6 +46,7 @@ class sram(design.design):
         design.design.name_map=[]
         start_time = datetime.datetime.now()
         design.design.__init__(self, name)
+        lef.lef.__init__(self, amc_layer_names)
 
         self.w_size = word_size
         self.w_per_row = words_per_row
@@ -192,7 +196,7 @@ class sram(design.design):
         
         self.pow_width = self.inbank.pow_width
         self.pow_pitch = self.inbank.pow_pitch
-        self.pitch = max(self.m_pitch("m1"), self.m_pitch("m2"))
+        self.pitch = max(self.metal1_pitch, self.metal2_pitch)
         self.num_via = self.inbank.num_via
         
         #"r", "w",  "rw", "ack", "rack", "rreq", "wreq", "wack"
@@ -206,10 +210,10 @@ class sram(design.design):
         
         if self.obank_orien == "H":
             self.data_bus_width = 2*self.inbank.width + 4*self.gap + 4*self.pow_pitch+\
-                                  self.out_sm_ctrl.height+self.m1_width
+                                  self.out_sm_ctrl.height+self.metal1_width
         if self.obank_orien == "V":
             self.data_bus_width = self.inbank.width + self.gap + self.out_sm_ctrl.height+ \
-                                  4*self.pow_pitch + self.pitch+self.m1_width
+                                  4*self.pow_pitch + self.pitch+self.metal1_width
         
         
         self.hbus_height = self.pitch*self.num_h_line + 2*self.pow_pitch
@@ -229,7 +233,7 @@ class sram(design.design):
         self.add_two_outbanks()
         self.add_busses()
         self.route_outbanks()
-        self.width = self.inbank_inst[1].ur().x + self.out_sm_ctrl.height + self.m1_width
+        self.width = self.inbank_inst[1].ur().x + self.out_sm_ctrl.height + self.metal1_width
         self.height = self.inbank_inst[1].ur().y
         if (self.ibank_orien == "V" and self.obank_orien == "H"):
             self.height = self.dout1_off.y + (self.w_size+1)*self.pitch
@@ -802,41 +806,41 @@ class sram(design.design):
             for k in range(self.num_obank):
                 for i in range(self.w_size):
                     pin = self.inbank_inst[k].get_pin("din[{0}]".format(i)).ll()
-                    yoff = self.din1_off.y+ i*self.pitch +0.5*self.m1_width
+                    yoff = self.din1_off.y+ i*self.pitch +0.5*self.metal1_width
                     din_off = vector(pin.x, yoff)
-                    din_height =  pin.y - yoff + self.m1_width
+                    din_height =  pin.y - yoff + self.metal1_width
                     self.add_rect(layer="metal2", 
                                   offset=din_off, 
-                                  width=self.m2_width, 
+                                  width=self.metal2_width, 
                                   height=din_height)
-                    self.add_via(self.m1_stack, offset=(din_off.x, din_off.y-self.via_yshift))
+                    self.add_via(self.metal1_stack, offset=(din_off.x, din_off.y-self.via_yshift))
 
                     if self.mask:
                         pin=self.inbank_inst[k].get_pin("bm[{0}]".format(i)).ll()
-                        yoff = self.din1_off.y+ i*self.pitch +0.5*self.m1_width
+                        yoff = self.din1_off.y+ i*self.pitch +0.5*self.metal1_width
                         din_off = vector(pin.x, yoff)
-                        din_height =  pin.y -  yoff + self.m1_width
-                        self.add_rect(layer="metal2", offset=din_off, width=self.m2_width, height=din_height)
-                        self.add_via_center(self.m2_stack, offset=(din_off.x+0.5*self.m2_width, din_off.y+0.5*contact.m2m3.width))
+                        din_height =  pin.y -  yoff + self.metal1_width
+                        self.add_rect(layer="metal2", offset=din_off, width=self.metal2_width, height=din_height)
+                        self.add_via_center(self.metal2_stack, offset=(din_off.x+0.5*self.metal2_width, din_off.y+0.5*contact.m2m3.width))
     
                     if (self.obank_orien == "H" or self.ibank_orien == "H"): 
                         pin =  self.inbank_inst[k].get_pin("dout[{0}]".format(i)).ll()
-                        yoff = self.dout1_off.y+i*self.pitch+0.5*self.m1_width
+                        yoff = self.dout1_off.y+i*self.pitch+0.5*self.metal1_width
                         dout_off = vector(pin.x, yoff)
-                        dout_height = pin.y - yoff + self.m1_width
+                        dout_height = pin.y - yoff + self.metal1_width
                         self.add_rect(layer="metal2", 
                                       offset=dout_off, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=dout_height)
-                        self.add_via(self.m1_stack, (dout_off.x, dout_off.y-self.via_yshift))
+                        self.add_via(self.metal1_stack, (dout_off.x, dout_off.y-self.via_yshift))
 
                     else: 
                         dout_off1 = self.inbank_inst[0].get_pin("dout[{0}]".format(i))
                         dout_off2 = self.inbank_inst[1].get_pin("dout[{0}]".format(i))
-                        dout_off1_y = self.dout1_off.y+ i*self.pitch +self.m1_width
+                        dout_off1_y = self.dout1_off.y+ i*self.pitch +self.metal1_width
                         dout_off2_y = self.dout2_off.y+ i*self.pitch
                         x_off = self.inbank_inst[1].lr().x+(i+1)*self.pitch 
-                        self.add_wire(self.m1_stack, [(dout_off1.uc().x,dout_off1.ll().y),
+                        self.add_wire(self.metal1_stack, [(dout_off1.uc().x,dout_off1.ll().y),
                                       (dout_off1.uc().x,dout_off1_y),
                                       (x_off,dout_off1_y), (x_off,dout_off2_y),
                                       (dout_off1.uc().x,dout_off2_y),
@@ -847,54 +851,54 @@ class sram(design.design):
             for k in range(self.num_obank):
                 for i in range(self.w_size):
                     pin = self.inbank_inst[k].get_pin("din[{0}]".format(i)).ll()
-                    yoff = self.din1_off.y+ i*self.pitch + 0.5*self.m1_width
+                    yoff = self.din1_off.y+ i*self.pitch + 0.5*self.metal1_width
                     din_off = vector(pin.x,  yoff)
-                    din_height =  pin.y - yoff + self.m1_width
+                    din_height =  pin.y - yoff + self.metal1_width
                     self.add_rect(layer="metal2", 
                                   offset=din_off, 
-                                  width=self.m2_width, 
+                                  width=self.metal2_width, 
                                   height=din_height)
-                    self.add_via(self.m1_stack, (din_off.x, din_off.y-self.via_yshift))
+                    self.add_via(self.metal1_stack, (din_off.x, din_off.y-self.via_yshift))
                     
                     if self.mask:
                         pin = self.inbank_inst[k].get_pin("bm[{0}]".format(i)).ll()
                         bm_off = vector(pin.x, yoff)
-                        bm_height =  pin.y - yoff + self.m1_width
+                        bm_height =  pin.y - yoff + self.metal1_width
                         self.add_rect(layer="metal2", 
                                       offset=bm_off, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=bm_height)
-                        self.add_via_center(self.m2_stack, (bm_off.x+0.5*self.m2_width, bm_off.y+0.5*contact.m2m3.width))
+                        self.add_via_center(self.metal2_stack, (bm_off.x+0.5*self.metal2_width, bm_off.y+0.5*contact.m2m3.width))
     
                     if (self.ibank_orien == "H"): 
                         pin = self.inbank_inst[k].get_pin("dout[{0}]".format(i)).ll()
-                        yoff = self.dout1_off.y+ i*self.pitch +  0.5*self.m1_width
+                        yoff = self.dout1_off.y+ i*self.pitch +  0.5*self.metal1_width
                         dout_off = vector(pin.x,  yoff)
-                        dout_height =  pin.y -  yoff + self.m1_width
+                        dout_height =  pin.y -  yoff + self.metal1_width
                         self.add_rect(layer="metal2", 
                                       offset=dout_off, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=dout_height)
-                        self.add_via(self.m1_stack, (dout_off.x, dout_off.y-self.via_yshift))
+                        self.add_via(self.metal1_stack, (dout_off.x, dout_off.y-self.via_yshift))
 
                     else: 
                         
                         dout_off0 = self.inbank_inst[0].get_pin("dout[{0}]".format(i))
                         dout_off1 = self.inbank_inst[1].get_pin("dout[{0}]".format(i))
                         dout_off2 = self.inbank_inst[3].get_pin("dout[{0}]".format(i))
-                        dout_off1_y = self.dout1_off.y+ i*self.pitch +self.m1_width
+                        dout_off1_y = self.dout1_off.y+ i*self.pitch +self.metal1_width
                         dout_off2_y = self.dout2_off.y+ i*self.pitch
                         dout_off3 = self.inbank_inst[2].get_pin("dout[{0}]".format(i))
-                        self.add_wire(self.m1_stack, [(dout_off0.uc().x,dout_off0.ll().y),
+                        self.add_wire(self.metal1_stack, [(dout_off0.uc().x,dout_off0.ll().y),
                                       (dout_off0.uc().x,dout_off1_y),(dout_off1.uc().x,dout_off1_y)])
 
                         x_off = self.inbank_inst[1].lr().x+(i+1)*self.pitch
-                        self.add_wire(self.m1_stack,[(dout_off1.uc().x,dout_off1.ll().y),
+                        self.add_wire(self.metal1_stack,[(dout_off1.uc().x,dout_off1.ll().y),
                                       (dout_off1.uc().x,dout_off1_y),
                                       (x_off,dout_off1_y), (x_off,dout_off2_y),
                                       (dout_off2.uc().x,dout_off2_y),
                                       (dout_off2.uc().x,dout_off2.ll().y)]) 
-                        self.add_wire(self.m1_stack, [(dout_off2.uc().x,dout_off2_y),
+                        self.add_wire(self.metal1_stack, [(dout_off2.uc().x,dout_off2_y),
                                       (dout_off3.uc().x,dout_off2_y),
                                       (dout_off3.uc().x,dout_off3.ll().y)]) 
 
@@ -905,56 +909,56 @@ class sram(design.design):
                 for j in range(2):
                     for i in range(self.w_size):
                         pin1 = self.inbank_inst[k+2*j].get_pin("din[{0}]".format(i)).ll()
-                        yoff1 = din_bus[j]+ i*self.pitch + 0.5*self.m1_width
+                        yoff1 = din_bus[j]+ i*self.pitch + 0.5*self.metal1_width
                         din_off1 = vector(pin1.x, yoff1)
-                        din1_height =  pin1.y -  yoff1 + self.m1_width
+                        din1_height =  pin1.y -  yoff1 + self.metal1_width
                         self.add_rect(layer="metal2", 
                                       offset=din_off1, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=din1_height)
-                        self.add_via(self.m1_stack, (din_off1.x, din_off1.y-self.via_yshift))
+                        self.add_via(self.metal1_stack, (din_off1.x, din_off1.y-self.via_yshift))
     
                         if self.mask:
                             pin1 = self.inbank_inst[k+2*j].get_pin("bm[{0}]".format(i)).ll()
                             bm_off1 = vector(pin1.x,  yoff1)
-                            bm1_height =  pin1.y -  yoff1 + self.m1_width
+                            bm1_height =  pin1.y -  yoff1 + self.metal1_width
                             self.add_rect(layer="metal2", 
                                       offset=bm_off1, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=bm1_height)
-                            self.add_via_center(self.m2_stack, (bm_off1.x+0.5*self.m2_width, bm_off1.y+0.5*contact.m2m3.width))
+                            self.add_via_center(self.metal2_stack, (bm_off1.x+0.5*self.metal2_width, bm_off1.y+0.5*contact.m2m3.width))
                 
                     if (self.ibank_orien == "H"):
                         for i in range(self.w_size): 
                             pin1 = self.inbank_inst[k+2*j].get_pin("dout[{0}]".format(i)).ll()
-                            yoff1 = dout_bus[j]+ i*self.pitch +  0.5*self.m1_width
+                            yoff1 = dout_bus[j]+ i*self.pitch +  0.5*self.metal1_width
                             dout_off1 = vector(pin1.x, yoff1)
-                            dout1_height =  pin1.y - yoff1 + self.m1_width
+                            dout1_height =  pin1.y - yoff1 + self.metal1_width
                             self.add_rect(layer="metal2", 
                                           offset=dout_off1, 
-                                          width=self.m2_width, 
+                                          width=self.metal2_width, 
                                           height=dout1_height)
-                            self.add_via(self.m1_stack, (dout_off1.x, dout_off1.y-self.via_yshift))
+                            self.add_via(self.metal1_stack, (dout_off1.x, dout_off1.y-self.via_yshift))
 
                             xoff1 = self.inbank_inst[1].lr().x
                             xoff2 = xoff1+(i+3)*self.pitch
-                            yoff1 = dout_bus[0]+ i*self.pitch + self.m1_width
-                            yoff2 = dout_bus[1]+ i*self.pitch + self.m1_width
-                            self.add_wire(self.m1_stack, [(xoff1, yoff1), (xoff2, yoff1), (xoff2, yoff2), (xoff1, yoff2)])
+                            yoff1 = dout_bus[0]+ i*self.pitch + self.metal1_width
+                            yoff2 = dout_bus[1]+ i*self.pitch + self.metal1_width
+                            self.add_wire(self.metal1_stack, [(xoff1, yoff1), (xoff2, yoff1), (xoff2, yoff2), (xoff1, yoff2)])
                     
                             xoff2 = xoff1+(i+self.w_size+3)*self.pitch
                             yoff1 = din_bus[0]+ i*self.pitch
                             yoff2 = din_bus[1]+ i*self.pitch
-                            self.add_wire(self.m1_stack, [(xoff1, yoff1+ self.m1_width), (xoff2, yoff1+ self.m1_width), 
-                                                          (xoff2, yoff2+ self.m1_width), (xoff1, yoff2+ self.m1_width)])
+                            self.add_wire(self.metal1_stack, [(xoff1, yoff1+ self.metal1_width), (xoff2, yoff1+ self.metal1_width), 
+                                                          (xoff2, yoff2+ self.metal1_width), (xoff1, yoff2+ self.metal1_width)])
                         
                             if self.mask:
                                 xoff2 = self.inbank_inst[1].lr().x+(i+2*self.w_size+3)*self.pitch
-                                self.add_path("metal3", [(xoff1, yoff1+ self.m3_width), (xoff2, yoff1+ self.m3_width)])
-                                self.add_path("metal3", [(xoff2, yoff2+ self.m3_width), (xoff1, yoff2+ self.m3_width)])
-                                self.add_path("metal2", [(xoff2, yoff1+ self.m3_width), (xoff2, yoff2+ self.m3_width)])
-                                self.add_via_center(self.m2_stack, (xoff2, yoff1+ self.m3_width))
-                                self.add_via_center(self.m2_stack, (xoff2, yoff2+ self.m3_width))
+                                self.add_path("metal3", [(xoff1, yoff1+ self.metal3_width), (xoff2, yoff1+ self.metal3_width)])
+                                self.add_path("metal3", [(xoff2, yoff2+ self.metal3_width), (xoff1, yoff2+ self.metal3_width)])
+                                self.add_path("metal2", [(xoff2, yoff1+ self.metal3_width), (xoff2, yoff2+ self.metal3_width)])
+                                self.add_via_center(self.metal2_stack, (xoff2, yoff1+ self.metal3_width))
+                                self.add_via_center(self.metal2_stack, (xoff2, yoff2+ self.metal3_width))
 
                     else: 
                         for i in range(self.w_size):
@@ -963,18 +967,18 @@ class sram(design.design):
                             dout_off2 = self.inbank_inst[2].get_pin("dout[{0}]".format(i))
                             dout_off3 = self.inbank_inst[3].get_pin("dout[{0}]".format(i))
                         
-                            dout_off1_y = self.dout1_off.y+ i*self.pitch +self.m1_width
-                            dout_off2_y = self.dout2_off.y+ i*self.pitch +self.m1_width
+                            dout_off1_y = self.dout1_off.y+ i*self.pitch +self.metal1_width
+                            dout_off2_y = self.dout2_off.y+ i*self.pitch +self.metal1_width
                             dout_off3_y = self.dout_bus3_off.y+ i*self.pitch 
 
                             x_off = self.inbank_inst[1].lr().x+(i+3)*self.pitch
-                            self.add_wire(self.m1_stack,[(dout_off0.uc().x,dout_off0.ll().y),
+                            self.add_wire(self.metal1_stack,[(dout_off0.uc().x,dout_off0.ll().y),
                                       (dout_off0.uc().x,dout_off1_y),
                                       (x_off,dout_off1_y), (x_off,dout_off3_y),
                                       (dout_off1.uc().x,dout_off3_y),
                                       (dout_off1.uc().x,dout_off1.ll().y)]) 
                         
-                            self.add_wire(self.m1_stack, [(dout_off3.uc().x,dout_off3.ll().y),
+                            self.add_wire(self.metal1_stack, [(dout_off3.uc().x,dout_off3.ll().y),
                                       (dout_off3.uc().x,dout_off2_y),
                                       (x_off,dout_off2_y), (x_off,dout_off3_y),
                                       (dout_off2.uc().x,dout_off3_y),
@@ -984,42 +988,42 @@ class sram(design.design):
                             xoff2 = self.inbank_inst[1].lr().x+(i+self.w_size+3)*self.pitch
                             yoff1 = din_bus[0]+ i*self.pitch
                             yoff2 = din_bus[1]+ i*self.pitch
-                            self.add_wire(self.m1_stack, [(xoff1, yoff1+ self.m1_width), (xoff2, yoff1+ self.m1_width), 
-                                                           (xoff2, yoff2+ self.m1_width), (xoff1, yoff2+ self.m1_width)])
+                            self.add_wire(self.metal1_stack, [(xoff1, yoff1+ self.metal1_width), (xoff2, yoff1+ self.metal1_width), 
+                                                           (xoff2, yoff2+ self.metal1_width), (xoff1, yoff2+ self.metal1_width)])
 
                             if self.mask:
                                 xoff2 = self.inbank_inst[1].lr().x+(i+2*self.w_size+3)*self.pitch
-                                self.add_path("metal3", [(xoff1, yoff1+ self.m3_width), (xoff2, yoff1+ self.m3_width)])
-                                self.add_path("metal3", [(xoff2, yoff2+ self.m3_width), (xoff1, yoff2+ self.m3_width)])
-                                self.add_path("metal2", [(xoff2, yoff1+ self.m3_width),(xoff2, yoff2+ self.m3_width)])
-                                self.add_via_center(self.m2_stack, (xoff2, yoff1+ self.m3_width))
-                                self.add_via_center(self.m2_stack, (xoff2, yoff2+ self.m3_width))
+                                self.add_path("metal3", [(xoff1, yoff1+ self.metal3_width), (xoff2, yoff1+ self.metal3_width)])
+                                self.add_path("metal3", [(xoff2, yoff2+ self.metal3_width), (xoff1, yoff2+ self.metal3_width)])
+                                self.add_path("metal2", [(xoff2, yoff1+ self.metal3_width),(xoff2, yoff2+ self.metal3_width)])
+                                self.add_via_center(self.metal2_stack, (xoff2, yoff1+ self.metal3_width))
+                                self.add_via_center(self.metal2_stack, (xoff2, yoff2+ self.metal3_width))
 
         if (self.num_obank == 2 or self.obank_orien == "H"):
             # Addr Connections
             for k in range(self.num_obank):
                 for i in range(self.inbank_addr_size):
                     pin = self.inbank_inst[k].get_pin("addr[{0}]".format(i)).ll()
-                    off = vector(pin.x, self.addr_bus_off.y+ i*self.pitch+ 0.5*self.m1_width) 
+                    off = vector(pin.x, self.addr_bus_off.y+ i*self.pitch+ 0.5*self.metal1_width) 
                     height =  pin.y - self.addr_bus_off.y - i*self.pitch
                     self.add_rect(layer="metal2", 
                                   offset=off, 
-                                  width=self.m2_width, 
+                                  width=self.metal2_width, 
                                   height=height)
-                    self.add_via(self.m1_stack, (off.x, off.y-self.via_yshift))
+                    self.add_via(self.metal1_stack, (off.x, off.y-self.via_yshift))
         
             # sel Connections
             for k in range(self.num_obank):
                yoff = self.H_ctrl_bus_pos["sel[{0}]".format(k)].cy()
                pin = self.inbank_inst[k].get_pin("S").ll()
-               sel_off = vector(pin.x, yoff - 0.5*self.m1_width)
-               sel_heigh =  pin.y - yoff + self.m1_width
+               sel_off = vector(pin.x, yoff - 0.5*self.metal1_width)
+               sel_heigh =  pin.y - yoff + self.metal1_width
                self.add_rect(layer="metal2", 
                              offset=sel_off, 
-                             width=self.m2_width, 
+                             width=self.metal2_width, 
                              height=sel_heigh)
-               self.add_via(self.m1_stack, (sel_off.x+self.m2_width, sel_off.y), rotate=90)
-               self.add_via(self.m1_stack, (sel_off.x,pin.y -self.via_yshift))
+               self.add_via(self.metal1_stack, (sel_off.x+self.metal2_width, sel_off.y), rotate=90)
+               self.add_via(self.metal1_stack, (sel_off.x,pin.y -self.via_yshift))
             
             if self.power_gate:
                for k in range(self.num_obank):
@@ -1030,11 +1034,11 @@ class sram(design.design):
                    else:
                        xoff=pos1.rx()+2*self.pitch              
                    pos2 = vector(xoff,pos1.lc().y)
-                   pos3 = vector(pos2.x, yoff- 0.5*self.m1_width)
+                   pos3 = vector(pos2.x, yoff- 0.5*self.metal1_width)
                    sleep_heigh =  self.inbank_inst[k].get_pin("sleep").lc().y - yoff
             
-                   self.add_wire(self.m1_stack, [pos1.lc(), pos2, pos3])
-                   self.add_via_center(self.m1_stack, pos3, rotate=90)
+                   self.add_wire(self.metal1_stack, [pos1.lc(), pos2, pos3])
+                   self.add_via_center(self.metal1_stack, pos3, rotate=90)
             
             # control signal Connections
             for k in range(self.num_obank):
@@ -1047,13 +1051,13 @@ class sram(design.design):
                 for i in range(len(split_list)):
                     yoff = self.H_ctrl_bus_pos[split_ctrl_list[i]].cy()
                     pin = self.inbank_inst[k].get_pin(split_list[i]).ll()
-                    split_off = vector(pin.x, yoff- 0.5*self.m1_width)
-                    split_heigh =  pin.y - yoff + 0.5*self.m1_width
+                    split_off = vector(pin.x, yoff- 0.5*self.metal1_width)
+                    split_heigh =  pin.y - yoff + 0.5*self.metal1_width
                     self.add_rect(layer="metal2", 
                                   offset=split_off, 
-                                  width=self.m2_width, 
+                                  width=self.metal2_width, 
                                   height=split_heigh)
-                    self.add_via(self.m1_stack, (split_off.x, split_off.y-self.via_yshift))
+                    self.add_via(self.metal1_stack, (split_off.x, split_off.y-self.via_yshift))
         
             # vdd and gnd Connections
             power_pin=["vdd", "gnd"]
@@ -1081,8 +1085,8 @@ class sram(design.design):
                     pos1=(pow_off.x+sign*0.5*self.pow_width, pow_pin.lc().y)
                     pos2=(pow_pin.lr().x, pow_pin.lc().y)
                     self.add_path("metal3", [pos1, pos2], width =self.pow_width)
-                    self.add_via_center(self.m2_stack, (pow_off.x, pow_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
-                    self.add_via_center(self.m2_stack, (pow_off.x, pow_pin.lc().y), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (pow_off.x, pow_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (pow_off.x, pow_pin.lc().y), size=[self.num_via, self.num_via])
             
             for k in range(self.num_obank):
                 pin = self.inbank_inst[k].get_pin("reset")
@@ -1091,9 +1095,9 @@ class sram(design.design):
                 else:
                     xoff = pin.lr().x+self.pitch
 
-                off = vector(xoff, self.reset1_off.y + 0.5*self.m1_width)
-                self.add_wire(self.m1_stack, [off,(off.x,pin.lc().y), (pin.lr().x,pin.lc().y)]) 
-                self.add_via(self.m1_stack, (off.x-0.5*self.m1_width, off.y-self.via_yshift))
+                off = vector(xoff, self.reset1_off.y + 0.5*self.metal1_width)
+                self.add_wire(self.metal1_stack, [off,(off.x,pin.lc().y), (pin.lr().x,pin.lc().y)]) 
+                self.add_via(self.metal1_stack, (off.x-0.5*self.metal1_width, off.y-self.via_yshift))
 
             # split_merge_control_inst Connections
             ctrl_pin_list = ["wack", "wreq",  "rreq", "rack", "ack", "rw",  "w", "r", 
@@ -1103,25 +1107,25 @@ class sram(design.design):
             for i in range(len(ctrl_pin_list)):
                 pin = self.out_sm_ctrl_inst.get_pin(ctrl_pin_list[i]).ll()
                 yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].cy()
-                ctrl_off = vector(pin.x, yoff - 0.5*self.m1_width)
-                ctrl_heigh =  pin.y - yoff + 0.5*self.m1_width
+                ctrl_off = vector(pin.x, yoff - 0.5*self.metal1_width)
+                ctrl_heigh =  pin.y - yoff + 0.5*self.metal1_width
                 self.add_rect(layer="metal2", 
                               offset=ctrl_off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=ctrl_heigh)
-                self.add_via(self.m1_stack, (ctrl_off.x, ctrl_off.y-self.via_yshift))        
+                self.add_via(self.metal1_stack, (ctrl_off.x, ctrl_off.y-self.via_yshift))        
             
             power_pin =["vdd", "gnd"]
             for i in range(2):
-                yoff = self.pow1_off.y + i*self.pow_pitch + 0.5*self.m1_width
+                yoff = self.pow1_off.y + i*self.pow_pitch + 0.5*self.metal1_width
                 pin = self.out_sm_ctrl_inst.get_pin(power_pin[i]).ll()
                 pow_off = vector(pin.x, yoff)
-                pow_heigh =  pin.y - yoff +self.m1_width
+                pow_heigh =  pin.y - yoff +self.metal1_width
                 self.add_rect(layer="metal2", 
                           offset=pow_off, 
-                          width=self.m2_width, 
+                          width=self.metal2_width, 
                           height=pow_heigh)
-                self.add_via_center(self.m2_stack, (pow_off.x+0.5*self.m2_width, pow_off.y+0.5*self.pow_width), size=[1, self.num_via])        
+                self.add_via_center(self.metal2_stack, (pow_off.x+0.5*self.metal2_width, pow_off.y+0.5*self.pow_width), size=[1, self.num_via])        
 
             if self.num_obank == 2:
                 addr_pin = ["addr[0]","sel[0]", "sel[1]"]
@@ -1130,14 +1134,14 @@ class sram(design.design):
                         "sel[0]", "sel[1]", "sel[2]", "sel[3]"]
             for i in range(len(addr_pin)):
                 pin = self.out_sm_ctrl_inst.get_pin(addr_pin[i]).ll()
-                yoff = self.addr_bus_off.y + (i+self.inbank_addr_size)*self.pitch + 0.5*self.m1_width
+                yoff = self.addr_bus_off.y + (i+self.inbank_addr_size)*self.pitch + 0.5*self.metal1_width
                 addr_off = vector(pin.x, yoff)
-                addr_heigh =  pin.y - yoff + self.m1_width
+                addr_heigh =  pin.y - yoff + self.metal1_width
                 self.add_rect(layer="metal2", 
                               offset=addr_off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=addr_heigh)
-                self.add_via(self.m1_stack, (addr_off.x,addr_off.y-self.via_yshift))        
+                self.add_via(self.metal1_stack, (addr_off.x,addr_off.y-self.via_yshift))        
 
         if (self.num_obank == 4 and self.obank_orien == "V"):
             # Addr Connections
@@ -1146,21 +1150,21 @@ class sram(design.design):
                 for j in range(2):
                     for i in range(self.inbank_addr_size):
                         pin = self.inbank_inst[k+2*j].get_pin("addr[{0}]".format(i)).ll()
-                        off = vector(pin.x, bus[j].y+ i*self.pitch+  0.5*self.m1_width) 
+                        off = vector(pin.x, bus[j].y+ i*self.pitch+  0.5*self.metal1_width) 
                         height = pin.y -  bus[j].y - i*self.pitch
 
                         self.add_rect(layer="metal2", 
                                   offset=off, 
-                                  width=self.m2_width, 
+                                  width=self.metal2_width, 
                                   height=height)
-                        self.add_via(self.m1_stack, (off.x, off.y-self.via_yshift))
+                        self.add_via(self.metal1_stack, (off.x, off.y-self.via_yshift))
                     
                         x_off = self.inbank_inst[1].lr().x+(i+2*self.w_size+3)*self.pitch
                         if self.mask:
                             x_off = self.inbank_inst[1].lr().x+(i+3*self.w_size+3)*self.pitch
-                        addr1_off = self.addr_bus_off.y+ i*self.pitch +self.m1_width
-                        addr2_off = self.addr_bus2_off.y+ i*self.pitch +self.m1_width
-                        self.add_wire(self.m1_stack, 
+                        addr1_off = self.addr_bus_off.y+ i*self.pitch +self.metal1_width
+                        addr2_off = self.addr_bus2_off.y+ i*self.pitch +self.metal1_width
+                        self.add_wire(self.metal1_stack, 
                                   [(self.inbank_inst[1].rx(), addr1_off),
                                   (x_off, addr1_off), (x_off, addr2_off),
                                   (self.inbank_inst[1].rx(), addr2_off)])
@@ -1171,16 +1175,16 @@ class sram(design.design):
                 for i in range(2):
                     pin = self.inbank_inst[k+2*i].get_pin("S").ll()
                     if k%2:
-                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-0.5*self.m1_width)
+                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-0.5*self.metal1_width)
                     else:
-                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-self.m1_width)
+                        off = vector(pin.x, bus[i]["sel[{0}]".format(k+2*i)].cy()-self.metal1_width)
                     heigh =  pin.y - off.y
                     self.add_rect(layer="metal2", 
                               offset=off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=heigh)
-                    self.add_via(self.m1_stack, (off.x, off.y-self.via_yshift))
-                    self.add_via(self.m1_stack, (off.x, pin.y-self.via_yshift ))
+                    self.add_via(self.metal1_stack, (off.x, off.y-self.via_yshift))
+                    self.add_via(self.metal1_stack, (off.x, pin.y-self.via_yshift ))
 
             # control signal Connections
             for k in range(self.num_obank//2):
@@ -1197,13 +1201,13 @@ class sram(design.design):
                 for i in range(len(split_list)):
                     for j in range(2):
                         pin = self.inbank_inst[k+2*j].get_pin(split_list[i]).ll()
-                        off = vector(pin.x, bus[j][ctrl_list[j][i]].y-  0.5*self.m1_width)
-                        heigh =  pin.y - bus[j][ctrl_list[j][i]].y + 0.5*self.m1_width
+                        off = vector(pin.x, bus[j][ctrl_list[j][i]].y-  0.5*self.metal1_width)
+                        heigh =  pin.y - bus[j][ctrl_list[j][i]].y + 0.5*self.metal1_width
                         self.add_rect(layer="metal2", 
                                       offset=off, 
-                                      width=self.m2_width, 
+                                      width=self.metal2_width, 
                                       height=heigh)
-                        self.add_via(self.m1_stack, (off.x, off.y-self.via_yshift))
+                        self.add_via(self.metal1_stack, (off.x, off.y-self.via_yshift))
         
             # vdd and gnd Connections
             pow_pins=["vdd", "gnd"]
@@ -1211,7 +1215,7 @@ class sram(design.design):
                 
                 for m in range(len(self.inbank_inst[k].get_pins("vdd"))):
                     vdd1_pin = self.inbank_inst[k].get_pins("vdd")[m]
-                    vdd1_off = vector(vdd1_pin.ll().x-4*self.pitch-self.pow_pitch, self.pow1_off.y+0.5*self.m1_width)
+                    vdd1_off = vector(vdd1_pin.ll().x-4*self.pitch-self.pow_pitch, self.pow1_off.y+0.5*self.metal1_width)
                 
                     if vdd1_pin.lc().y < self.pow1_off.y:
                         sign = -0.5*self.pow_width
@@ -1222,33 +1226,33 @@ class sram(design.design):
                     pos1=(vdd1_off.x-0.5*self.pow_width, vdd1_pin.lc().y)
                     pos2=(vdd1_pin.lr().x, vdd1_pin.lc().y)
                     self.add_path("metal3", [pos1, pos2], width =self.pow_width)
-                    self.add_via_center(self.m2_stack, (vdd1_off.x, vdd1_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
-                    self.add_via_center(self.m2_stack, (vdd1_off.x, vdd1_pin.lc().y), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (vdd1_off.x, vdd1_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (vdd1_off.x, vdd1_pin.lc().y), size=[self.num_via, self.num_via])
                 
                     gnd1_pin = self.inbank_inst[k].get_pins("gnd")[m]
-                    gnd1_off = vector(gnd1_pin.ll().x-5*self.pitch-2*self.pow_pitch, self.pow1_off.y+ self.pow_pitch+0.5*self.m1_width)
+                    gnd1_off = vector(gnd1_pin.ll().x-5*self.pitch-2*self.pow_pitch, self.pow1_off.y+ self.pow_pitch+0.5*self.metal1_width)
                     self.add_path("metal2", [gnd1_off,(gnd1_off.x, gnd1_pin.lc().y+sign)], width =self.pow_width)
                     pos1=(gnd1_off.x-0.5*self.pow_width, gnd1_pin.lc().y)
                     pos2=(gnd1_pin.lr().x, gnd1_pin.lc().y)
                     self.add_path("metal3", [pos1, pos2], width =self.pow_width)
-                    self.add_via_center(self.m2_stack, (gnd1_off.x, gnd1_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
-                    self.add_via_center(self.m2_stack, (gnd1_off.x, gnd1_pin.lc().y), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (gnd1_off.x, gnd1_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (gnd1_off.x, gnd1_pin.lc().y), size=[self.num_via, self.num_via])
                 
                 reset1_pin = self.inbank_inst[k].get_pin("reset")
-                reset1_off = vector(reset1_pin.ll().x-2*self.pitch, self.reset1_off.y + 0.5*self.m1_width)
-                self.add_wire(self.m1_stack, [reset1_off,(reset1_off.x, reset1_pin.lc().y), (reset1_pin.lr().x, reset1_pin.lc().y)]) 
-                self.add_via_center(self.m1_stack, (reset1_off.x, reset1_off.y))
+                reset1_off = vector(reset1_pin.ll().x-2*self.pitch, self.reset1_off.y + 0.5*self.metal1_width)
+                self.add_wire(self.metal1_stack, [reset1_off,(reset1_off.x, reset1_pin.lc().y), (reset1_pin.lr().x, reset1_pin.lc().y)]) 
+                self.add_via_center(self.metal1_stack, (reset1_off.x, reset1_off.y))
                 
                 if self.power_gate:
                     sleep1_pin = self.inbank_inst[k].get_pin("sleep")
-                    sleep1_off = vector(sleep1_pin.ll().x-3*self.pitch, self.sleep1_off.y + 0.5*self.m1_width)
-                    self.add_wire(self.m1_stack, [sleep1_off,(sleep1_off.x, sleep1_pin.lc().y), (sleep1_pin.lr().x, sleep1_pin.lc().y)]) 
-                    self.add_via_center(self.m1_stack, (sleep1_off.x, sleep1_off.y))
+                    sleep1_off = vector(sleep1_pin.ll().x-3*self.pitch, self.sleep1_off.y + 0.5*self.metal1_width)
+                    self.add_wire(self.metal1_stack, [sleep1_off,(sleep1_off.x, sleep1_pin.lc().y), (sleep1_pin.lr().x, sleep1_pin.lc().y)]) 
+                    self.add_via_center(self.metal1_stack, (sleep1_off.x, sleep1_off.y))
 
                 
                 for m in range(len(self.inbank_inst[k+2].get_pins("vdd"))):
                     vdd2_pin = self.inbank_inst[k+2].get_pins("vdd")[m]
-                    vdd2_off = vector(vdd2_pin.ll().x-4*self.pitch-self.pow_pitch, self.pow2_off.y+0.5*self.m1_width)
+                    vdd2_off = vector(vdd2_pin.ll().x-4*self.pitch-self.pow_pitch, self.pow2_off.y+0.5*self.metal1_width)
                     if vdd2_pin.lc().y < self.pow2_off.y:
                         sign2 = -0.5*self.pow_width
                     else:
@@ -1258,46 +1262,46 @@ class sram(design.design):
                     pos1=(vdd2_off.x-0.5*self.pow_width, vdd2_pin.lc().y)
                     pos2=(vdd2_pin.lr().x, vdd2_pin.lc().y)
                     self.add_path("metal3", [pos1, pos2], width =self.pow_width)
-                    self.add_via_center(self.m2_stack, (vdd2_off.x, vdd2_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
-                    self.add_via_center(self.m2_stack, (vdd2_off.x, vdd2_pin.lc().y), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (vdd2_off.x, vdd2_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (vdd2_off.x, vdd2_pin.lc().y), size=[self.num_via, self.num_via])
             
                     gnd2_pin = self.inbank_inst[k+2].get_pins("gnd")[m]
-                    gnd2_off = vector(gnd2_pin.ll().x-5*self.pitch-2*self.pow_pitch, self.pow2_off.y+ self.pow_pitch+0.5*self.m1_width)
+                    gnd2_off = vector(gnd2_pin.ll().x-5*self.pitch-2*self.pow_pitch, self.pow2_off.y+ self.pow_pitch+0.5*self.metal1_width)
                     self.add_path("metal2", [gnd2_off,(gnd2_off.x, gnd2_pin.lc().y+sign2)], width =self.pow_width)
                     pos1=(gnd2_off.x-0.5*self.pow_width, gnd2_pin.lc().y)
                     pos2=(gnd2_pin.lr().x, gnd2_pin.lc().y)
                     self.add_path("metal3", [pos1, pos2], width =self.pow_width)
-                    self.add_via_center(self.m2_stack, (gnd2_off.x, gnd2_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
-                    self.add_via_center(self.m2_stack, (gnd2_off.x, gnd2_pin.lc().y), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (gnd2_off.x, gnd2_off.y+0.5*self.pow_width), size=[self.num_via, self.num_via])
+                    self.add_via_center(self.metal2_stack, (gnd2_off.x, gnd2_pin.lc().y), size=[self.num_via, self.num_via])
                 
                 reset2_pin = self.inbank_inst[k+2].get_pin("reset")
-                reset2_off = vector(reset2_pin.ll().x-2*self.pitch, self.reset2_off.y + 0.5*self.m1_width)
-                self.add_wire(self.m1_stack, [reset2_off,(reset2_off.x, reset2_pin.lc().y), (reset2_pin.lr().x, reset2_pin.lc().y)]) 
-                self.add_via_center(self.m1_stack, (reset2_off.x, reset2_off.y))
+                reset2_off = vector(reset2_pin.ll().x-2*self.pitch, self.reset2_off.y + 0.5*self.metal1_width)
+                self.add_wire(self.metal1_stack, [reset2_off,(reset2_off.x, reset2_pin.lc().y), (reset2_pin.lr().x, reset2_pin.lc().y)]) 
+                self.add_via_center(self.metal1_stack, (reset2_off.x, reset2_off.y))
                 if self.power_gate:
                     sleep2_pin = self.inbank_inst[k+2].get_pin("sleep")
-                    sleep2_off = vector(sleep2_pin.ll().x-3*self.pitch, self.sleep2_off.y + 0.5*self.m1_width)
-                    self.add_wire(self.m1_stack, [sleep2_off,(sleep2_off.x, sleep2_pin.lc().y), (sleep2_pin.lr().x, sleep2_pin.lc().y)]) 
-                    self.add_via_center(self.m1_stack, (sleep2_off.x, sleep2_off.y))
+                    sleep2_off = vector(sleep2_pin.ll().x-3*self.pitch, self.sleep2_off.y + 0.5*self.metal1_width)
+                    self.add_wire(self.metal1_stack, [sleep2_off,(sleep2_off.x, sleep2_pin.lc().y), (sleep2_pin.lr().x, sleep2_pin.lc().y)]) 
+                    self.add_via_center(self.metal1_stack, (sleep2_off.x, sleep2_off.y))
 
             shift = 2*self.w_size
             if self.mask:
                 shift = 3*self.w_size
 
             reset_xoff = self.inbank_inst[1].lr().x+ (self.inbank_addr_size+shift+3)*self.pitch
-            self.add_wire(self.m1_stack, 
-                          [(self.inbank_inst[1].lr().x, self.reset1_off.y+self.m1_width),
-                          (reset_xoff, self.reset1_off.y+self.m1_width),
-                          (reset_xoff, self.reset2_off.y+self.m1_width),
-                          (self.inbank_inst[1].lr().x, self.reset2_off.y+self.m1_width)])
+            self.add_wire(self.metal1_stack, 
+                          [(self.inbank_inst[1].lr().x, self.reset1_off.y+self.metal1_width),
+                          (reset_xoff, self.reset1_off.y+self.metal1_width),
+                          (reset_xoff, self.reset2_off.y+self.metal1_width),
+                          (self.inbank_inst[1].lr().x, self.reset2_off.y+self.metal1_width)])
 
             if self.power_gate:
                 sleep_xoff = self.inbank_inst[1].lr().x+ (self.inbank_addr_size+shift+4)*self.pitch
-                self.add_wire(self.m1_stack, 
-                              [(self.inbank_inst[1].lr().x, self.sleep1_off.y+self.m1_width),
-                              (sleep_xoff, self.sleep1_off.y+self.m1_width),
-                              (sleep_xoff, self.sleep2_off.y+self.m1_width),
-                              (self.inbank_inst[1].lr().x, self.sleep2_off.y+self.m1_width)])
+                self.add_wire(self.metal1_stack, 
+                              [(self.inbank_inst[1].lr().x, self.sleep1_off.y+self.metal1_width),
+                              (sleep_xoff, self.sleep1_off.y+self.metal1_width),
+                              (sleep_xoff, self.sleep2_off.y+self.metal1_width),
+                              (self.inbank_inst[1].lr().x, self.sleep2_off.y+self.metal1_width)])
             
             # split_merge_control_inst Connections
             ctrl_pin_list = ["wack", "wreq",  "rreq", "rack", "ack", "rw",  "w", "r", 
@@ -1308,54 +1312,54 @@ class sram(design.design):
             for i in range(len(ctrl_pin_list)):
                 pin = self.out_sm_ctrl_inst.get_pin(ctrl_pin_list[i]).ll()
                 yoff = self.H_ctrl_bus_pos[ctrl_pin_list[i]].cy()
-                ctrl_off = vector(pin.x, yoff- 0.5*self.m1_width)
-                ctrl2_off = vector(ctrl_off.x, self.H2_ctrl_bus_pos[ctrl_pin_list[i]].cy()- 0.5*self.m1_width)
-                ctrl_heigh =  pin.y -  yoff + 0.5*self.m1_width
+                ctrl_off = vector(pin.x, yoff- 0.5*self.metal1_width)
+                ctrl2_off = vector(ctrl_off.x, self.H2_ctrl_bus_pos[ctrl_pin_list[i]].cy()- 0.5*self.metal1_width)
+                ctrl_heigh =  pin.y -  yoff + 0.5*self.metal1_width
 
                 self.add_rect(layer="metal2", 
                               offset=ctrl_off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=ctrl_heigh)
-                self.add_via(self.m1_stack, (ctrl_off.x, ctrl_off.y-self.via_yshift))
-                self.add_via(self.m1_stack, (ctrl2_off.x, ctrl2_off.y-self.via_yshift))        
+                self.add_via(self.metal1_stack, (ctrl_off.x, ctrl_off.y-self.via_yshift))
+                self.add_via(self.metal1_stack, (ctrl2_off.x, ctrl2_off.y-self.via_yshift))        
             
             power_pin =["vdd", "gnd"]
             for i in range(2):
                 pin = self.out_sm_ctrl_inst.get_pin(power_pin[i]).ll()
-                pow_off = vector(pin.x, self.pow1_off.y + i*self.pow_pitch + 0.5*self.m1_width)
-                pow2_off = vector(pow_off.x, self.pow2_off.y + i*self.pow_pitch + 0.5*self.m1_width)
-                pow_heigh =  pin.y- pow_off.y + self.m1_width
+                pow_off = vector(pin.x, self.pow1_off.y + i*self.pow_pitch + 0.5*self.metal1_width)
+                pow2_off = vector(pow_off.x, self.pow2_off.y + i*self.pow_pitch + 0.5*self.metal1_width)
+                pow_heigh =  pin.y- pow_off.y + self.metal1_width
 
                 self.add_rect(layer="metal2", 
                               offset=pow_off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=pow_heigh)
-                self.add_via(self.m2_stack, (pow_off.x, pow_off.y-self.via_yshift), size=[1, self.num_via])
-                self.add_via(self.m2_stack, (pow2_off.x, pow2_off.y-self.via_yshift), size=[1, self.num_via])                
+                self.add_via(self.metal2_stack, (pow_off.x, pow_off.y-self.via_yshift), size=[1, self.num_via])
+                self.add_via(self.metal2_stack, (pow2_off.x, pow2_off.y-self.via_yshift), size=[1, self.num_via])                
 
             if self.num_obank == 2:
                 addr_pin = ["addr[0]","sel[0]", "sel[1]"]
             if self.num_obank == 4:
                 addr_pin = ["addr[0]","addr[1]", "sel[0]", "sel[1]", "sel[2]", "sel[3]"]
             for i in range(len(addr_pin)):
-                shift = (i+self.inbank_addr_size)*self.pitch + 0.5*self.m1_width
+                shift = (i+self.inbank_addr_size)*self.pitch + 0.5*self.metal1_width
                 pin = self.out_sm_ctrl_inst.get_pin(addr_pin[i]).ll()
                 addr_off = vector(pin.x, self.addr_bus_off.y + shift)
                 addr2_off = vector(addr_off.x, self.addr_bus2_off.y + shift)
-                addr_heigh =  pin.y -  self.addr_bus_off.y - shift + self.m1_width
+                addr_heigh =  pin.y -  self.addr_bus_off.y - shift + self.metal1_width
                 self.add_rect(layer="metal2", 
                               offset=addr_off, 
-                              width=self.m2_width, 
+                              width=self.metal2_width, 
                               height=addr_heigh)
-                self.add_via(self.m1_stack, (addr_off.x, addr_off.y-self.via_yshift))
-                self.add_via(self.m1_stack, (addr2_off.x, addr2_off.y-self.via_yshift))        
+                self.add_via(self.metal1_stack, (addr_off.x, addr_off.y-self.via_yshift))
+                self.add_via(self.metal1_stack, (addr2_off.x, addr2_off.y-self.via_yshift))        
 
         # select= vdd Connection
         sel_pos1=self.out_sm_ctrl_inst.get_pin("S").uc()
         sel_pos2=self.out_sm_ctrl_inst.get_pin("vdd").uc()
         pos1=vector(sel_pos1.x, sel_pos1.y-2*self.pitch)
         pos2=vector(sel_pos2.x, pos1.y)
-        self.add_wire(self.m1_stack, [sel_pos1, pos1, pos2, sel_pos2])
+        self.add_wire(self.metal1_stack, [sel_pos1, pos1, pos2, sel_pos2])
     
     def sp_write(self, sp_name):
         """ Write the entire spice of the object to the file """

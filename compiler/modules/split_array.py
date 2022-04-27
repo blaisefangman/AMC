@@ -113,31 +113,31 @@ class split_array(design.design):
             self.connect_inst(temp)
             
             D_offset = self.split_inst[i].get_pin("D")
-            Q_offset = vector(self.split_inst[i].get_pin("Q").lx() , self.height-self.m2_width)
+            Q_offset = vector(self.split_inst[i].get_pin("Q").lx() , self.height-self.metal2_width)
 
             self.add_layout_pin(text="D[{0}]".format(i//self.words_per_row), 
                                 layer=D_offset.layer, 
                                 offset=D_offset.ll(), 
-                                width=self.m3_width, 
-                                height=self.m2_width)
+                                width=self.metal3_width, 
+                                height=self.metal2_width)
             self.add_layout_pin(text="Q[{0}]".format(i//self.words_per_row), 
                                 layer=Q_pin.layer, 
                                 offset=Q_offset, 
                                 width=Q_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
             if self.mask:
                 bm_in_offset = self.split_inst[i].get_pin("bm_in").ll()
-                bm_out_offset = vector(self.split_inst[i].get_pin("bm_out").lx() , self.split_inst[i].get_pin("bm_out").uy()-self.m2_width)
+                bm_out_offset = vector(self.split_inst[i].get_pin("bm_out").lx() , self.split_inst[i].get_pin("bm_out").uy()-self.metal2_width)
                 self.add_layout_pin(text="bm_in[{0}]".format(i//self.words_per_row), 
                                 layer=bm_in_pin.layer, 
                                 offset=bm_in_offset, 
                                 width=bm_in_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
                 self.add_layout_pin(text="bm_out[{0}]".format(i//self.words_per_row), 
                                 layer=bm_out_pin.layer, 
                                 offset=bm_out_offset, 
                                 width=bm_out_pin.width(), 
-                                height=self.m2_width)
+                                height=self.metal2_width)
 
     def connect_rails(self):
         """ Add vdd, gnd, en1_s, en2_s, reset and select rails across entire array"""
@@ -148,7 +148,7 @@ class split_array(design.design):
             self.add_rect(layer="metal1", 
                           offset=pin.ll().scale(0,1),
                           width=self.width, 
-                          height=self.m1_width)
+                          height=self.metal1_width)
             self.add_layout_pin(text=i, 
                                 layer=pin.layer, 
                                 offset=pin.ll().scale(0,1),

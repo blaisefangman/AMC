@@ -37,7 +37,7 @@ class delay_chain(design.design):
         self.add_pins()
         self.create_module()
         self.route_inv()
-        self.width = (self.num_even_stage+self.final_stage)*self.inv.width + 4*self.m_pitch("m1")+contact.m1m2.height
+        self.width = (self.num_even_stage+self.final_stage)*self.inv.width + 4*self.metal1_pitch+contact.m1m2.height
         self.height = self.stage_size*self.inv.height
         self.add_layout_pins()
         self.offset_all_coordinates()
@@ -127,26 +127,26 @@ class delay_chain(design.design):
         for j in range(self.final_stage_size):
             pin1 = self.inv_inst[l-self.final_stage_size+1+j].get_pin("Z")
             pin2 = self.inv_inst[j+1].get_pin("A")
-            mid_pos1=vector(pin1.rx()+self.m_pitch("m1"), pin1.lc().y)
+            mid_pos1=vector(pin1.rx()+self.metal1_pitch, pin1.lc().y)
             mid_pos2=vector(mid_pos1.x, (j+1)*self.inv.height)
-            mid_pos3=vector(pin2.lx()-self.m_pitch("m1"), mid_pos2.y)
+            mid_pos3=vector(pin2.lx()-self.metal1_pitch, mid_pos2.y)
             mid_pos4=vector(mid_pos3.x, pin2.lc().y)
             self.add_path("metal2", [mid_pos1, mid_pos2, mid_pos3, mid_pos4])
-            self.add_via_center(self.m1_stack, mid_pos1, rotate=90)
-            self.add_via_center(self.m1_stack, mid_pos4, rotate=90)
+            self.add_via_center(self.metal1_stack, mid_pos1, rotate=90)
+            self.add_via_center(self.metal1_stack, mid_pos4, rotate=90)
             self.add_path("metal1", [pin1.lc(), mid_pos1])
             self.add_path("metal1", [ mid_pos4, pin2.lc()])
         
         for j in range(self.stage_size-self.final_stage_size-1):
             pin1 = self.inv_inst[l-self.stage_size+1+j].get_pin("Z")
             pin2 = self.inv_inst[self.final_stage_size+1+j].get_pin("A")
-            mid_pos1=vector(pin1.rx()+self.m_pitch("m1"), pin1.lc().y)
+            mid_pos1=vector(pin1.rx()+self.metal1_pitch, pin1.lc().y)
             mid_pos2=vector(mid_pos1.x, (j+self.final_stage_size+1)*self.inv.height)
-            mid_pos3=vector(pin2.lx()-self.m_pitch("m1"), mid_pos2.y)
+            mid_pos3=vector(pin2.lx()-self.metal1_pitch, mid_pos2.y)
             mid_pos4=vector(mid_pos3.x, pin2.lc().y)
             self.add_path("metal2", [mid_pos1, mid_pos2, mid_pos3, mid_pos4])
-            self.add_via_center(self.m1_stack, mid_pos1, rotate=90)
-            self.add_via_center(self.m1_stack, mid_pos4, rotate=90)
+            self.add_via_center(self.metal1_stack, mid_pos1, rotate=90)
+            self.add_via_center(self.metal1_stack, mid_pos4, rotate=90)
             self.add_path("metal1", [pin1.lc(), mid_pos1])
             self.add_path("metal1", [mid_pos4, pin2.lc()])
         
@@ -155,16 +155,16 @@ class delay_chain(design.design):
                 pin1 = self.inv_inst[i+j*self.stage_size].get_pin("Z")
                 pin2 = self.inv_inst[self.stage_size+i+j*self.stage_size].get_pin("A")
                 yoff = min (pin1.by(), pin2.by())
-                height= abs(pin1.by()-pin2.by())+self.m1_width
-                off = (pin2.lx()-self.m1_space, yoff)
-                self.add_rect(layer="metal1", offset= off, width=self.m1_space, height=height)
+                height= abs(pin1.by()-pin2.by())+self.metal1_width
+                off = (pin2.lx()-self.metal1_space, yoff)
+                self.add_rect(layer="metal1", offset= off, width=self.metal1_space, height=height)
         for i in range(self.final_stage_size):
             pin1 = self.inv_inst[i+(self.num_even_stage-1)*self.stage_size].get_pin("Z")
             pin2 = self.inv_inst[i+self.num_even_stage*self.stage_size].get_pin("A")
             yoff = min (pin1.by(), pin2.by())
-            height= abs(pin1.by()-pin2.by())+self.m1_width
-            off = (pin2.lx()-self.m1_space, yoff)
-            self.add_rect(layer="metal1", offset= off, width=self.m1_space, height=height)
+            height= abs(pin1.by()-pin2.by())+self.metal1_width
+            off = (pin2.lx()-self.metal1_space, yoff)
+            self.add_rect(layer="metal1", offset= off, width=self.metal1_space, height=height)
             
     def add_layout_pins(self):
         """ Add vdd and gnd rails and the input/output. Connect the gnd rails internally on
@@ -189,32 +189,32 @@ class delay_chain(design.design):
 
         #gnd = -2pitch, vdd = -3pitch
         for i in range(2):
-            xoff=self.inv_inst[0].get_pin("A").lx()-0.5*self.m2_width
+            xoff=self.inv_inst[0].get_pin("A").lx()-0.5*self.metal2_width
             self.add_rect(layer="metal2", 
-                          offset = (xoff-(2+i)*self.m_pitch("m1"),0),
-                          width=self.m2_width,
+                          offset = (xoff-(2+i)*self.metal1_pitch,0),
+                          width=self.metal2_width,
                           height=self.height)
         for i in range(self.stage_size):
             if i%2:
                 pin = self.inv_inst[i].get_pin("gnd")
-                self.add_path("metal1", [(xoff-2*self.m_pitch("m1"), pin.lc().y), pin.lc()])
-                self.add_via_center(self.m1_stack, (xoff-2*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+                self.add_path("metal1", [(xoff-2*self.metal1_pitch, pin.lc().y), pin.lc()])
+                self.add_via_center(self.metal1_stack, (xoff-2*self.metal1_pitch+0.5*self.metal2_width, pin.lc().y), rotate=90)
 
             else:
                 pin = self.inv_inst[i].get_pin("vdd")
-                self.add_path("metal1", [(xoff-3*self.m_pitch("m1"), pin.lc().y), pin.lc()])
-                self.add_via_center(self.m1_stack, (xoff-3*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+                self.add_path("metal1", [(xoff-3*self.metal1_pitch, pin.lc().y), pin.lc()])
+                self.add_via_center(self.metal1_stack, (xoff-3*self.metal1_pitch+0.5*self.metal2_width, pin.lc().y), rotate=90)
 
             #first gnd
             pin = self.inv_inst[0].get_pin("gnd")
-            self.add_path("metal1", [(xoff-2*self.m_pitch("m1"), pin.lc().y), pin.lc()])
-            self.add_via_center(self.m1_stack, (xoff-2*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+            self.add_path("metal1", [(xoff-2*self.metal1_pitch, pin.lc().y), pin.lc()])
+            self.add_via_center(self.metal1_stack, (xoff-2*self.metal1_pitch+0.5*self.metal2_width, pin.lc().y), rotate=90)
         
         power_pin=["gnd", "vdd"]
         for i in range(2):
             pin = self.inv_inst[0].get_pin(power_pin[i])
-            self.add_path("metal1", [(xoff-(2+i)*self.m_pitch("m1"), pin.lc().y), pin.lc()])
-            self.add_via_center(self.m1_stack, (xoff-(2+i)*self.m_pitch("m1")+0.5*self.m2_width, pin.lc().y), rotate=90)
+            self.add_path("metal1", [(xoff-(2+i)*self.metal1_pitch, pin.lc().y), pin.lc()])
+            self.add_via_center(self.metal1_stack, (xoff-(2+i)*self.metal1_pitch+0.5*self.metal2_width, pin.lc().y), rotate=90)
             self.add_layout_pin(text=power_pin[i],
                                 layer=pin.layer,
                                 offset=pin.ll(),

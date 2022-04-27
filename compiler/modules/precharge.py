@@ -28,7 +28,7 @@ class precharge(design.design):
 
         self.bitcell = bitcell()
         
-        self.ptx_width = 2*self.minwidth_tx
+        self.ptx_width = 2*self.tx_width
         self.add_pin_list(["bl", "br", "en", "vdd"])
         self.width = self.bitcell.width
         self.create_layout()
@@ -93,7 +93,7 @@ class precharge(design.design):
 
         
         # add a m1_pitch at top for DRC-free abutment connection with write_complete 
-        self.height = self.pmos2_inst.uy()+self.m_pitch("m1")
+        self.height = self.pmos2_inst.uy()+self.metal1_pitch
 
     def connect_poly_and_en(self):
 
@@ -103,7 +103,7 @@ class precharge(design.design):
         self.add_path("poly", [self.pmos1_inst.get_pin("G").lc(), self.pmos2_inst.get_pin("G").lc()])
         self.mid_pos=vector(0.5*self.width, self.pmos1_inst.get_pin("G").lc().y)
         
-        if (self.bitcell.get_pin("br").lx() - self.bitcell.get_pin("bl").rx()) < 3*self.m2_width:
+        if (self.bitcell.get_pin("br").lx() - self.bitcell.get_pin("bl").rx()) < 3*self.metal2_width:
             self.add_path("poly", [self.mid_pos,self.pmos3_inst.get_pin("G").lc()])
             
             off=(self.mid_pos.x+0.5*self.poly_width, self.height-contact.poly.height)
@@ -120,38 +120,38 @@ class precharge(design.design):
             self.add_contact_center(self.poly_stack, off, rotate=90)
             
             off=(self.mid_pos.x, self.pmos3_inst.get_pin("G").cc().y)
-            self.add_contact_center(self.m1_stack, off, rotate=90)
+            self.add_contact_center(self.metal1_stack, off, rotate=90)
 
             off=(self.mid_pos.x, self.pmos1_inst.get_pin("G").cc().y)
             self.add_contact_center(self.poly_stack, off, rotate=90)
             
             off=(self.mid_pos.x, self.pmos1_inst.get_pin("G").cc().y)
-            self.add_contact_center(self.m1_stack, off, rotate=90)
+            self.add_contact_center(self.metal1_stack, off, rotate=90)
             
-            off=(self.mid_pos.x, self.height-0.5*self.m1_width)
-            self.add_contact_center(self.m1_stack, off, rotate=90)
+            off=(self.mid_pos.x, self.height-0.5*self.metal1_width)
+            self.add_contact_center(self.metal1_stack, off, rotate=90)
             
-            off=(self.mid_pos.x-0.5*self.m2_width,self.pmos3_inst.get_pin("G").cc().y)
+            off=(self.mid_pos.x-0.5*self.metal2_width,self.pmos3_inst.get_pin("G").cc().y)
             self.add_rect(layer="metal2",
                           offset=off,
-                          width = self.m2_width,
+                          width = self.metal2_width,
                           height= self.height-self.pmos3_inst.get_pin("G").cc().y)
-            off=(self.mid_pos.x-0.5*self.m2_width,self.pmos3_inst.get_pin("G").cc().y)
+            off=(self.mid_pos.x-0.5*self.metal2_width,self.pmos3_inst.get_pin("G").cc().y)
             self.add_rect(layer="metal1",
                           offset=off,
-                          width = self.m1_width,
+                          width = self.metal1_width,
                           height= self.pmos1_inst.get_pin("G").cc().y-self.pmos3_inst.get_pin("G").cc().y)
         
         # Add enable pin and rail
         self.add_rect(layer="metal1",
-                      offset=(0,self.height-self.m1_width),
+                      offset=(0,self.height-self.metal1_width),
                       width = self.width,
-                      height= self.m1_width)
+                      height= self.metal1_width)
         self.add_layout_pin(text="en",
                             layer="metal1",
-                            offset=(0,self.height-self.m1_width),
-                            width = self.m1_width,
-                            height = self.m1_width)
+                            offset=(0,self.height-self.metal1_width),
+                            width = self.metal1_width,
+                            height = self.metal1_width)
 
         if info["tx_dummy_poly"]:                     
              pos1= (self.pmos1_inst.lx()+self.pmos.dummy_poly_offset1.y, 
@@ -212,15 +212,15 @@ class precharge(design.design):
                          implant_type=nimplant_type, 
                          well_type=nwell_type, 
                          add_extra_layer=info["well_contact_extra"])
-        active_width = self.active_minarea/contact.well.width
+        active_width = self.minarea_active/contact.well.width
         active_off = vector(nwell_contact.x-active_width, nwell_contact.y)
         self.add_rect(layer="active",
                       offset=active_off,
                       width=active_width,
                       height=contact.well.width)
-        extra_off = active_off-vector(self.extra_enclose, self.extra_enclose)
-        extra_width = self.width-active_off.x+self.extra_enclose
-        extra_height = max(contact.well.width + 2*self.extra_enclose, ceil(self.extra_minarea/extra_width))
+        extra_off = active_off-vector(self.extra_layer_enclose, self.extra_layer_enclose)
+        extra_width = self.width-active_off.x+self.extra_layer_enclose
+        extra_height = max(contact.well.width + 2*self.extra_layer_enclose, ceil(self.minarea_extra_layer/extra_width))
         self.add_rect(layer="extra_layer",
                       offset= (extra_off.x, min(extra_off.y, 0)),
                       width= extra_width,
@@ -271,27 +271,27 @@ class precharge(design.design):
     def add_bitlines(self):
         """Adds both BL and BR pins to the module"""
         
-        offset = vector(self.bitcell.get_pin("bl").cx()-0.5*self.m2_width,0)
+        offset = vector(self.bitcell.get_pin("bl").cx()-0.5*self.metal2_width,0)
         self.add_rect(layer="metal2",
                       offset=offset,
-                      width=self.m2_width,
+                      width=self.metal2_width,
                       height=self.height)
         self.add_layout_pin(text="bl",
                             layer="metal2",
                             offset=offset,
-                            width=self.m2_width,
-                            height=self.m2_width)
+                            width=self.metal2_width,
+                            height=self.metal2_width)
 
-        offset = vector(self.bitcell.get_pin("br").cx()-0.5*self.m2_width,0)
+        offset = vector(self.bitcell.get_pin("br").cx()-0.5*self.metal2_width,0)
         self.add_rect(layer="metal2",
                       offset=offset,
-                      width=self.m2_width,
+                      width=self.metal2_width,
                       height=self.height)
         self.add_layout_pin(text="br",
                             layer="metal2",
                             offset=offset,
-                            width=self.m2_width,
-                            height=self.m2_width)
+                            width=self.metal2_width,
+                            height=self.metal2_width)
 
     def connect_to_bitlines(self):
         """ Route bitlines to pmoses"""
@@ -304,18 +304,18 @@ class precharge(design.design):
         self.add_path("metal1", [pmos1_s.uc(), self.pmos3_inst.get_pin("D").uc()], 
                       width= contact.m1m2.first_layer_height)
         
-        pos1=(pmos3_s.uc().x-0.5*contact.active.height, pmos3_s.by()-0.5*self.m1_width)
-        pos2=(pmos2_s.uc().x+0.5*contact.m1m2.height-edge, pmos3_s.by()-0.5*self.m1_width)
+        pos1=(pmos3_s.uc().x-0.5*contact.active.height, pmos3_s.by()-0.5*self.metal1_width)
+        pos2=(pmos2_s.uc().x+0.5*contact.m1m2.height-edge, pmos3_s.by()-0.5*self.metal1_width)
         self.add_path("metal1", [pos1, pos2])
 
-        self.add_via_center(self.m1_stack, (pmos2_s.uc().x, pmos2_s.lc().y), rotate=90)
+        self.add_via_center(self.metal1_stack, (pmos2_s.uc().x, pmos2_s.lc().y), rotate=90)
         self.add_path("metal2", [pmos2_s.lc(), (self.bitcell.get_pin("br").cx(),pmos2_s.lc().y)])
-        self.add_via_center(self.m1_stack, (pmos1_s.uc().x, pmos1_s.lc().y), rotate=90)
+        self.add_via_center(self.metal1_stack, (pmos1_s.uc().x, pmos1_s.lc().y), rotate=90)
         self.add_path("metal2", [pmos1_s.lc(), (self.bitcell.get_pin("bl").cx(),pmos1_s.lc().y)])
-        self.add_via_center(self.m1_stack, (pmos2_s.uc().x, pmos3_s.by()), rotate=90)
+        self.add_via_center(self.metal1_stack, (pmos2_s.uc().x, pmos3_s.by()), rotate=90)
         self.add_path("metal2", [(pmos2_s.uc().x, pmos3_s.by()), (self.bitcell.get_pin("br").cx(),pmos3_s.by())])
         
-        height = ceil(self.m1_minarea/contact.m1m2.first_layer_height)
+        height = ceil(self.minarea_metal1/contact.m1m2.first_layer_height)
         self.add_rect_center(layer="metal1", 
                              offset = (pmos2_s.uc().x, pmos2_s.by()-0.5*height),
                              width= contact.m1m2.first_layer_height,

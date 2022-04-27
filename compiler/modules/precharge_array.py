@@ -62,13 +62,13 @@ class precharge_array(design.design):
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer="metal2", 
                                 offset=bl_pin.ll(), 
-                                width=self.m2_width, 
+                                width=self.metal2_width, 
                                 height=bl_pin.height())
             br_pin = inst.get_pin("br") 
             self.add_layout_pin(text="br[{0}]".format(i), 
                                 layer="metal2", 
                                 offset=br_pin.ll(), 
-                                width=self.m2_width, 
+                                width=self.metal2_width, 
                                 height=bl_pin.height())
             self.connect_inst(["bl[{0}]".format(i), "br[{0}]".format(i), "en", "vdd"])
     
@@ -78,10 +78,10 @@ class precharge_array(design.design):
         self.add_layout_pin(text="vdd", 
                             layer="metal1", 
                             offset=self.pc_cell.get_pin("vdd").ll(), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
+                            width=self.metal1_width, 
+                            height=self.metal1_width)
         self.add_layout_pin(text="en", 
                             layer="metal1", 
                             offset=self.pc_cell.get_pin("en").ll(), 
-                            width=self.m1_width, 
-                            height=self.m1_width)
+                            width=self.metal1_width, 
+                            height=self.metal1_width)

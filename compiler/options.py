@@ -69,3 +69,5 @@ class options(optparse.Values):
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
 
+    # Generate Synchronous ("sync") or Asynchronous ("async") memory
+    mode = "async"
