@@ -27,7 +27,7 @@ class design(hierarchy_design):
         # Except bitcell names are generated automatically by the globals.py setup_bitcells routines
         # depending on the number of ports.
 
-        if name in props.names:
+        if OPTS.mode == "sync" and name in props.names:
             if type(props.names[name]) is list:
                 num_ports = OPTS.num_rw_ports + OPTS.num_r_ports + OPTS.num_w_ports - 1
                 cell_name = props.names[name][num_ports]
@@ -89,6 +89,7 @@ class design(hierarchy_design):
         These are some DRC constants used in many places
         in the compiler.
         """
+        from tech import drc
         design.well_extend_active = None
         design.well_enclose_active = None
 
@@ -156,31 +157,10 @@ class design(hierarchy_design):
                                            design.nwell_enclose_active,
                                            design.active_space)
 
-        # These are for debugging previous manual rules
-        if False:
-            print("poly_width", design.poly_width)
-            print("poly_space", design.poly_space)
-            print("m1_width", design.m1_width)
-            print("m1_space", design.m1_space)
-            print("m2_width", design.m2_width)
-            print("m2_space", design.m2_space)
-            print("m3_width", design.m3_width)
-            print("m3_space", design.m3_space)
-            print("m4_width", design.m4_width)
-            print("m4_space", design.m4_space)
-            print("active_width", design.active_width)
-            print("active_space", design.active_space)
-            print("contact_width", design.contact_width)
-            print("poly_to_active", design.poly_to_active)
-            print("poly_extend_active", design.poly_extend_active)
-            print("poly_to_contact", design.poly_to_contact)
-            print("active_contact_to_gate", design.active_contact_to_gate)
-            print("poly_contact_to_gate", design.poly_contact_to_gate)
-            print("well_enclose_active", design.well_enclose_active)
-            print("implant_enclose_active", design.implant_enclose_active)
-            print("implant_space", design.implant_space)
-            import sys
-            sys.exit(1)
+    @classmethod
+    def debug_constants(design):
+        for key, value in design.__dict__.items():
+            print("{}: {}".format(key, value))
 
     @classmethod
     def setup_layer_constants(design):
@@ -376,3 +356,8 @@ class design(hierarchy_design):
 design.setup_drc_constants()
 design.setup_layer_constants()
 
+# Prints drc and layer constants for debugging
+if False:
+    design.debug_constants()
+    import sys
+    sys.exit(1)
