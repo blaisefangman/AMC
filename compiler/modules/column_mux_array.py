@@ -127,12 +127,12 @@ class column_mux_array(design.design):
                 self.add_rect_center(layer="metal1", 
                                      offset = off, 
                                      width=width, 
-                                     height=1.5 * (self.m1_minarea / width))
+                                     height=1.5 * (self.minarea_metal1 / width))
             
             # add implant for poly-enclosure drc violation
             implant_offset = (self.mux_inst[0].lx(), self.mux_inst[0].by()-self.route_height)
             implant_width = self.width
-            if (info["has_pimplant"] and drc["implant_enclose_poly"]>0):
+            if (info["has_pimplant"] and drc["implant_enclosure_poly"]>0):
                 self.add_rect(layer= "pimplant", 
                               offset= implant_offset, 
                               width = implant_width,

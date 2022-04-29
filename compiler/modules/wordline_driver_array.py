@@ -121,7 +121,7 @@ class wordline_driver_array(design.design):
             else:
                 pin_layer = "metal3"
                 pin_width= self.metal3_width
-                layer_stack = self.m2_stack
+                layer_stack = self.metal2_stack
                 contact_height= contact.m2m3.height
 
             self.add_rect(layer=pin_layer,

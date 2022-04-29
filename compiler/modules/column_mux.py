@@ -224,7 +224,7 @@ class column_mux(design.design):
         active_width= self.minarea_active/contact.well.first_layer_height
         active_height = contact.well.first_layer_height
         active_offse= vector(self.well_enclose_active,  well_contact_offset.y+ \
-                      self.metal1_extend_contact-self.active_extend_contact)
+                      self.m1_extend_contact-self.active_extend_contact)
         self.add_rect(layer="active", 
                       offset=active_offse, 
                       width = active_width,
@@ -257,7 +257,7 @@ class column_mux(design.design):
 
 
         extra_height = active_height+2*self.extra_layer_enclose
-        #extra_width = self.extra_minarea/ extra_height
+        #extra_width = self.minarea_extra_layer/ extra_height
         extra_width = self.width
         extra_off= vector(0, active_offse[1]-self.extra_layer_enclose)
         self.add_rect(layer="extra_layer",

@@ -336,7 +336,7 @@ class bitcell_array(design.design):
             
             self.add_rect(layer= "active",
                           offset= (contact_xoff, contact_yoff),
-                          width= self.active_minarea/contact.well.height,
+                          width= self.minarea_active/contact.well.height,
                           height= contact.well.height)
             
             if info["has_{}".format(well_type)]:
@@ -360,19 +360,19 @@ class bitcell_array(design.design):
             self.add_layout_pin(text="vdd",
                                 layer= "metal1",
                                 offset=pin_off,
-                                width= self.m1_width,
-                                height= self.m1_width)
+                                width= self.metal1_width,
+                                height= self.metal1_width)
 
             self.add_rect(layer= "metal1",
                           offset= (0, y_off+self.well_enclose_active),
                           width= self.width,
-                          height= self.m1_width)
+                          height= self.metal1_width)
 
             self.add_layout_pin(text="gnd",
                                 layer= "metal1",
                                 offset=(0, y_off+self.well_enclose_active),
-                                width= self.m1_width,
-                                height= self.m1_width)
+                                width= self.metal1_width,
+                                height= self.metal1_width)
         
         self.y_shift = y_shift
         if info["foundry_cell"]:

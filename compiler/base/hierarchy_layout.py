@@ -134,11 +134,11 @@ class layout():
             lowesty = min(min(inst.by() for inst in self.insts), lowesty)
 
         if len(self.pin_map) > 0:
-            for pin_set in self.pin_map.values():
-                if len(pin_set) == 0:
+            for pin_list in self.pin_map.values():
+                if len(pin_list) == 0:
                     continue
-                lowestx = min(min(pin.lx() for pin in pin_set), lowestx)
-                lowesty = min(min(pin.by() for pin in pin_set), lowesty)
+                lowestx = min(min(pin.lx() for pin in pin_list), lowestx)
+                lowesty = min(min(pin.by() for pin in pin_list), lowesty)
 
         return vector(lowestx, lowesty)
 
@@ -158,11 +158,11 @@ class layout():
             highesty = max(max(inst.uy() for inst in self.insts), highesty)
 
         if len(self.pin_map) > 0:
-            for pin_set in self.pin_map.values():
-                if len(pin_set) == 0:
+            for pin_list in self.pin_map.values():
+                if len(pin_list) == 0:
                     continue
-                highestx = max(max(pin.rx() for pin in pin_set), highestx)
-                highesty = max(max(pin.uy() for pin in pin_set), highesty)
+                highestx = max(max(pin.rx() for pin in pin_list), highestx)
+                highesty = max(max(pin.uy() for pin in pin_list), highesty)
 
         return vector(highestx, highesty)
 
@@ -368,10 +368,10 @@ class layout():
         """
         name = self.get_pin_name(text)
 
-        if name in self.pin_map.keys():
+        try:
             return self.pin_map[name]
-        else:
-            return set()
+        except KeyError:
+            return []
 
     def add_pin_names(self, pin_dict):
         """
@@ -612,7 +612,7 @@ class layout():
         """
         Delete a labeled pin (or all pins of the same name)
         """
-        self.pin_map[text] = set()
+        self.pin_map[text] = []
 
     def remove_layout_pins(self):
         """
@@ -662,11 +662,11 @@ class layout():
             # Check if there's a duplicate!
             # and if so, silently ignore it.
             # Rounding errors may result in some duplicates.
+            # Use a dict so iteration occurs in order the elements were added
             if new_pin not in self.pin_map[text]:
-                self.pin_map[text].add(new_pin)
+                self.pin_map[text].append(new_pin)
         except KeyError:
-            self.pin_map[text] = set()
-            self.pin_map[text].add(new_pin)
+            self.pin_map[text] = [new_pin]
 
         return new_pin
 

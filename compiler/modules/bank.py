@@ -371,7 +371,7 @@ class bank(design.design):
 
             x_offset=i*self.subank_width+ self.ctrl_bus_width 
             if self.two_level_bank:
-                x_offset = x_offset + 3*self.metal1_pitch
+                x_offset = x_offset + 3*self.metal1_pitch 
             if self.num_subanks > 1:   
                 self.bitcell_ary_drv_inst[i] = self.add_inst(name="bitcell_drv_{0}".format(i), 
                                                              mod=self.bitcell_array_drv, 
@@ -513,7 +513,7 @@ class bank(design.design):
             #en2_M
             self.merge_xoffset[0]=self.d_split_ary_inst[0].lx()-self.metal2_pitch
             #en1_M
-            self.merge_xoffset[1]=self.merge_xoffset[0]-self.metal2_pitch
+            self.merge_xoffset[1]=self.merge_xoffset[0]-self.metal2_pitch        
             #en2_s
             self.split_xoffset[0]=self.merge_xoffset[1]-self.metal2_pitch
             #en1_s
@@ -620,7 +620,7 @@ class bank(design.design):
                     #en1_M
                     self.merge_xoffset[1]=self.go_drv_inst[0].get_pin("in[0]").lc().x-2*self.metal2_pitch+0.5*self.metal2_width
                     #en2_M
-                    self.merge_xoffset[0]=self.merge_xoffset[1] - self.metal2_pitch
+                    self.merge_xoffset[0]=self.merge_xoffset[1] - self.metal2_pitch        
                     #en1_s
                     self.split_xoffset[1]=self.merge_xoffset[0] - self.metal2_pitch
                     #en2_s
@@ -1344,7 +1344,7 @@ class bank(design.design):
         for i in range(self.mux_addr_size):
             if self.mux_addr_size == 1:
                 addr_off = self.mux_dec_inst.get_pin("A").ll()
-                self.add_via(self.metal2_stack,(addr_off.x-drc["metal3_enclose_via2"]-\
+                self.add_via(self.metal2_stack,(addr_off.x-drc["metal3_enclosure_via2"]-\
                                             self.metal1_width,addr_off.y-self.via_shift("v1")))
 
             if self.mux_addr_size > 1:
@@ -1769,7 +1769,7 @@ class bank(design.design):
                                 offset=data_out_pos, 
                                 width=self.metal3_width,
                                 height= height_data_out)
-                self.add_via(self.metal2_stack, (data_out_pos.x-drc["metal3_enclose_via2"], self.min_point_y))
+                self.add_via(self.metal2_stack, (data_out_pos.x-drc["metal3_enclosure_via2"], self.min_point_y))
                 self.add_rect(layer="metal2", 
                                 offset=data_out_pos, 
                                 width=contact.m1m2.width,

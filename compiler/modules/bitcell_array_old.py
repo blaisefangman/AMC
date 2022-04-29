@@ -233,12 +233,12 @@ class bitcell_array(design.design):
         width= self.column_size*self.cell.width
         
         
-        h_power_rail_yoff = height+self.y_shift+4*self.m3_width-0.5*contact.m2m3.width
+        h_power_rail_yoff = height+self.y_shift+4*self.metal3_width-0.5*contact.m2m3.width
         pos1=(0, h_power_rail_yoff)
         pos2=(width, h_power_rail_yoff)
         self.add_path("metal3", [pos1, pos2], width=contact.m2m3.width)
         
-        off = (0, height+self.y_shift+4*self.m3_width-contact.m2m3.width)
+        off = (0, height+self.y_shift+4*self.metal3_width-contact.m2m3.width)
         self.add_layout_pin(text=v_pin, 
                             layer=self.m3_pin_layer, 
                             offset=off, 
@@ -250,22 +250,22 @@ class bitcell_array(design.design):
             for pin in self.cell_inst[0,col].get_pins(v_pin):
                 
                 xoff = pin.lx()+contact.m2m3.height-self.via_shift("v2")
-                yoff =  height+self.y_shift+4*self.m3_width-contact.m2m3.width
-                self.add_via(self.m2_stack, (xoff, yoff), rotate=90)
+                yoff =  height+self.y_shift+4*self.metal3_width-contact.m2m3.width
+                self.add_via(self.metal2_stack, (xoff, yoff), rotate=90)
                 self.add_rect(layer="metal2",
                               offset=(pin.lx(),height),
                               width=contact.m1m2.width,
-                              height=self.y_shift+4*self.m3_width)
+                              height=self.y_shift+4*self.metal3_width)
 
             #extend the bitlines from bottom to the top edge
             self.add_rect(layer="metal2",
                           offset=(self.cell_inst[0,col].get_pin("bl").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.m3_width)
+                          height=height+2*self.y_shift+4*self.metal3_width)
             self.add_rect(layer="metal2",
                           offset=(self.cell_inst[0,col].get_pin("br").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.m3_width)
+                          height=height+2*self.y_shift+4*self.metal3_width)
 
         self.ybot_shift = self.y_shift
     
@@ -316,7 +316,7 @@ class bitcell_array(design.design):
             
             self.add_rect(layer= "active",
                           offset= (contact_xoff, contact_yoff),
-                          width= self.active_minarea/contact.well.height,
+                          width= self.minarea_active/contact.well.height,
                           height= contact.well.height)
             
             if info["has_{}".format(well_type)]:
@@ -340,19 +340,19 @@ class bitcell_array(design.design):
             self.add_layout_pin(text="vdd",
                                 layer= self.m1_pin_layer,
                                 offset=pin_off,
-                                width= self.m1_width,
-                                height= self.m1_width)
+                                width= self.metal1_width,
+                                height= self.metal1_width)
 
             self.add_rect(layer= "metal1",
                           offset= (0, y_off+self.well_enclose_active),
                           width= self.width,
-                          height= self.m1_width)
+                          height= self.metal1_width)
 
             self.add_layout_pin(text="gnd",
                                 layer= self.m1_pin_layer,
                                 offset=(0, y_off+self.well_enclose_active),
-                                width= self.m1_width,
-                                height= self.m1_width)
+                                width= self.metal1_width,
+                                height= self.metal1_width)
         
         self.y_shift = self.well_enclose_active+0.5*contact.well.width
         if info["has_pwell"]:

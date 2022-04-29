@@ -362,6 +362,7 @@ class hierarchical_decoder(design.design):
             self.rail_x_offsets.append(x_offset+0.5*self.metal2_width)
             self.add_rect(layer="metal2",
                           offset=vector(x_offset,0),
+                          width=self.metal2_width,
                           height=self.height)
 
         self.connect_rails_to_predecodes()
