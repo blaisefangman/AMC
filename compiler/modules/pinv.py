@@ -281,9 +281,9 @@ class pinv(design.design):
                       width=contact.well.width,
                       height=self.active_height)
         
-        x_shift = max((self.active_width - self.contact_width)/2, self.active_enclose_contact)
+        x_shift = max((self.active_width - self.contact_width)/2, self.active_enclose_active_contact)
         self.add_rect(layer="metal1",
-                      offset=metal_off+vector(x_shift-self.metal1_enclose_contact,0),
+                      offset=metal_off+vector(x_shift-self.metal1_enclose_active_contact,0),
                       width=contact.well.second_layer_width,
                       height=metal_height)
         

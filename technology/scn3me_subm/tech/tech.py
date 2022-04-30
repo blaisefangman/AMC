@@ -66,7 +66,8 @@ preferred_directions = {"poly": "V",
                         "active": "V",
                         "metal1": "H",
                         "metal2": "V",
-                        "metal3": "H"}
+                        "metal3": "H",
+                        "metal4": "V"}
 
 ###################################################
 ##GDS Layer Map
@@ -79,7 +80,7 @@ tech_layer_names = ["Metal1", "Via1", "Metal2", "Via2", "Metal3", "Via3", "Metal
 
 layer={} 
 layer["vt"]             = (-1,0) 
-layer["contact"]        = (47,0) 
+layer["poly_contact"]   = (47,0) 
 layer["pwell"]          = (41,0) 
 layer["nwell"]          = (42,0) 
 layer["active"]         = (43,0) 
@@ -178,7 +179,7 @@ drc["poly_to_poly"] = 0.9
 # 3.3 Minimum gate extension of active 
 drc["poly_extend_active"] = 0.6
 # ??
-drc["poly_to_polycontact"] = 1.2
+drc["poly_to_poly_contact"] = 1.2
 # Not a rule
 drc["active_enclose_gate"] = 0.0
 # 3.2.a Minimum spacing over field poly
@@ -199,6 +200,8 @@ drc["minwidth_active"] = 0.9
 drc["active_to_active"] = 0.9
 # 2.3 Source/drain active to well edge 
 drc["well_enclose_active"] = 1.8
+drc["pwell_enclose_active"] = 1.8
+drc["nwell_enclose_active"] = 1.8
 # Reserved for asymmetric enclosures
 drc["well_extend_active"] = 1.8
 # Not a rule
@@ -231,7 +234,7 @@ drc["implant_enclose_active"] = 0.6
 # Not a rule
 drc["implant_enclose_body_active"] = 0.6
 # 4.3 Minimum select overlap of contact  
-drc["implant_enclose_contact"] = 0.3
+drc["implant_enclose_poly_contact"] = 0.3
 # Not a rule
 drc["implant_enclose_poly"] = 0
 #Not a rule
@@ -239,7 +242,8 @@ drc["implant_to_active"] = 0
 #Not a rule
 drc["implant_to_gate"] = 0.0
 # Not a rule
-drc["implant_to_contact"] = 0
+drc["implant_to_poly_contact"] = 0
+drc["implant_to_active_contact"] = 0
 # Not a rule
 drc["implant_to_implant"] = 0
 # Not a rule
@@ -251,21 +255,25 @@ drc["minarea_implant"] = 0
 
 ### CONTACT RULES ####
 # 6.1 Exact contact size
-drc["minwidth_contact"] = 0.6
+drc["minwidth_poly_contact"] = 0.6
+drc["minwidth_active_contact"] = 0.6
 # 5.3 Minimum contact spacing
-drc["contact_to_contact"] = 0.9                    
+drc["poly_contact_to_poly_contact"] = 0.9                    
+drc["active_contact_to_active_contact"] = 0.9                    
 # 6.2.b Minimum active overlap 
-drc["active_enclose_contact"] = 0.3
+drc["active_enclose_poly_contact"] = 0.3
+drc["active_enclose_active_contact"] = 0.3
 # Reserved for asymmetric enclosure
-drc["active_extend_contact"] = 0.3
+drc["active_extend_poly_contact"] = 0.3
+drc["active_extend_active_contact"] = 0.3
 # 5.2.b Minimum poly overlap 
-drc["poly_enclose_contact"] = 0.3
+drc["poly_enclose_poly_contact"] = 0.3
 # Reserved for asymmetric enclosures
-drc["poly_extend_contact"] = 0.3
+drc["poly_extend_poly_contact"] = 0.3
 # Reserved for other technologies
-drc["contact_to_gate"] = 0.6
+drc["poly_contact_to_gate"] = 0.6
 # 5.4 Minimum spacing to gate of transistor
-drc["contact_to_poly"] = 0.6
+drc["poly_contact_to_poly"] = 0.6
 
 ### Metal1 RULES ####        
 # 7.1 Minimum width 
@@ -275,9 +283,11 @@ drc["minwidth_m1pin"] = 0
 # 7.2 Minimum spacing 
 drc["metal1_to_metal1"] = 0.9
 # 7.3 Minimum overlap of any contact 
-drc["metal1_enclose_contact"] = 0.3
+drc["metal1_enclose_poly_contact"] = 0.3
+drc["metal1_enclose_active_contact"] = 0.3
 # Reserved for asymmetric enclosure
-drc["metal1_extend_contact"] = 0.3
+drc["metal1_extend_poly_contact"] = 0.3
+drc["metal1_extend_active_contact"] = 0.3
 # 8.3 Minimum overlap by metal1 
 drc["metal1_enclose_via1"] = 0.3                
 # Reserve for asymmetric enclosures

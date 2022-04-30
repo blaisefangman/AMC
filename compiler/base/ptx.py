@@ -93,16 +93,16 @@ class ptx(design.design):
                                       dimensions=(1, self.num_contacts))
 
         # The contacted poly pitch
-        self.poly_pitch = max(2*self.contact_to_gate + self.contact_width + self.poly_width,
+        self.poly_pitch = max(2*self.poly_contact_to_gate + self.contact_width + self.poly_width,
                               self.poly_space)
 
         
         # This is the distance from the edge of poly to the contacted end of active
-        self.end_to_poly = max(self.active_enclose_contact + self.contact_width + self.contact_to_gate,
+        self.end_to_poly = max(self.active_enclose_poly_contact + self.contact_width + self.poly_contact_to_gate,
                                self.active_enclose_gate)
         
         # The contacted poly pitch
-        self.contact_pitch = 2*self.contact_to_gate + self.contact_width + self.poly_width
+        self.contact_pitch = 2*self.poly_contact_to_gate + self.contact_width + self.poly_width
         
         # Active height is just the transistor width
         self.active_height = self.tx_width
@@ -143,8 +143,8 @@ class ptx(design.design):
         
         
         # This is the center of the first active contact offset (centered vertically)
-        y_shift = max(self.active_enclose_contact, 
-                      self.active_enclose_gate - self.contact_width - self.contact_to_gate)
+        y_shift = max(self.active_enclose_poly_contact, 
+                      self.active_enclose_gate - self.contact_width - self.poly_contact_to_gate)
         self.contact_offset = self.active_offset + vector(y_shift + 0.5*self.contact_width, 
                                                           0.5*self.active_height)
                                      

@@ -312,8 +312,8 @@ class pull_up_pull_down(design.design):
         self.active_width = ceil(self.minarea_active/self.active_height)
         
         active_off1 = nw_contact_off-vector(0, self.active_height-contact.well.first_layer_width)
-        metal_off1= nw_contact_off + vector(0,self.active_enclose_contact)
-        metal_height1 = self.height -  nw_contact_off.y - self.active_enclose_contact
+        metal_off1= nw_contact_off + vector(0,self.active_enclose_active_contact)
+        metal_height1 = self.height -  nw_contact_off.y - self.active_enclose_active_contact
         pimplant_off = (0, 0)
         
         extra_height1=extra_height2 = self.height - active_off1.y + self.extra_layer_enclose
@@ -323,7 +323,7 @@ class pull_up_pull_down(design.design):
 
         active_off2 = pw_contact_off
         metal_off2= (pw_contact_off.x, 0)
-        metal_height2 = pw_contact_off.y + self.active_enclose_contact+self.metal1_width
+        metal_height2 = pw_contact_off.y + self.active_enclose_active_contact+self.metal1_width
         nimplant_off = (self.nmos_inst[0].rx(), 0)
         extra_off2=(self.nmos_inst[0].rx()+drc["extra_to_poly"],0)
         extra_width2=max (self.width-self.nmos_inst[0].rx()-drc["extra_to_poly"], extra_width1)
