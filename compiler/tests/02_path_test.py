@@ -31,8 +31,8 @@ class path_test(AMC_test):
         import tech
         import design
 
-        min_space = 2 * tech.drc["minwidth_metal1"]
-        layer = ("metal1")
+        min_space = 2 * tech.drc["minwidth_m1"]
+        layer = ("m1")
         # checks if we can retrace a path
         position_list = [[0,0],
                          [0, 3 * min_space ],
@@ -45,8 +45,8 @@ class path_test(AMC_test):
         self.local_drc_check(w)
 
 
-        min_space = 2 * tech.drc["minwidth_metal1"]
-        layer = ("metal1")
+        min_space = 2 * tech.drc["minwidth_m1"]
+        layer = ("m1")
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
                              [1 * min_space, 3 * min_space],
@@ -61,8 +61,8 @@ class path_test(AMC_test):
         wire_path.wire_path(w,layer, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * tech.drc["minwidth_metal2"]
-        layer = ("metal2")
+        min_space = 2 * tech.drc["minwidth_m2"]
+        layer = ("m2")
         old_position_list = [[0, 0],
                              [0, 3 * min_space],
                              [1 * min_space, 3 * min_space],
@@ -77,8 +77,8 @@ class path_test(AMC_test):
         wire_path.wire_path(w, layer, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * tech.drc["minwidth_metal3"]
-        layer = ("metal3")
+        min_space = 2 * tech.drc["minwidth_m3"]
+        layer = ("m3")
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],

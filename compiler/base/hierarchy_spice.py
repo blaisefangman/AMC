@@ -12,11 +12,11 @@ import math
 import tech
 from globals import OPTS
 from pprint import pformat
-from delay_data import delay_data
-from wire_spice_model import wire_spice_model
-from power_data import power_data
-#import logical_effort
-
+if OPTS.mode == "sync":
+    from delay_data import delay_data
+    from wire_spice_model import wire_spice_model
+    from power_data import power_data
+    import logical_effort
 
 class spice():
     """

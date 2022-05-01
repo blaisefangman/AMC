@@ -50,12 +50,12 @@ class driver(design.design):
     def add_driver(self):
         """ Add nand2 + inv cells"""
         
-        self.x_offset1 = 7*self.metal1_space
+        self.x_offset1 = 7*self.m1_space
         self.x_offset2 = self.x_offset1 + self.nand2.width
         self.width = self.x_offset2 + self.inv.width
         
         self.add_layout_pin(text="gnd", 
-                            layer="metal1", 
+                            layer="m1", 
                             offset=[self.x_offset1, -0.5*contact.m1m2.width], 
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -81,7 +81,7 @@ class driver(design.design):
 
             yoffset = (row + 1) * self.inv.height - 0.5 * contact.m1m2.width
             self.add_layout_pin(text=pin_name, 
-                                layer="metal1", 
+                                layer="m1", 
                                 offset=[self.x_offset1, yoffset], 
                                 width=contact.m1m2.width, 
                                 height=contact.m1m2.width)
@@ -102,9 +102,9 @@ class driver(design.design):
             # en connection
             a_pin = nand_inst.get_pin("A")
             a_pos = a_pin.lc()
-            clk_offset = vector(2*self.metal1_space+0.5*contact.m1m2.height ,a_pos.y)
-            self.add_segment_center(layer="metal1", start=clk_offset, end=a_pos)
-            self.add_via_center(self.metal1_stack, clk_offset, rotate=90)
+            clk_offset = vector(2*self.m1_space+0.5*contact.m1m2.height ,a_pos.y)
+            self.add_segment_center(layer="m1", start=clk_offset, end=a_pos)
+            self.add_via_center(self.m1_stack, clk_offset, rotate=90)
 
             # Nand2 out to inv input
             zr_pos = nand_inst.get_pin("Z").lc()
@@ -112,31 +112,31 @@ class driver(design.design):
             # ensure the bend is in the middle 
             mid1_pos = vector(0.5*(zr_pos.x+al_pos.x), zr_pos.y)
             mid2_pos = vector(0.5*(zr_pos.x+al_pos.x), al_pos.y)
-            self.add_path("metal1", [zr_pos, mid1_pos, mid2_pos, al_pos])
+            self.add_path("m1", [zr_pos, mid1_pos, mid2_pos, al_pos])
 
             # output each OUT on the right
             out_pin = inv2_inst.get_pin("Z")
             self.add_layout_pin(text="out[{0}]".format(row), 
                                 layer=out_pin.layer, 
                                 offset=out_pin.ll(),
-                                width=self.metal1_width,
-                                height=self.metal1_width)
+                                width=self.m1_width,
+                                height=self.m1_width)
 
             # connect the decoder input pin to nand2 B
             b_pin = nand_inst.get_pin("B")
             self.add_layout_pin(text="in[{0}]".format(row), 
                                 layer=out_pin.layer, 
                                 offset=b_pin.ll(), 
-                                width=self.metal1_width,
-                                height=self.metal1_width)
+                                width=self.m1_width,
+                                height=self.m1_width)
 
         # Wordline enable connection
-        en_pin=self.add_rect(layer="metal2", 
-                             offset=[2*self.metal1_space,0], 
-                             width=self.metal2_width, 
+        en_pin=self.add_rect(layer="m2", 
+                             offset=[2*self.m1_space,0], 
+                             width=self.m2_width, 
                              height=self.height)
         en_pin=self.add_layout_pin(text="en", 
-                                   layer="metal2", 
-                                   offset=[2*self.metal1_space,0], 
-                                   width=self.metal2_width, 
-                                   height=self.metal2_width)
+                                   layer="m2", 
+                                   offset=[2*self.m1_space,0], 
+                                   width=self.m2_width, 
+                                   height=self.m2_width)

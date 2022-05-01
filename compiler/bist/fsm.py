@@ -57,7 +57,7 @@ class fsm(design.design):
         self.connect_modules()
         self.add_layout_pins()
         self.width= self.max_xoff - self.min_xoff
-        self.height=self.height1+10*self.m_pitch("m1")+self.dc_inst.height
+        self.height=self.height1+10*self.m1_pitch+self.dc_inst.height
 
     def add_pins(self):
         """ Adds all pins of data pattern module """
@@ -93,21 +93,21 @@ class fsm(design.design):
         self.add_mod(self.dc)
         
         #These are gaps between neighbor cell to avoid well/implant DRC violation
-        self.ygap = max(self.well_space, self.implant_space, self.m_pitch("m1"))+contact.m1m2.width
-        self.yshift = vector(0,self.ygap+self.m_pitch("m1"))
+        self.ygap = max(self.well_space, self.implant_space, self.m1_pitch)+contact.m1m2.width
+        self.yshift = vector(0,self.ygap+self.m1_pitch)
         
-        self.xgap = 2*self.m_pitch("m1")
-        self.xshift = vector(3*self.m_pitch("m1"),0)
+        self.xgap = 2*self.m1_pitch
+        self.xshift = vector(3*self.m1_pitch,0)
         
         #offset for vdd and gnd pin
-        self.vdd_xoff = -9*self.m_pitch("m1")
-        self.gnd_xoff = -10*self.m_pitch("m1")
+        self.vdd_xoff = -9*self.m1_pitch
+        self.gnd_xoff = -10*self.m1_pitch
         
         #width of vertical m2 bus for connections
-        self.vbus_width = 15*self.m_pitch("m1")
+        self.vbus_width = 15*self.m1_pitch
         
         #width of horizontal m1 bus for connections
-        self.hbus_width = 14*self.m_pitch("m1")
+        self.hbus_width = 14*self.m1_pitch
 
     def add_modules(self):
         """ Adds all modules in the following order"""
@@ -176,7 +176,7 @@ class fsm(design.design):
                 y_off=i*self.ff.height
 
             self.rst_nand[i]=self.add_inst(name="rst_nand{0}".format(i), mod=self.nand2,
-                                           offset=(self.ff_inst[0].rx()+4*self.m_pitch("m1"),y_off),
+                                           offset=(self.ff_inst[0].rx()+4*self.m1_pitch,y_off),
                                            mirror = mirror)
             self.connect_inst(["reset_bar", "sx{0}".format(i), "s_b{0}".format(i), "vdd", "gnd"])
             
@@ -210,7 +210,7 @@ class fsm(design.design):
         """ Add delay chain for clk input to match the delay with clk3 & clk2 """        
         
         self.dc_inst=self.add_inst(name="delay_chain", mod=self.dc,
-                                   offset=(0,-5*self.m_pitch("m1")-self.dc.height))
+                                   offset=(0,-5*self.m1_pitch-self.dc.height))
         self.connect_inst(["clk", "clk_d", "vdd", "gnd"])
 
     def add_stage0_gates(self):
@@ -284,7 +284,7 @@ class fsm(design.design):
         self.connect_inst(["o2","s2","o3","vdd","gnd"])
 
         self.gate14=self.add_inst(name="gate14", mod=self.nor2,
-                                  offset=self.gate12.ul()+vector(0,self.ygap+2*self.m_pitch("m1")))
+                                  offset=self.gate12.ul()+vector(0,self.ygap+2*self.m1_pitch))
         self.connect_inst(["o3","s2","o4","vdd","gnd"])
         
         self.gate15=self.add_inst(name="gate15", mod=self.nor2,
@@ -388,7 +388,7 @@ class fsm(design.design):
     def add_finish_gates(self):
         """ Add gates for combinational logic of "fin" output """
         
-        xoff=self.inv2_inst.rx()+self.m_pitch("m1")
+        xoff=self.inv2_inst.rx()+self.m1_pitch
         self.gate_fin0=self.add_inst(name="gate_fin0", mod=self.nand2,
                                      offset=(xoff+self.vbus_width,self.hbus_width))
         self.connect_inst(["lfsr_done", "comp_err_b", "m0","vdd","gnd"])
@@ -432,7 +432,7 @@ class fsm(design.design):
         """ Add gates for combinational logic of "r" and "w" outputs """
         
         #W
-        xoff=max(self.inv_finish_inst.rx(),self.gate_updown0.rx())+8*self.m_pitch("m1")
+        xoff=max(self.inv_finish_inst.rx(),self.gate_updown0.rx())+8*self.m1_pitch
         self.gate_w0=self.add_inst(name="w0", mod=self.nand2,
                                    offset=(xoff+self.vbus_width, self.hbus_width))
         self.connect_inst(["s_b0", "s_b1", "f2", "vdd","gnd"])
@@ -498,26 +498,26 @@ class fsm(design.design):
         self.rail = []
         stage = []
         off=[self.rst_inv[0].rx(), self.gate09.rx(), self.gate112.rx(), self.inv2_inst.rx(), 
-             max(self.inv_finish_inst.rx(), self.gate_updown0.rx())+3*self.m_pitch("m1")]
+             max(self.inv_finish_inst.rx(), self.gate_updown0.rx())+3*self.m1_pitch]
         
         self.height1=max(self.gate_r5.uy(), self.gate_data1.uy(),  
                          self.gate08.uy(), self.gate19.uy(), self.gate_err3.uy())
         
         for i in range(len(off)):
             for j in range(12):
-                stage.append(off[i]+(j+2)*self.m_pitch("m1"))
-                self.add_rect(layer="metal2", 
-                              offset=(off[i]+(j+2)*self.m_pitch("m1"), 0),
+                stage.append(off[i]+(j+2)*self.m1_pitch)
+                self.add_rect(layer="m2", 
+                              offset=(off[i]+(j+2)*self.m1_pitch, 0),
                               width=contact.m1m2.width,
-                              height=self.height1+5*self.m_pitch("m1"))
-                self.add_via(self.m1_stack, (off[i]+(j+2)*self.m_pitch("m1"), 
-                                             j*self.m_pitch("m1")-self.via_shift("v1")))
+                              height=self.height1+5*self.m1_pitch)
+                self.add_via(self.m1_stack, (off[i]+(j+2)*self.m1_pitch, 
+                                             j*self.m1_pitch-self.v1_via_shift))
             self.rail.append(stage)
             stage=[]
         
         for j in range(12):
-            self.add_rect(layer="metal1", 
-                          offset=(off[0]+(j+2)*self.m_pitch("m1"), j*self.m_pitch("m1")),
+            self.add_rect(layer="m1", 
+                          offset=(off[0]+(j+2)*self.m1_pitch, j*self.m1_pitch),
                           width=off[-1]-off[0],
                           height=self.m1_width)
 
@@ -528,13 +528,13 @@ class fsm(design.design):
         for i in range(3):
             pos1=self.rst_inv[i].get_pin("Z").lc()
             pos2=vector(self.rail[0][2*i], pos1.y)
-            self.add_path("metal1",[pos1, pos2])
+            self.add_path("m1",[pos1, pos2])
             self.add_via_center(self.m1_stack, (pos2.x+0.5*contact.m1m2.width, pos2.y)) 
 
             if i%2:
-                y_off=self.rst_inv[i].by()-self.m_pitch("m1")
+                y_off=self.rst_inv[i].by()-self.m1_pitch
             else:
-                y_off=self.rst_inv[i].uy()+self.m_pitch("m1")
+                y_off=self.rst_inv[i].uy()+self.m1_pitch
             
             pin=self.rst_inv[i].get_pin("A")
             pos3=vector(pin.rx()-2*self.m1_width, pin.lc().y)
@@ -542,7 +542,7 @@ class fsm(design.design):
             pos5=vector(self.rail[0][2*i+1], pos4.y)
             
             self.add_via_center(self.m1_stack, pos3)
-            self.add_wire(self.m1_stack,[pos3, pos4, pos5])
+            self.add_wire(self.m1_stack,[pos3, pos4, pos5], widen_short_wires=False)
             self.add_via_center(self.m1_stack, (pos5.x+0.5*contact.m1m2.width, pos5.y)) 
 
     def connect_input_inv_to_rails(self):
@@ -552,28 +552,28 @@ class fsm(design.design):
         for i in range(2):
             pos1=self.rst_inv[3+i].get_pin("Z")
             pos2=vector(self.rail[0][6+2*i], pos1.lc().y)
-            self.add_path("metal3", [(pos1.rx()-2*self.m1_space-contact.m2m3.width, pos1.lc().y), pos2])
+            self.add_path("m3", [(pos1.rx()-2*self.m1_space-contact.m2m3.width, pos1.lc().y), pos2])
             self.add_via_center(self.m2_stack, (pos2.x+0.5*contact.m1m2.width, pos2.y))
             pin=self.rst_inv[3+i].get_pin("A")
             pos3=vector(pin.lx()-0.5*contact.m1m2.width, pin.lc().y)
             
             if i %2:
-                pos5=vector(pos3.x, self.rst_inv[3+i].get_pin("gnd").lc().y+self.m_pitch("m1"))
+                pos5=vector(pos3.x, self.rst_inv[3+i].get_pin("gnd").lc().y+self.m1_pitch)
                 self.add_via(self.m2_stack, pos1.ul()-vector(contact.m2m3.width, 
-                                                      contact.m2m3.height-self.via_shift("v2")))
+                                                      contact.m2m3.height-self.v2_via_shift))
             else:
-                pos5=vector(pos3.x, self.rst_inv[3+i].get_pin("gnd").lc().y-self.m_pitch("m1"))
-                self.add_via(self.m2_stack, pos1.ll()-vector(contact.m2m3.width, self.via_shift("v2")))
+                pos5=vector(pos3.x, self.rst_inv[3+i].get_pin("gnd").lc().y-self.m1_pitch)
+                self.add_via(self.m2_stack, pos1.ll()-vector(contact.m2m3.width, self.v2_via_shift))
             
             pos6=vector(self.rail[0][7+2*i], pos5.y)
-            self.add_wire(self.m2_rev_stack,[pos3, pos5, pos6] )
+            self.add_wire(self.m2_rev_stack,[pos3, pos5, pos6], widen_short_wires=False)
             self.add_via_center(self.m1_stack, pos3)
             self.add_via_center(self.m2_stack, (pos6.x+0.5*contact.m1m2.width, pos6.y))
 
             for j in range(2):
                 pos1=self.rst_inv[3+i].get_pin(power_pins[j]).lc()
-                pos2=vector(self.vdd_xoff-j*self.m_pitch("m1"), pos1.y)
-                self.add_path("metal1",[pos1, pos2])
+                pos2=vector(self.vdd_xoff-j*self.m1_pitch, pos1.y)
+                self.add_path("m1",[pos1, pos2])
                 self.add_via_center(self.m1_stack, (pos2.x+0.5*self.m1_width, pos2.y))
 
     def reset_inverter_connections(self):
@@ -588,21 +588,21 @@ class fsm(design.design):
             for (i,off) in zip(power_pins, xoffset):
                 pos1=mod.get_pin(i).lc()
                 pos2 = vector(off, pos1.y)
-                self.add_path("metal1",[pos1, pos2])
+                self.add_path("m1",[pos1, pos2])
                 self.add_via_center(self.m1_stack, (pos2.x+0.5*contact.m1m2.width, pos2.y))
         
         #connect output of reset inverter to input 'A' of nand2 gates
-        xpos=self.ff.width+3*self.m_pitch("m1")
+        xpos=self.ff.width+3*self.m1_pitch
         pos1=self.reset_inv.get_pin("Z").lc()
         pos2=vector(xpos, pos1.y)
         pos3=vector(pos2.x, self.rst_nand[3].get_pin("A").lc().y)
-        self.add_path("metal1", [pos1, pos2])
+        self.add_path("m1", [pos1, pos2])
         self.add_via_center(self.m1_stack, pos2)
         
         for i in range(5):
             pos4=self.rst_nand[i].get_pin("A").lc()
             pos5=vector(xpos, pos4.y)
-            self.add_wire(self.m1_stack, [(xpos, pos1.y), pos4, pos5])
+            self.add_wire(self.m1_stack, [(xpos, pos1.y), pos4, pos5], widen_short_wires=False)
 
     def connect_reset_gates_to_ff(self):
         """ Connect output and power of FF to reset gates"""
@@ -612,13 +612,13 @@ class fsm(design.design):
             #connect output of rst_inv to input of FF
             pin=self.ff_inst[i].get_pin("out")
             pos1=vector(pin.rx(), pin.lc().y)
-            pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
+            pos2=vector(pos1.x+self.m1_pitch, pos1.y)
             pos4=self.rst_nand[i].get_pin("B").lc()
-            pos3=vector(pos2.x+self.m_pitch("m1"), pos4.y)
-            self.add_path("metal1", [pos1, pos2, pos3, pos4])
+            pos3=vector(pos2.x+self.m1_pitch, pos4.y)
+            self.add_path("m1", [pos1, pos2, pos3, pos4])
             
             #connect gnd of rst_inv to gnd of FF
-            self.add_path("metal1", [self.rst_inv[i].get_pin("gnd").lc(), 
+            self.add_path("m1", [self.rst_inv[i].get_pin("gnd").lc(), 
                                      self.ff_inst[i].get_pin("gnd").lc()])
             
             #connect vdd of rst_inv to vdd of FF
@@ -626,33 +626,33 @@ class fsm(design.design):
             pin=self.rst_nand[i].get_pin("vdd")
             pos1=vector(pin.lx()+0.5*self.m1_width, pin.lc().y)
             pos2=vector(pos1.x, pos3.y)
-            self.add_path("metal1", [pos1, pos2, pos3])
+            self.add_path("m1", [pos1, pos2, pos3])
             
             #connect rst0 of FF to reset pin
             pin=self.ff_inst[i].get_pin("rst0")
             pos1=vector(pin.lx(), pin.lc().y)
-            pos2=vector(pos1.x-2*self.m_pitch("m1"), pos1.y)
+            pos2=vector(pos1.x-2*self.m1_pitch, pos1.y)
             pos4=self.reset_inv.get_pin("A")
             pos3=vector(pos2.x, pos4.lc().y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
-            self.add_wire(self.m1_stack, [pos2, pos3, pos4.lc()])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
+            self.add_wire(self.m1_stack, [pos2, pos3, pos4.lc()], widen_short_wires=False)
             
             #connect rst1 of FF to vv pin
             pin=self.ff_inst[i].get_pin("rst1")
-            self.add_path("metal1", [pin.lc(), (self.vdd_xoff, pin.lc().y)])
+            self.add_path("m1", [pin.lc(), (self.vdd_xoff, pin.lc().y)])
             self.add_via_center(self.m1_stack, (self.vdd_xoff+0.5*self.m1_width, pin.lc().y), rotate=90)
             
             for j in range(2):
                 pos1=self.ff_inst[i].get_pin(pins[j]).lc()
-                pos2 = vector(self.vdd_xoff-j*self.m_pitch("m1"), pos1.y)
-                self.add_path("metal1",[pos1, pos2])
+                pos2 = vector(self.vdd_xoff-j*self.m1_pitch, pos1.y)
+                self.add_path("m1",[pos1, pos2])
                 self.add_via_center(self.m1_stack, (pos2.x+0.5*self.m1_width, pos2.y))
 
     def connect_pin_to_rail(self, gate, pin, rail_off):
         """ Connect pin 'pin' of gate 'gate' to rail at offset 'rail_off' """
         
-        self.add_path("metal1", [gate.get_pin(pin).lc(), (rail_off, gate.get_pin(pin).lc().y)])
-        xoff = rail_off+contact.m1m2.width+self.via_shift("v1")
+        self.add_path("m1", [gate.get_pin(pin).lc(), (rail_off, gate.get_pin(pin).lc().y)])
+        xoff = rail_off+contact.m1m2.width+self.v1_via_shift
         yoff=  gate.get_pin(pin).by()
         self.add_via(self.m1_stack, (xoff,yoff), rotate=90)
 
@@ -662,21 +662,21 @@ class fsm(design.design):
         outpin=vector(out_gate.get_pin("Z").rx(), out_gate.get_pin("Z").lc().y)
         inpin=vector(in_gate.get_pin(in_pin).lx(), in_gate.get_pin(in_pin).lc().y)
         if (abs(outpin.y - inpin.y) > self.inv.height):
-            self.add_wire(self.m1_stack, [outpin, (inpin.x-self.m_pitch("m1"), outpin.y),
-                                         (inpin.x-self.m_pitch("m1"), inpin.y), inpin])
+            self.add_wire(self.m1_stack, [outpin, (inpin.x-self.m1_pitch, outpin.y),
+                                         (inpin.x-self.m1_pitch, inpin.y), inpin], widen_short_wires=False)
         else:
-            self.add_path("metal1", [outpin, (outpin.x+self.m_pitch("m1"), outpin.y),
-                                     (outpin.x+self.m_pitch("m1"), inpin.y), inpin])
+            self.add_path("m1", [outpin, (outpin.x+self.m1_pitch, outpin.y),
+                                     (outpin.x+self.m1_pitch, inpin.y), inpin])
 
     def s_connection(self, pin1, pin_name, pin2):
         """ Connect pin1 to pin2 with an S-shape wire"""
         
         pos1=pin1.get_pin(pin_name).lc()
         pos2=vector(pos1.x-self.m1_width, pos1.y)
-        pos3=vector(pos2.x, pin1.by()-self.m_pitch("m1"))
+        pos3=vector(pos2.x, pin1.by()-self.m1_pitch)
         pos5=vector(pin2.get_pin("Z").rx(), pin2.get_pin("Z").lc().y)
-        pos4=vector(pos5.x+self.m_pitch("m1"), pos3.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5])
+        pos4=vector(pos5.x+self.m1_pitch, pos3.y)
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5], widen_short_wires=False)
         
     def connect_stage0_gates_to_rails(self):
         """ Connect input pins of stage1 gates to middle rails. order of rails: 
@@ -752,10 +752,10 @@ class fsm(design.design):
             self.connect_pin_to_rail(gate, "gnd", self.rail[1][11])
         
         #connect input B of gate13 to s2 (self.rail[1][4])
-        pos1=vector(self.rail[1][4], self.gate12.uy()+self.m_pitch("m1"))
-        pos2=vector(self.gate12.rx()+self.m_pitch("m1"), pos1.y)
+        pos1=vector(self.rail[1][4], self.gate12.uy()+self.m1_pitch)
+        pos2=vector(self.gate12.rx()+self.m1_pitch, pos1.y)
         pos3=self.gate13.get_pin("B").lc()
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
         self.add_via(self.m1_stack, pos1)
 
     def connect_stage2_gates_to_rails(self):
@@ -782,10 +782,10 @@ class fsm(design.design):
             self.connect_pin_to_rail(gate, "gnd", self.rail[2][11])
         
         #connect input C of gate25 to s2 (self.rail[2][4])
-        pos1=vector(self.rail[2][4], self.gate22.by()-self.m_pitch("m1"))
-        pos2=vector(self.gate25.lx()-self.m_pitch("m1"), pos1.y)
+        pos1=vector(self.rail[2][4], self.gate22.by()-self.m1_pitch)
+        pos2=vector(self.gate25.lx()-self.m1_pitch, pos1.y)
         pos3=self.gate25.get_pin("C").lc()
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
         self.add_via(self.m1_stack, pos1)
 
     def connect_err_gates_to_rails(self):
@@ -811,10 +811,10 @@ class fsm(design.design):
             self.connect_pin_to_rail(gate, "gnd", self.rail[2][11])
 
         #connect input B of gate_err4 to comp_err_b (self.rail[2][7])
-        pos1=vector(self.rail[2][7], self.gate_err3.uy()+self.m_pitch("m1"))
-        pos2=vector(self.gate_err3.rx()+self.m_pitch("m1"), pos1.y)
+        pos1=vector(self.rail[2][7], self.gate_err3.uy()+self.m1_pitch)
+        pos2=vector(self.gate_err3.rx()+self.m1_pitch, pos1.y)
         pos3=self.gate_err4.get_pin("B").lc()
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
         self.add_via_center(self.m1_stack, pos1+vector(0.5*contact.m1m2.width, 0), rotate=90)
     
     def connect_finish_updown_data_gates_to_rails(self):
@@ -866,17 +866,17 @@ class fsm(design.design):
         
         pos1= self.gate_r6.get_pin("Z").lc()
         pos4= self.gate_r7.get_pin("A").lc()
-        pos2= vector(pos1.x+self.m_pitch("m1"), pos1.y)
+        pos2= vector(pos1.x+self.m1_pitch, pos1.y)
         pos3= vector(pos2.x, pos4.y)
         
-        self.add_path("metal1", [pos1, pos2, pos3, pos4])
+        self.add_path("m1", [pos1, pos2, pos3, pos4])
         
         pos1= self.gate_w4.get_pin("Z").lc()
         pos4= self.gate_w5.get_pin("A").lc()
-        pos2= vector(pos1.x+self.m_pitch("m1"), pos1.y)
+        pos2= vector(pos1.x+self.m1_pitch, pos1.y)
         pos3= vector(pos2.x, pos4.y)
         
-        self.add_path("metal1", [pos1, pos2, pos3, pos4])
+        self.add_path("m1", [pos1, pos2, pos3, pos4])
         
         
         self.s_connection(self.gate_r4, "A", self.gate_r3)
@@ -886,38 +886,38 @@ class fsm(design.design):
             self.connect_pin_to_rail(gate, "gnd", self.rail[4][11])
 
         #connect input B of gate_w2 to clk2
-        pos3=vector(-8*self.m_pitch("m1"), self.height1+3*self.m_pitch("m1"))
+        pos3=vector(-8*self.m1_pitch, self.height1+3*self.m1_pitch)
         pos6=self.gate_w2.get_pin("B").lc()
-        pos4=vector(pos6.x-3*self.m_pitch("m1"), pos3.y)
+        pos4=vector(pos6.x-3*self.m1_pitch, pos3.y)
         pos5=vector(pos4.x, pos6.y)
-        self.add_wire(self.m1_stack, [pos3, pos4, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos3, pos4, pos5, pos6], widen_short_wires=False)
         self.add_layout_pin(text="clk2",
                             offset=pos3-vector(0, 0.5*self.m1_width),
-                            layer="metal1",
+                            layer="m1",
                             width=self.m1_width,
                             height=self.m1_width)
 
         #connect input B of gate_r4 to clk3
         pos1=self.ff_inst[0].get_pin("clk").lc()
-        pos2=vector(pos1.x-self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.height1+2*self.m_pitch("m1"))
+        pos2=vector(pos1.x-self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x, self.height1+2*self.m1_pitch)
         pos6=self.gate_r4.get_pin("B").lc()
-        pos4=vector(pos6.x-4*self.m_pitch("m1"), pos3.y)
+        pos4=vector(pos6.x-4*self.m1_pitch, pos3.y)
         pos5=vector(pos4.x, pos6.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6], widen_short_wires=False)
 
         #connect input C of gate_w2 and gate_r4 to clk_d (delay_chain output)
         pos1=self.dc_inst.get_pin("out").lc()
-        pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.dc_inst.by()-self.m_pitch("m1"))
+        pos2=vector(pos1.x+self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x, self.dc_inst.by()-self.m1_pitch)
         pos6=self.gate_r4.get_pin("C").lc()
-        pos4=vector(pos6.x-5*self.m_pitch("m1"), pos3.y)
+        pos4=vector(pos6.x-5*self.m1_pitch, pos3.y)
         pos5=vector(pos4.x, pos6.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6], widen_short_wires=False)
 
         pos7=self.gate_w2.get_pin("C").lc()
         pos8=vector(pos4.x, pos7.y)
-        self.add_wire(self.m1_stack, [pos4, pos7, pos8])
+        self.add_wire(self.m1_stack, [pos4, pos7, pos8], widen_short_wires=False)
 
     def connect_ff_gates_inputs(self):
         """  Connect output of stage0, stage1 and stage2 to to 
@@ -927,34 +927,34 @@ class fsm(design.design):
         for i in range(3):
             pos1=vector(modules[i].get_pin("Z").rx(), modules[i].get_pin("Z").lc().y)
             pos2=vector(pos1.x+2*self.m1_width, pos1.y)
-            pos3=vector(pos2.x, -(i+1)*self.m_pitch("m1"))
+            pos3=vector(pos2.x, -(i+1)*self.m1_pitch)
             pos5=self.ff_inst[i].get_pin("in").lc()
-            pos4=vector(pos5.x-(i+5)*self.m_pitch("m1"), pos3.y)
+            pos4=vector(pos5.x-(i+5)*self.m1_pitch, pos3.y)
             
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5], widen_short_wires=False)
     
     def add_layout_pins(self):
         """ Adds all input, ouput and power pins"""
 
-        self.min_xoff= -10*self.m_pitch("m1")
-        self.max_xoff = max(self.gate_r7.rx(), self.gate_w5.rx()) + self.m_pitch("m1")
+        self.min_xoff= -10*self.m1_pitch
+        self.max_xoff = max(self.gate_r7.rx(), self.gate_w5.rx()) + self.m1_pitch
         
         #Add output pin "comp" and "lfsr"
         pin_names = ["comp" , "lfsr"]
         for i in range(2):
             pin =self.rst_nand[3+i].get_pin("B")
-            self.add_path("metal1", [(self.min_xoff, pin.lc().y), pin.lc()])
+            self.add_path("m1", [(self.min_xoff, pin.lc().y), pin.lc()])
             self.add_layout_pin(text=pin_names[i],
-                                layer="metal1",
+                                layer="m1",
                                 offset=(self.min_xoff, pin.by()),
                                 width=self.m1_width,
                                 height=self.m1_width)
 
         #Add input pin "reset"
         pin= self.reset_inv.get_pin("A")
-        self.add_path("metal1", [pin.lc(), (self.min_xoff, pin.lc().y) ])
+        self.add_path("m1", [pin.lc(), (self.min_xoff, pin.lc().y) ])
         self.add_layout_pin(text="reset",
-                            layer="metal1",
+                            layer="m1",
                             offset=(self.min_xoff, pin.by()),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -962,25 +962,25 @@ class fsm(design.design):
         #Connect clk pin of all FFs together and Add input pin "clk3"
         for i in range(3):
             pos1=self.ff_inst[i].get_pin("clk").lc()
-            pos2=vector(pos1.x-self.m_pitch("m1"), pos1.y)
+            pos2=vector(pos1.x-self.m1_pitch, pos1.y)
             pos3=vector(pos2.x, self.ff_inst[2].get_pin("clk").lc().y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
             self.add_via_center(self.m1_stack, pos3, rotate=90)
         
 
         #Add clk pin
         pos4=vector(self.min_xoff, self.dc_inst.get_pin("in").lc().y)
-        self.add_path("metal1", [pos4, self.dc_inst.get_pin("in").lc()])
+        self.add_path("m1", [pos4, self.dc_inst.get_pin("in").lc()])
         self.add_layout_pin(text="clk",
-                            layer="metal1",
+                            layer="m1",
                             offset=(pos4.x, pos4.y-0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
         
         pos4=vector(self.min_xoff, self.ff_inst[0].get_pin("clk").lc().y)
-        self.add_path("metal1", [pos4, self.ff_inst[0].get_pin("clk").lc()])
+        self.add_path("m1", [pos4, self.ff_inst[0].get_pin("clk").lc()])
         self.add_layout_pin(text="clk3",
-                            layer="metal1",
+                            layer="m1",
                             offset=(pos4.x, pos4.y-0.5*self.m1_width),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -990,11 +990,11 @@ class fsm(design.design):
         module=[self.gate_data2, self.gate_updown1, self.inv_finish_inst]
         for i in range(3):
             pos1=vector(module[i].get_pin("Z").rx(), module[i].get_pin("Z").lc().y)
-            pos2=vector(module[2].get_pin("Z").rx()+(i+1)*self.m_pitch("m1"), pos1.y)
-            pos3=vector(pos2.x, self.height1+5*self.m_pitch("m1"))
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+            pos2=vector(module[2].get_pin("Z").rx()+(i+1)*self.m1_pitch, pos1.y)
+            pos3=vector(pos2.x, self.height1+5*self.m1_pitch)
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
             self.add_layout_pin(text=pins[i],
-                                layer="metal2",
+                                layer="m2",
                                 offset=(pos3.x-0.5*self.m2_width, pos3.y-self.m2_width),
                                 width=self.m2_width,
                                 height=self.m2_width)
@@ -1002,10 +1002,10 @@ class fsm(design.design):
         #Add output pin "err"
         pos1=vector(self.gate_err5.get_pin("Z").rx(), self.gate_err5.get_pin("Z").lc().y)
         pos2=vector(pos1.x+self.m1_width, pos1.y)
-        pos3=vector(pos2.x, self.height1+5*self.m_pitch("m1"))
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+        pos3=vector(pos2.x, self.height1+5*self.m1_pitch)
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
         self.add_layout_pin(text="err",
-                            layer="metal2",
+                            layer="m2",
                             offset=(pos3.x-0.5*self.m2_width, pos3.y-self.m2_width),
                             width=self.m2_width,
                             height=self.m2_width)
@@ -1016,9 +1016,9 @@ class fsm(design.design):
         for (pin,mod) in zip(pin_list, module_list):
             pos1=mod.get_pin("Z").lc()
             pos2=vector(self.max_xoff, pos1.y)
-            self.add_path("metal1", [pos1, pos2])
+            self.add_path("m1", [pos1, pos2])
             self.add_layout_pin(text=pin,
-                                layer="metal1",
+                                layer="m1",
                                 offset=(self.max_xoff-self.m1_width, pos2.y-0.5*self.m1_width),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -1027,18 +1027,18 @@ class fsm(design.design):
         pin_off=[self.vdd_xoff, self.gnd_xoff]
         pin_names=["vdd", "gnd"]
         for i in range(2):
-            y_off=self.height1+(5-i)*self.m_pitch("m1")
-            self.add_path("metal1", [(pin_off[i],y_off), (self.rail[0][10+i], y_off)])
-            self.add_via(self.m1_stack, (pin_off[i], y_off-0.5*self.m1_width-self.via_shift("v1")))
-            self.add_via(self.m1_stack, (self.rail[0][10+i], y_off-0.5*self.m1_width-self.via_shift("v1")))
+            y_off=self.height1+(5-i)*self.m1_pitch
+            self.add_path("m1", [(pin_off[i],y_off), (self.rail[0][10+i], y_off)])
+            self.add_via(self.m1_stack, (pin_off[i], y_off-0.5*self.m1_width-self.v1_via_shift))
+            self.add_via(self.m1_stack, (self.rail[0][10+i], y_off-0.5*self.m1_width-self.v1_via_shift))
         
         for (off, name) in zip(pin_off, pin_names):
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=(off, self.dc_inst.by()), 
                           width=self.m2_width, 
-                          height=self.height1+self.dc_inst.height+10*self.m_pitch("m1"))
+                          height=self.height1+self.dc_inst.height+10*self.m1_pitch)
             self.add_layout_pin(text=name,
-                                layer="metal2",
-                                offset=(off, self.height1+5*self.m_pitch("m1")-self.m2_width),
+                                layer="m2",
+                                offset=(off, self.height1+5*self.m1_pitch-self.m2_width),
                                 width=self.m2_width,
                                 height=self.m2_width)

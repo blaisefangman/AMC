@@ -89,7 +89,7 @@ class ptx(design.design):
             
             
         # This is not actually instantiated but used for calculations
-        self.active_contact = contact(layer_stack=("active", "contact", "metal1"),
+        self.active_contact = contact(layer_stack=("active", "contact", "m1"),
                                       dimensions=(1, self.num_contacts))
 
         # The contacted poly pitch
@@ -265,25 +265,25 @@ class ptx(design.design):
         
         pin_width = self.active_contact.second_layer_width
         for pos in source_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
+            contact=self.add_contact_center(layers=("active", "contact", "m1"),
                                             offset=pos,
                                             size=(1, self.num_contacts),
                                             implant_type=implant_type,
                                             well_type=well_type)
             self.add_layout_pin_rect_center(text="S",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=pos,
                                             width=pin_width,
                                             height=pin_width)
                 
         for pos in drain_positions:
-            contact=self.add_contact_center(layers=("active", "contact", "metal1"),
+            contact=self.add_contact_center(layers=("active", "contact", "m1"),
                                             offset=pos,
                                             size=(1, self.num_contacts),
                                             implant_type=implant_type,
                                             well_type=well_type)
             self.add_layout_pin_rect_center(text="D",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=pos,
                                             width=pin_width,
                                             height=pin_width)
@@ -319,10 +319,10 @@ class ptx(design.design):
         # This is the distance that we must route up or down from the center
         # of the contacts to avoid DRC violations to the other contacts
         pin_offset = vector(0, 0.5*max(self.active_contact.height, self.active_contact.width) + \
-                               self.metal1_space + 0.5*self.metal1_width)
+                               self.m1_space + 0.5*self.m1_width)
         
         # This is the width of a m1 extend the ends of the pin
-        end_offset = vector(0.5*self.metal1_width,0)
+        end_offset = vector(0.5*self.m1_width,0)
 
         # drains always go to the MIDDLE of the cell, so top of NMOS, bottom of PMOS
         # so reverse the directions for NMOS compared to PMOS.
@@ -338,36 +338,36 @@ class ptx(design.design):
             self.remove_layout_pin("S") # remove the individual connections
             # Add each vertical segment
             for a in source_positions:
-                self.add_path(("metal1"), [a,a+pin_offset.scale(source_dir,source_dir)])
+                self.add_path(("m1"), [a,a+pin_offset.scale(source_dir,source_dir)])
             # Add a single horizontal pin
-            self.add_segment_center(layer="metal1",
+            self.add_segment_center(layer="m1",
                                     start=source_positions[0]+source_offset-end_offset,
                                     end=source_positions[-1]+source_offset+end_offset)
 
             source_pin_offset=source_positions[0]+source_offset
             self.add_layout_pin_rect_center(text="S",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=source_pin_offset,
-                                            width=self.metal1_width,
-                                            height=self.metal1_width)
+                                            width=self.m1_width,
+                                            height=self.m1_width)
 
         if len(drain_positions)>1:
             drain_offset = pin_offset.scale(drain_dir,drain_dir)
             self.remove_layout_pin("D") # remove the individual connections
             # Add each vertical segment
             for a in drain_positions:
-                self.add_path(("metal1"), [a,a+drain_offset])
+                self.add_path(("m1"), [a,a+drain_offset])
             # Add a single horizontal pin
-            self.add_segment_center(layer="metal1",
+            self.add_segment_center(layer="m1",
                                     start=drain_positions[0]+drain_offset-end_offset,
                                     end=drain_positions[-1]+drain_offset+end_offset)
             
             drain_pin_offset=drain_positions[0]+drain_offset
             self.add_layout_pin_rect_center(text="D",
-                                            layer="metal1",
+                                            layer="m1",
                                             offset=drain_pin_offset,
-                                            width=self.metal1_width,
-                                            height=self.metal1_width)
+                                            width=self.m1_width,
+                                            height=self.m1_width)
 
     def add_well_implant(self):
         """ Add an well and implant for the type of transistor. """
@@ -386,7 +386,7 @@ class ptx(design.design):
             
         if (self.mults>1 and self.connect_active):
             shift = 0.5*(self.active_contact.height-self.active_height)
-            m1_extend = shift+self.metal1_space+self.metal1_width-self.well_enclose_active
+            m1_extend = shift+self.m1_space+self.m1_width-self.well_enclose_active
             if m1_extend > 0: 
                 self.cell_well_height = self.cell_well_height + m1_extend 
                 

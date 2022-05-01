@@ -306,12 +306,12 @@ class contact(hierarchy_design.hierarchy_design):
 
 # This is not instantiated and used for calculations only.
 # These are static 1x1 contacts to reuse in all the design modules.
-well = contact(layer_stack=("active", "contact", "metal1"))
-active = contact(layer_stack=("active", "contact", "metal1"))
-poly = contact(layer_stack=("poly", "contact", "metal1"))
-m1m2 = contact(layer_stack=("metal1", "via1", "metal2"))
-m2m3 = contact(layer_stack=("metal2", "via2", "metal3"))
-m3m4 = contact(layer_stack=("metal3", "via3", "metal4"))
+well = contact(layer_stack=("active", "contact", "m1"))
+active = contact(layer_stack=("active", "contact", "m1"))
+poly = contact(layer_stack=("poly", "contact", "m1"))
+m1m2 = contact(layer_stack=("m1", "via1", "m2"))
+m2m3 = contact(layer_stack=("m2", "via2", "m3"))
+m3m4 = contact(layer_stack=("m3", "via3", "m4"))
 
 # Set up a static for each layer to be used for measurements
 for layer_stack in tech.layer_stacks:

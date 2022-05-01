@@ -51,7 +51,7 @@ class nor_tree(design.design):
         self.create_modules()
         self.determine_gates()
         self.add_layout_pins()
-        self.height= self.nor2.height + self.m_pitch("m1")
+        self.height= self.nor2.height + self.m1_pitch
         
     def add_pins(self):
         """ Adds pins for nor_tree module """
@@ -79,14 +79,14 @@ class nor_tree(design.design):
         self.inv_inst={}
         if (self.size == 3):
             self.add_nor2()
-            self.width= self.nor2.width + self.m_pitch("m1")+0.5*self.m2_width
+            self.width= self.nor2.width + self.m1_pitch+0.5*self.m2_width
         elif (self.size == 4):
             self.add_nor3()
-            self.width= self.nor3.width + 3*self.m_pitch("m1")+0.5*self.m2_width
+            self.width= self.nor3.width + 3*self.m1_pitch+0.5*self.m2_width
         elif (self.size > 4):
             self.add_nor_tree()
             self.width= (self.size-3)*(self.nor2.width+self.inv.width) + \
-                         self.nor2.width + self.m_pitch("m1")+0.5*self.m2_width
+                         self.nor2.width + self.m1_pitch+0.5*self.m2_width
         
         #This is a contact/via shift to avoid DRC violation
         self.via_co_shift= 0.5*abs(contact.poly.width-contact.m1m2.width)
@@ -133,14 +133,14 @@ class nor_tree(design.design):
         # Add first input pin
         module = self.nor_inst[0]
         A_off= module.get_pin("A")
-        mid_pos = vector(module.lx()-self.m_pitch("m1"), A_off.lc().y)
+        mid_pos = vector(module.lx()-self.m1_pitch, A_off.lc().y)
         pos2 = vector(module.lx(), A_off.lc().y)
-        self.add_path("metal2", [(mid_pos.x,-self.m_pitch("m1")), mid_pos, pos2])
-        self.add_via(self.m1_stack, (module.lx()+self.via_shift("v1"),A_off.by()), rotate=90) 
+        self.add_path("m2", [(mid_pos.x,-self.m1_pitch), mid_pos, pos2])
+        self.add_via(self.m1_stack, (module.lx()+self.v1_via_shift,A_off.by()), rotate=90) 
         
-        in0_off=(module.lx()-self.m_pitch("m1")-0.5*self.m2_width,-self.m_pitch("m1"))
+        in0_off=(module.lx()-self.m1_pitch-0.5*self.m2_width,-self.m1_pitch)
         self.add_layout_pin(text="in0",
-                            layer="metal2",
+                            layer="m2",
                             offset=in0_off,
                             width=self.m2_width,
                             height=self.m2_width)
@@ -150,14 +150,14 @@ class nor_tree(design.design):
             pins = ["B", "C"]
             for i in range(2):
                 nor_off= module.get_pin(pins[i])
-                mid_pos = vector(module.lx()-(i+2)*self.m_pitch("m1"), nor_off.lc().y)
+                mid_pos = vector(module.lx()-(i+2)*self.m1_pitch, nor_off.lc().y)
                 pos2 = vector(module.lx(), nor_off.lc().y)
-                self.add_path("metal2", [(mid_pos.x,-self.m_pitch("m1")), mid_pos, pos2])
-                self.add_via(self.m1_stack, (module.lx()+self.via_shift("v1"),nor_off.by()), rotate=90) 
+                self.add_path("m2", [(mid_pos.x,-self.m1_pitch), mid_pos, pos2])
+                self.add_via(self.m1_stack, (module.lx()+self.v1_via_shift,nor_off.by()), rotate=90) 
                 
-                in_off=(module.lx()-(i+2)*self.m_pitch("m1")-0.5*self.m2_width,-self.m_pitch("m1"))
+                in_off=(module.lx()-(i+2)*self.m1_pitch-0.5*self.m2_width,-self.m1_pitch)
                 self.add_layout_pin(text="in{0}".format(i+1),
-                                     layer="metal2",
+                                     layer="m2",
                                      offset=in_off,
                                      width=self.m2_width,
                                      height=self.m2_width)
@@ -166,13 +166,13 @@ class nor_tree(design.design):
             for i in range(self.size-2):
                 xoff = self.nor_inst[i].lx()
                 B_off= self.nor_inst[i].get_pin("B")
-                self.add_path("metal2", [(xoff,-self.m_pitch("m1")), 
+                self.add_path("m2", [(xoff,-self.m1_pitch), 
                                          (xoff, B_off.by()+contact.m1m2.width)])
                 self.add_via(self.m1_stack, (xoff+contact.m1m2.height, B_off.by()), rotate=90)
                 
-                in_off=(xoff-0.5*self.m2_width,-self.m_pitch("m1"))
+                in_off=(xoff-0.5*self.m2_width,-self.m1_pitch)
                 self.add_layout_pin(text="in{0}".format(i+1),
-                                    layer="metal2",
+                                    layer="m2",
                                     offset=in_off,
                                     width=self.m2_width,
                                     height=self.m2_width)
@@ -182,7 +182,7 @@ class nor_tree(design.design):
                 A_off= self.nor_inst[i+1].get_pin("A")
                 inv_Z_off= self.inv_inst[i].get_pin("Z")
                 height = abs(A_off.by()-inv_Z_off.by()) + self.m1_width
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset=(A_off.lx(), min(A_off.by(), inv_Z_off.by())),
                               width=self.m1_width,
                               height=height)
@@ -193,7 +193,7 @@ class nor_tree(design.design):
         else:
             nor_Z_off= self.nor_inst[self.size-3].get_pin("Z")
         self.add_layout_pin(text="out",
-                            layer="metal1",
+                            layer="m1",
                             offset=nor_Z_off.ll(),
                             width=self.m1_width,
                             height=self.m1_width)
@@ -202,12 +202,12 @@ class nor_tree(design.design):
         nor_vdd_off= module.get_pin("vdd").ll()
         nor_gnd_off= module.get_pin("gnd").ll()
         self.add_layout_pin(text="vdd",
-                            layer="metal1",
+                            layer="m1",
                             offset=nor_vdd_off,
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)
         self.add_layout_pin(text="gnd",
-                            layer="metal1",
+                            layer="m1",
                             offset=nor_gnd_off,
                             width=contact.m1m2.width,
                             height=contact.m1m2.width)

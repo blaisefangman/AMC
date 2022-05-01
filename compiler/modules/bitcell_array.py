@@ -246,14 +246,14 @@ class bitcell_array(design.design):
         if info["name"]=="scn3me_subm":
             self.y_shift =  round(0.5*min(self.cell.height, self.cell.width), 4)
         
-        h_power_rail_yoff = height+self.y_shift+4*self.metal3_width-0.5*contact.m2m3.width 
+        h_power_rail_yoff = height+self.y_shift+4*self.m3_width-0.5*contact.m2m3.width 
         pos1=(0, h_power_rail_yoff)
         pos2=(width, h_power_rail_yoff)
-        self.add_path("metal3", [pos1, pos2], width=contact.m2m3.width)
+        self.add_path("m3", [pos1, pos2], width=contact.m2m3.width)
         
-        off = (0, height+self.y_shift+4*self.metal3_width-contact.m2m3.width)
+        off = (0, height+self.y_shift+4*self.m3_width-contact.m2m3.width)
         self.add_layout_pin(text=v_pin, 
-                            layer="metal3", 
+                            layer="m3", 
                             offset=off, 
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -262,23 +262,23 @@ class bitcell_array(design.design):
         for col in range(self.column_size):
             for pin in self.cell_inst[0,col].get_pins(v_pin):
                 
-                xoff = pin.lx()+contact.m2m3.height-self.via_shift("v2")
-                yoff =  height+self.y_shift+4*self.metal3_width-contact.m2m3.width
-                self.add_via(self.metal2_stack, (xoff, yoff), rotate=90)
-                self.add_rect(layer="metal2",
+                xoff = pin.lx()+contact.m2m3.height-self.v2_via_shift
+                yoff =  height+self.y_shift+4*self.m3_width-contact.m2m3.width
+                self.add_via(self.m2_stack, (xoff, yoff), rotate=90)
+                self.add_rect(layer="m2",
                               offset=(pin.lx(),height),
                               width=contact.m1m2.width,
-                              height=self.y_shift+4*self.metal3_width)
+                              height=self.y_shift+4*self.m3_width)
 
             #extend the bitlines from bottom to the top edge
-            self.add_rect(layer="metal2",
+            self.add_rect(layer="m2",
                           offset=(self.cell_inst[0,col].get_pin("bl").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.metal3_width+contact.m2m3.width)
-            self.add_rect(layer="metal2",
+                          height=height+2*self.y_shift+4*self.m3_width+contact.m2m3.width)
+            self.add_rect(layer="m2",
                           offset=(self.cell_inst[0,col].get_pin("br").lx(),-self.y_shift),
                           width=bitline_width,
-                          height=height+2*self.y_shift+4*self.metal3_width+contact.m2m3.width)
+                          height=height+2*self.y_shift+4*self.m3_width+contact.m2m3.width)
 
         self.ybot_shift = self.y_shift
     
@@ -332,7 +332,7 @@ class bitcell_array(design.design):
                           width= extra_width,
                           height= well_height)
 
-            self.add_contact(("active", "contact", "metal1"), (contact_xoff, contact_yoff))
+            self.add_contact(("active", "contact", "m1"), (contact_xoff, contact_yoff))
             
             self.add_rect(layer= "active",
                           offset= (contact_xoff, contact_yoff),
@@ -352,27 +352,27 @@ class bitcell_array(design.design):
                           height= well_height)
 
             pin_off =(0,y_off+well_height-self.well_enclose_active-contact.active.height)
-            self.add_rect(layer= "metal1",
+            self.add_rect(layer= "m1",
                           offset= pin_off,
                           width= self.width,
                           height= contact.m1m2.width)
 
             self.add_layout_pin(text="vdd",
-                                layer= "metal1",
+                                layer= "m1",
                                 offset=pin_off,
-                                width= self.metal1_width,
-                                height= self.metal1_width)
+                                width= self.m1_width,
+                                height= self.m1_width)
 
-            self.add_rect(layer= "metal1",
+            self.add_rect(layer= "m1",
                           offset= (0, y_off+self.well_enclose_active),
                           width= self.width,
-                          height= self.metal1_width)
+                          height= self.m1_width)
 
             self.add_layout_pin(text="gnd",
-                                layer= "metal1",
+                                layer= "m1",
                                 offset=(0, y_off+self.well_enclose_active),
-                                width= self.metal1_width,
-                                height= self.metal1_width)
+                                width= self.m1_width,
+                                height= self.m1_width)
         
         self.y_shift = y_shift
         if info["foundry_cell"]:
@@ -388,11 +388,11 @@ class bitcell_array(design.design):
         height= self.row_size*self.cell.height+2*y_shift+well_height
         for col in range(self.column_size):
             #extend the bitlines from bottom to the top edge
-            self.add_rect(layer="metal2",
+            self.add_rect(layer="m2",
                           offset=(self.cell_inst[0,col].get_pin("bl").lx(),-y_shift),
                           width=contact.m1m2.width,
                           height=height)
-            self.add_rect(layer="metal2",
+            self.add_rect(layer="m2",
                           offset=(self.cell_inst[0,col].get_pin("br").lx(),-y_shift),
                           width=contact.m1m2.width,
                           height=height)
@@ -425,7 +425,7 @@ class bitcell_array(design.design):
                               width=self.xleft_shift,
                               height=pin.height())
                 self.add_layout_pin(text=power_pin[frame_pin.index(i)],
-                                layer= "metal1",
+                                layer= "m1",
                                 offset=(-self.xleft_shift, pin.by()),
                                 width= pin.width(),
                                 height= pin.height())

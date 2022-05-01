@@ -84,8 +84,8 @@ class sense_amp_array(design.design):
                                "d[{0}]".format(i//self.words_per_row),
                                "en", "vdd", "gnd"])
 
-            bl_offset = vector(self.sa_inst[i].get_pin("bl").lx() , self.height-self.metal2_width)
-            br_offset = vector(self.sa_inst[i].get_pin("br").lx() , self.height-self.metal2_width)
+            bl_offset = vector(self.sa_inst[i].get_pin("bl").lx() , self.height-self.m2_width)
+            br_offset = vector(self.sa_inst[i].get_pin("br").lx() , self.height-self.m2_width)
             dout_offset = self.sa_inst[i].get_pin("dout").ll()
             dout_bar_offset = self.sa_inst[i].get_pin("dout_bar").ll()
             d_offset = self.sa_inst[i].get_pin("dout1").ll()
@@ -94,64 +94,64 @@ class sense_amp_array(design.design):
             self.add_layout_pin(text="bl[{0}]".format(i), 
                                 layer=bl_pin.layer, 
                                 offset=bl_offset, 
-                                width=self.metal2_width, 
-                                height=self.metal2_width)
+                                width=self.m2_width, 
+                                height=self.m2_width)
             self.add_layout_pin(text="br[{0}]".format(i), 
                                 layer=br_pin.layer, 
                                 offset=br_offset, 
-                                width=self.metal2_width, 
-                                height=self.metal2_width)
+                                width=self.m2_width, 
+                                height=self.m2_width)
             self.add_layout_pin(text="data[{0}]".format(i//self.words_per_row), 
                                 layer=dout_pin.layer, 
                                 offset=dout_offset, 
                                 width=dout_pin.width(), 
-                                height=self.metal2_width)
+                                height=self.m2_width)
             self.add_layout_pin(text="data_bar[{0}]".format(i//self.words_per_row), 
                                 layer=dout_bar_pin.layer, 
                                 offset=dout_bar_offset, 
                                 width=dout_bar_pin.width(), 
-                                height=self.metal2_width)
+                                height=self.m2_width)
             self.add_layout_pin(text="d[{0}]".format(i//self.words_per_row), 
                                 layer=d_pin.layer, 
                                 offset=d_offset, 
                                 width=d_pin.width(), 
-                                height=self.metal2_width)
+                                height=self.m2_width)
 
     def connect_rails(self):
         """ Add vdd, gnd and en rails across entire array """
         
         #vdd
         vdd_pin = self.amp.get_pin("vdd")
-        self.add_rect(layer="metal1", 
+        self.add_rect(layer="m1", 
                       offset=vdd_pin.ll().scale(0,1), 
                       width=self.width, 
-                      height=self.metal1_width)
+                      height=self.m1_width)
         self.add_layout_pin(text="vdd", 
                             layer=vdd_pin.layer, 
                             offset=vdd_pin.ll().scale(0,1), 
-                            width=self.metal1_width, 
-                            height=self.metal1_width)
+                            width=self.m1_width, 
+                            height=self.m1_width)
 
         #gnd
         gnd_pin = self.amp.get_pin("gnd")
-        self.add_rect(layer="metal1", 
+        self.add_rect(layer="m1", 
                       offset=gnd_pin.ll().scale(0,1), 
                       width=self.width, 
-                      height=self.metal1_width)
+                      height=self.m1_width)
         self.add_layout_pin(text="gnd", 
                             layer=gnd_pin.layer, 
                             offset=gnd_pin.ll().scale(0,1), 
-                            width=self.metal1_width, 
-                            height=self.metal1_width)
+                            width=self.m1_width, 
+                            height=self.m1_width)
 
         #en
         sen_pin = self.amp.get_pin("en")
-        self.add_rect(layer="metal1", 
+        self.add_rect(layer="m1", 
                       offset=sen_pin.ll().scale(0,1), 
                       width=self.width, 
-                      height=self.metal1_width)
+                      height=self.m1_width)
         self.add_layout_pin(text="en", 
                             layer=sen_pin.layer, 
                             offset=sen_pin.ll().scale(0,1), 
-                            width=self.metal1_width, 
-                            height=self.metal1_width)
+                            width=self.m1_width, 
+                            height=self.m1_width)

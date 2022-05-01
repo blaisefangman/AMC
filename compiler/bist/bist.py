@@ -122,10 +122,10 @@ class bist(design.design):
         """ Setup layout offsets, spaces, etc """
 
         #This is a gap between neighbor cell to avoid well/implant DRC violation
-        self.gap= max(self.implant_space, self.well_space, self.m_pitch("m1"))
-        self.power_pitch = 8*self.m_pitch("m2")
-        self.power_height = 6*self.m_pitch("m2")
-        self.routing_gap = self.gap+7*self.m_pitch("m1")+2*self.power_pitch
+        self.gap= max(self.implant_space, self.well_space, self.m1_pitch)
+        self.power_pitch = 8*self.m2_pitch
+        self.power_height = 6*self.m2_pitch
+        self.routing_gap = self.gap+7*self.m1_pitch+2*self.power_pitch
 
     def add_modules(self):
         """ Adds all modules in the following order"""
@@ -164,10 +164,10 @@ class bist(design.design):
         """ Place lfsr """
         
         if self.async_bist:
-            x_off = self.osc.width-(self.xor2.width+self.inv.width+(self.addr_size+11)*self.m_pitch("m2")-\
+            x_off = self.osc.width-(self.xor2.width+self.inv.width+(self.addr_size+11)*self.m2_pitch-\
                    (self.lfsr.width-self.osc.width))
         else:
-            x_off = -(self.xor2.width+self.inv.width+(self.addr_size+11)*self.m_pitch("m2") -self.lfsr.width)
+            x_off = -(self.xor2.width+self.inv.width+(self.addr_size+11)*self.m2_pitch -self.lfsr.width)
 
         self.lfsr_inst=self.add_inst(name="lfsr", mod=self.lfsr,
                                      offset=(x_off,0), mirror="MY")
@@ -181,9 +181,9 @@ class bist(design.design):
         """ Place FSM """
 
         if self.async_bist:
-            xoff = max(self.osc_inst.rx(),self.lfsr_inst.rx())+self.gap+12*self.m_pitch("m1")
+            xoff = max(self.osc_inst.rx(),self.lfsr_inst.rx())+self.gap+12*self.m1_pitch
         else:
-            xoff = self.lfsr_inst.rx()+self.gap+10*self.m_pitch("m1")
+            xoff = self.lfsr_inst.rx()+self.gap+10*self.m1_pitch
         
         self.fsm_inst=self.add_inst(name="fsm", mod=self.fsm,
                                     offset=(xoff, self.lfsr_inst.uy()-self.fsm.height))
@@ -193,7 +193,7 @@ class bist(design.design):
     def add_data_pattern(self):
         """ Place data pattern generator """
         
-        off = self.fsm_inst.ul()+ vector(self.m_pitch("m1"), self.routing_gap)
+        off = self.fsm_inst.ul()+ vector(self.m1_pitch, self.routing_gap)
         self.data_pattern_inst=self.add_inst(name="data_pattern", mod=self.data_pattern,
                                              offset= off)
         temp=[]
@@ -205,7 +205,7 @@ class bist(design.design):
     def add_comparator(self):
         """ Place comparator """
         
-        off = self.data_pattern_inst.ur() +vector(0,(self.data_size+2)*self.m_pitch("m1"))
+        off = self.data_pattern_inst.ur() +vector(0,(self.data_size+2)*self.m1_pitch)
         self.comparator_inst=self.add_inst(name="comparator", mod=self.comparator,
                                            offset=off)
         temp=[]
@@ -223,77 +223,77 @@ class bist(design.design):
         
         for i in range(self.data_size):
             pos1 = self.data_pattern_inst.get_pin("out{0}".format(i)).uc()
-            pos2= vector(pos1.x, pos1.y+(i+1)*self.m_pitch("m1"))
+            pos2= vector(pos1.x, pos1.y+(i+1)*self.m1_pitch)
             pos4=self.comparator_inst.get_pin("din{0}".format(i)).uc()
             pos3=vector(pos4.x, pos2.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
 
     def connect_comp_err_to_fsm(self):
         """ connect output 'err' from comparator to input 'comp_err' of FSM"""
         
         pos1 = self.comparator_inst.get_pin("error").lc()
-        pos2= vector(self.comparator_inst.rx() + 2*self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.data_pattern_inst.by() - self.m_pitch("m1"))
+        pos2= vector(self.comparator_inst.rx() + 2*self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x, self.data_pattern_inst.by() - self.m1_pitch)
         pos6= self.fsm_inst.get_pin("comp").lc()
-        pos4 = vector(pos6.x-self.m_pitch("m1"), pos3.y)
+        pos4 = vector(pos6.x-self.m1_pitch, pos3.y)
         pos5= vector(pos4.x, pos6.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6], widen_short_wires=False)
 
 
     def connect_data_enable_to_data_pattern(self):
         """ connect output 'data0' and 'data1' from FSM to input of data pattern generator"""
         
         pos1 = self.fsm_inst.get_pin("data_enable").uc()
-        pos2= vector(pos1.x, self.fsm_inst.uy()+4*self.m_pitch("m1"))
+        pos2= vector(pos1.x, self.fsm_inst.uy()+4*self.m1_pitch)
         pos5= self.data_pattern_inst.get_pin("enable").lc()
-        pos3=vector(pos5.x-4*self.m_pitch("m1")-self.m2_space,pos2.y)
+        pos3=vector(pos5.x-4*self.m1_pitch-self.m2_space,pos2.y)
         pos4=vector(pos3.x, pos5.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4,  pos5])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4,  pos5], widen_short_wires=False)
 
 
     def connect_lfsr_done_to_fsm_and_comparator(self):
         """ connect output 'lfsr_done' from lfsr to input 'lfsr' of fsm"""
         
         pos1 = self.lfsr_inst.get_pin("done").lc()
-        pos2= vector(pos1.x - self.m_pitch("m1"), pos1.y)
+        pos2= vector(pos1.x - self.m1_pitch, pos1.y)
         pos6= self.fsm_inst.get_pin("lfsr").lc()
-        pos3=vector(pos2.x, min(self.fsm_inst.by(), self.lfsr_inst.by()-self.m_pitch("m1")))
-        pos4=vector(pos6.x-2*self.m_pitch("m1"),pos3.y)
+        pos3=vector(pos2.x, min(self.fsm_inst.by(), self.lfsr_inst.by()-self.m1_pitch))
+        pos4=vector(pos6.x-2*self.m1_pitch,pos3.y)
         pos5=vector(pos4.x, pos6.y)
         pos8=self.comparator_inst.get_pin("lfsr_done").lc()
         pos7 = vector(pos5.x, pos8.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4,  pos5, pos6])
-        self.add_wire(self.m1_stack, [pos5, pos7, pos8])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4,  pos5, pos6], widen_short_wires=False)
+        self.add_wire(self.m1_stack, [pos5, pos7, pos8], widen_short_wires=False)
 
 
     def connect_up_down_to_lfsr(self):
         """ connect output 'up_down' from fsm to input 'up_down' of lfsr"""
         
         pos1 = self.fsm_inst.get_pin("up_down").uc()
-        pos2= vector(pos1.x, self.fsm_inst.uy()+3*self.m_pitch("m1"))
+        pos2= vector(pos1.x, self.fsm_inst.uy()+3*self.m1_pitch)
         pos4= self.lfsr_inst.get_pin("up_down").uc()
         pos3=vector(pos4.x, pos2.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
 
     def connect_reset_test(self):
         """ Add input reset pin and connect it to reset input of all modules"""
         
         self.ctrl_xoff={}
         pin_list = ["reset", "test"]
-        pin_yoff = min(self.lfsr_inst.by(),self.fsm_inst.by()) - 2*self.m_pitch("m1")
+        pin_yoff = min(self.lfsr_inst.by(),self.fsm_inst.by()) - 2*self.m1_pitch
         
         for i in range(2):
             if self.async_bist:
                 self.ctrl_xoff[i]=pin_xoff = max(self.lfsr_inst.rx(),self.osc_inst.rx())+\
-                                             (i+1)*self.m_pitch("m1")
+                                             (i+1)*self.m1_pitch
                 height=max(self.comparator_inst.uy(), self.osc_inst.uy())
             else:
-                self.ctrl_xoff[i]=pin_xoff = self.lfsr_inst.rx() + (i+1)*self.m_pitch("m1")
+                self.ctrl_xoff[i]=pin_xoff = self.lfsr_inst.rx() + (i+1)*self.m1_pitch
                 height=self.comparator_inst.uy()
 
-            self.add_path("metal2", [(pin_xoff, pin_yoff), (pin_xoff,height)])
+            self.add_path("m2", [(pin_xoff, pin_yoff), (pin_xoff,height)])
             self.add_layout_pin(text=pin_list[i],
-                                layer="metal2",
+                                layer="m2",
                                 offset=(pin_xoff-0.5*self.m2_width, pin_yoff),
                                 width=self.m2_width,
                                 height = height-pin_yoff)
@@ -302,39 +302,39 @@ class bist(design.design):
         pos2= self.fsm_inst.get_pin("reset").lc()
         mid_pos=vector(self.ctrl_xoff[0], pos1.y)
         
-        if abs(pos1.y-pos2.y) < self.m_pitch("m1"):
-            self.add_path("metal1", [pos1, mid_pos, pos2], width=contact.m1m2.width)
+        if abs(pos1.y-pos2.y) < self.m1_pitch:
+            self.add_path("m1", [pos1, mid_pos, pos2], width=contact.m1m2.width)
             self.add_via_center(self.m1_stack, mid_pos)
         else:
-            self.add_wire(self.m1_stack, [pos1, mid_pos, pos2])
+            self.add_wire(self.m1_stack, [pos1, mid_pos, pos2], widen_short_wires=False)
         
         if self.async_bist:
             
             #connect rest of osc to rest of comparator
             pos1= self.osc_inst.get_pin("reset").lc()
             pos2=vector(self.ctrl_xoff[0], pos1.y)
-            pos3=vector(pos2.x, pos2.y-self.m_pitch("m1"))
-            pos4=vector(self.ctrl_xoff[1]+7*self.m_pitch("m1"), pos3.y)
+            pos3=vector(pos2.x, pos2.y-self.m1_pitch)
+            pos4=vector(self.ctrl_xoff[1]+7*self.m1_pitch, pos3.y)
             pos6=self.comparator_inst.get_pin("reset").lc()
             pos5=vector(pos4.x, pos6.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6], widen_short_wires=False)
             
             #connect finish of fsm to finish of osc
             pos1 = self.fsm_inst.get_pin("fin").uc()
-            pos2= vector(pos1.x, self.fsm_inst.uy()+5*self.m_pitch("m1"))
+            pos2= vector(pos1.x, self.fsm_inst.uy()+5*self.m1_pitch)
             pos5= self.osc_inst.get_pin("finish").lc()
-            pos3=vector(self.ctrl_xoff[1]+2*self.m_pitch("m1"), pos2.y)
+            pos3=vector(self.ctrl_xoff[1]+2*self.m1_pitch, pos2.y)
             pos4=vector(pos3.x, pos5.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5], widen_short_wires=False)
 
         else:
             pos1=self.osc_inst.get_pin("reset").lc()
-            self.add_path("metal1", [pos1, (self.ctrl_xoff[0], pos1.y)])
+            self.add_path("m1", [pos1, (self.ctrl_xoff[0], pos1.y)])
             self.add_via_center(self.m1_stack,(self.ctrl_xoff[0], pos1.y))
 
 
             pos1=self.comparator_inst.get_pin("reset").lc()
-            self.add_path("metal1", [pos1, (self.ctrl_xoff[0], pos1.y)])
+            self.add_path("m1", [pos1, (self.ctrl_xoff[0], pos1.y)])
             self.add_via_center(self.m1_stack,(self.ctrl_xoff[0], pos1.y))
         
         modules2=[self.lfsr_inst]
@@ -343,40 +343,40 @@ class bist(design.design):
         for mod in modules2:
             pos1=mod.get_pin("test").lc()
             pos2=vector(self.ctrl_xoff[1], pos1.y)
-            self.add_path("metal1", [pos1, pos2])
+            self.add_path("m1", [pos1, pos2])
             self.add_via_center(self.m1_stack, pos2)
 
     def connect_clk(self):
         """ Connect clk to 'clk' input of all modules"""
 
-        pin_yoff = min(self.lfsr_inst.by(), self.fsm_inst.by()) - 2*self.m_pitch("m1")
-        clk_xoff = self.ctrl_xoff[1]+self.m_pitch("m1")
+        pin_yoff = min(self.lfsr_inst.by(), self.fsm_inst.by()) - 2*self.m1_pitch
+        clk_xoff = self.ctrl_xoff[1]+self.m1_pitch
         if self.async_bist:
             height= max(self.comparator_inst.uy(), self.osc_inst.uy())
         else:
             height= self.comparator_inst.uy()
-        self.add_path("metal2", [(clk_xoff, pin_yoff), (clk_xoff, height)])
+        self.add_path("m2", [(clk_xoff, pin_yoff), (clk_xoff, height)])
         
         modules=[self.fsm_inst, self.osc_inst]
         for mod in modules:
             pos1=mod.get_pin("clk").lc()
             pos2=vector(clk_xoff, pos1.y)
-            self.add_path("metal1", [pos1, pos2])
+            self.add_path("m1", [pos1, pos2])
             self.add_via_center(self.m1_stack, pos2)
 
         if not self.async_bist:
             # Add an external clk pin
-            external_clk_xoff = clk_xoff+self.m_pitch("m1")
-            self.add_path("metal2", [(external_clk_xoff, pin_yoff), (external_clk_xoff, height)])
+            external_clk_xoff = clk_xoff+self.m1_pitch
+            self.add_path("m2", [(external_clk_xoff, pin_yoff), (external_clk_xoff, height)])
             
             pos1=self.osc_inst.get_pin("in").uc()
-            pos2=vector(pos1.x, pos1.y-3*self.m_pitch("m1"))
+            pos2=vector(pos1.x, pos1.y-3*self.m1_pitch)
             pos3=vector(external_clk_xoff, pos2.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
             self.add_via_center(self.m1_stack, pos3)
             
             self.add_layout_pin(text="external_clk",
-                                layer="metal2",
+                                layer="m2",
                                 offset=(external_clk_xoff-0.5*self.m2_width, pin_yoff),
                                 width=self.m2_width,
                                 height = self.m2_width)
@@ -385,23 +385,23 @@ class bist(design.design):
         #connect clk3 and clk2 to from oscillator to fsm
         pins=["clk2", "clk3"] 
         for i in range(2):
-            xoff = clk_xoff + (i+2) * self.m_pitch("m1")
+            xoff = clk_xoff + (i+2) * self.m1_pitch
             pos1=self.fsm_inst.get_pin(pins[i]).lc()
             pos4=self.osc_inst.get_pin(pins[i]).lc()
             pos2=(xoff, pos1.y)
             pos3=(xoff, pos4.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
         
         #connect clk1 to from oscillator to lfsr and comparator
-        xoff = clk_xoff + 4 * self.m_pitch("m1")
+        xoff = clk_xoff + 4 * self.m1_pitch
         pos1=self.osc_inst.get_pin("clk1").lc()
         pos4=self.lfsr_inst.get_pin("clk").lc()
         pos6=self.comparator_inst.get_pin("clk").lc()
         pos2=(xoff, pos1.y)
         pos3=(xoff, pos4.y)
         pos5=(xoff, pos6.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
-        self.add_wire(self.m1_stack, [pos1, pos2, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
+        self.add_wire(self.m1_stack, [pos1, pos2, pos5, pos6], widen_short_wires=False)
         
 
     def connect_vdd_gnd(self):
@@ -409,75 +409,75 @@ class bist(design.design):
 
         self.pow_yoff={}
         pin_list = ["vdd", "gnd"]
-        self.max_xoff = max(self.comparator_inst.rx(),self.fsm_inst.rx()) + 6*self.m_pitch("m1")
+        self.max_xoff = max(self.comparator_inst.rx(),self.fsm_inst.rx()) + 6*self.m1_pitch
 
         if self.async_bist:
-            space = max(3*(self.addr_size+1)*self.m_pitch("m1"), (self.lfsr_inst.get_pin("addr{}".format(self.addr_size-1)).lx()-self.lfsr_inst.lx()))
+            space = max(3*(self.addr_size+1)*self.m1_pitch, (self.lfsr_inst.get_pin("addr{}".format(self.addr_size-1)).lx()-self.lfsr_inst.lx()))
             if self.osc_inst.lx() < self.lfsr_inst.lx():
-                self.min_xoff = self.osc_inst.lx() - 3*(self.addr_size+1)*self.m_pitch("m1")- 2*self.m_pitch("m1")
+                self.min_xoff = self.osc_inst.lx() - 3*(self.addr_size+1)*self.m1_pitch- 2*self.m1_pitch
             else:
-                self.min_xoff = self.lfsr_inst.lx() - space - 2*self.m_pitch("m1")
+                self.min_xoff = self.lfsr_inst.lx() - space - 2*self.m1_pitch
 
         else:
-            self.min_xoff = self.lfsr_inst.lx() - 2*self.m_pitch("m1")
+            self.min_xoff = self.lfsr_inst.lx() - 2*self.m1_pitch
         
         for i in range(2):
-            self.pow_yoff[i] = pin_yoff = self.fsm_inst.uy() + 6*self.m_pitch("m1") +self.power_pitch*i
-            self.add_path("metal3", [(self.min_xoff, pin_yoff), (self.max_xoff, pin_yoff)], width=self.power_height)
+            self.pow_yoff[i] = pin_yoff = self.fsm_inst.uy() + 6*self.m1_pitch +self.power_pitch*i
+            self.add_path("m3", [(self.min_xoff, pin_yoff), (self.max_xoff, pin_yoff)], width=self.power_height)
             self.add_layout_pin(text=pin_list[i],
-                                layer="metal3",
+                                layer="m3",
                                 offset=(self.min_xoff, pin_yoff-0.5*self.power_height),
                                 width=self.max_xoff-self.min_xoff,
                                 height = self.power_height)
         
-        num_via = int(self.power_height/self.m_pitch("m2"))
+        num_via = int(self.power_height/self.m2_pitch)
         modules=[self.lfsr_inst, self.comparator_inst, self.fsm_inst, self.data_pattern_inst, self.osc_inst]
         for mod in modules:
             for i in range(2):
                 pos1=mod.get_pin(pin_list[i]).uc()
                 pos2=vector(pos1.x, self.pow_yoff[i])
-                self.add_path("metal2", [pos1, pos2])
+                self.add_path("m2", [pos1, pos2])
                 self.add_via_center(self.m2_stack, pos2, size=[1,num_via])
 
     def add_layout_pins(self):
         """ Add input, output and power pins """
         
         if self.async_bist:
-            self.max_yoff = max(self.comparator_inst.uy()+4*self.m_pitch("m2"), self.osc_inst.uy())
+            self.max_yoff = max(self.comparator_inst.uy()+4*self.m2_pitch, self.osc_inst.uy())
         else:
-            self.max_yoff = self.comparator_inst.uy()+4*self.m_pitch("m2")
+            self.max_yoff = self.comparator_inst.uy()+4*self.m2_pitch
             
         self.min_yoff = min (self.lfsr_inst.by(), self.fsm_inst.by())
         
         for i in range(self.data_size):
             pos = self.data_pattern_inst.get_pin("out{0}".format(i)).uc()
-            self.add_path("metal2", [pos, (pos.x, self.max_yoff)])
+            self.add_path("m2", [pos, (pos.x, self.max_yoff)])
             self.add_layout_pin(text="data_in[{0}]".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=(pos.x-0.5*self.m2_width, pos.y),
                                 width=self.m2_width,
                                 height = self.max_yoff-pos.y)
         for i in range(self.data_size):
             pos = self.comparator_inst.get_pin("dout{0}".format(i)).uc()-vector(0, self.m2_width)
-            self.add_path("metal2", [pos, (pos.x, self.max_yoff)])
+            self.add_path("m2", [pos, (pos.x, self.max_yoff)])
             self.add_via_center(self.m2_stack, pos)
             self.add_layout_pin(text="data_out[{0}]".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=(pos.x-0.5*self.m2_width, pos.y),
                                 width=self.m2_width,
                                 height = self.max_yoff-pos.y)
 
-        pitch = 3*self.m_pitch("m1")
+        pitch = 3*self.m1_pitch
         for i in range(self.addr_size):
             pos = self.lfsr_inst.get_pin("addr{0}".format(self.addr_size-1-i))
-            pos2 = vector(pos.uc().x, self.lfsr_inst.uy()+i*self.m_pitch("m1"))
-            if self.osc_inst.lx()-self.m_pitch("m1") <= self.lfsr_inst.get_pin("addr0").lx():
+            pos2 = vector(pos.uc().x, self.lfsr_inst.uy()+i*self.m1_pitch)
+            if self.osc_inst.lx()-self.m1_pitch <= self.lfsr_inst.get_pin("addr0").lx():
                 xpos = self.osc_inst.lx()-(self.addr_size+1-i)*pitch
             else: 
                 xpos = pos2.x-(self.addr_size+1-i)*pitch
             pos3 = vector(xpos, pos2.y)
             pos4 = vector(pos3.x, self.max_yoff)
-            self.add_wire(self.m1_stack, [pos.uc(), pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos.uc(), pos2, pos3, pos4], widen_short_wires=False)
             self.add_layout_pin(text="addr[{0}]".format(self.addr_size-1-i),
                                 layer=pos.layer,
                                 offset=(pos4.x-0.5*self.m2_width, pos2.y),
@@ -488,11 +488,11 @@ class bist(design.design):
         xoff = max(self.comparator_inst.rx(), self.fsm_inst.rx())
         for i in range(len(pin_list)):
             pos1 = self.fsm_inst.get_pin(pin_list[i]).lc()
-            pos2 = vector(xoff+(i+3)*self.m_pitch("m1"), pos1.y)
+            pos2 = vector(xoff+(i+3)*self.m1_pitch, pos1.y)
             pos3 = vector(pos2.x, self.max_yoff)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
             self.add_layout_pin(text=pin_list[i],
-                                layer="metal2",
+                                layer="m2",
                                 offset=(pos2.x-0.5*self.m2_width, pos3.y-self.m2_width),
                                 width=self.m2_width,
                                 height = self.m2_width)
@@ -500,19 +500,19 @@ class bist(design.design):
 
         #connect comparator input "R" to R pin
         pos1=self.comparator_inst.get_pin("r").lc()
-        pos2=(xoff+3*self.m_pitch("m1"), pos1.y)
-        self.add_path("metal1", [pos1, pos2])
+        pos2=(xoff+3*self.m1_pitch, pos1.y)
+        self.add_path("m1", [pos1, pos2])
         self.add_via_center(self.m1_stack, pos2)
         
         out_pin_list=["err", "fin"]
         out_pin_name=["error", "finish"]
         for i in range(2):
             pos1 = self.fsm_inst.get_pin(out_pin_list[i]).uc()
-            pos2 = vector(pos1.x, self.fsm_inst.uy()+(i+7)*self.m_pitch("m1"))
+            pos2 = vector(pos1.x, self.fsm_inst.uy()+(i+7)*self.m1_pitch)
             pos3 = vector(self.max_xoff, pos2.y)
-            self.add_wire(self.m1_stack, [pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
             self.add_layout_pin(text=out_pin_name[i],
-                                layer="metal1",
+                                layer="m1",
                                 offset=(pos3.x-self.m1_width, pos3.y-0.5*self.m1_width),
                                 width=self.m1_width,
                                 height = self.m1_width)

@@ -53,9 +53,9 @@ class data_pattern(design.design):
         self.add_layout_pins()
         
         self.width= self.nmos_inst[self.size-1].rx()-self.nmos_inst[0].lx()+\
-                    self.shift+self.pin_off+self.m_pitch("m1")
+                    self.shift+self.pin_off+self.m1_pitch
         
-        self.height= self.nmos.width+self.pmos.width+self.m_pitch("m1")
+        self.height= self.nmos.width+self.pmos.width+self.m1_pitch
         if info["tx_dummy_poly"]:
             self.height= self.height+self.poly_space
             
@@ -77,7 +77,7 @@ class data_pattern(design.design):
         self.add_mod(self.pmos)
         
         #This is a offset in x-direction for input pins
-        self.pin_off = 3*self.m_pitch("m1")
+        self.pin_off = 3*self.m1_pitch
         self.shift = max(self.nmos.height, self.pmos.height)
 
         self.space = 0
@@ -130,16 +130,16 @@ class data_pattern(design.design):
         xoff=self.well_enclose_active+contact.well.height
         yoff=self.well_enclose_active
         self.nwell_co_off=self.nmos_inst[self.size-1].lr()+vector(xoff,yoff)
-        self.add_contact(("active", "contact", "metal1"), self.nwell_co_off, rotate=90)
+        self.add_contact(("active", "contact", "m1"), self.nwell_co_off, rotate=90)
         self.add_rect(layer="active",
                       offset=(self.nwell_co_off.x-contact.well.height,self.nwell_co_off.y ),
-                      width=ceil(self.active_minarea/contact.well.width),
+                      width=ceil(self.minarea_active/contact.well.width),
                       height=contact.well.width)
         #pwell contact
         if info["has_nwell"]:
             self.add_rect(layer="nwell",
-                          offset=self.pmos_inst[0].ll()-vector(2*self.m_pitch("m1"), 0.5*self.space),
-                          width=self.shift*(self.size+1)+2*self.m_pitch("m1"),
+                          offset=self.pmos_inst[0].ll()-vector(2*self.m1_pitch, 0.5*self.space),
+                          width=self.shift*(self.size+1)+2*self.m1_pitch,
                           height=self.pmos.width+self.space)
         if info["has_nimplant"]:
              self.add_rect(layer="nimplant",
@@ -151,16 +151,16 @@ class data_pattern(design.design):
         yoff = self.well_enclose_active+contact.well.width
         self.pwell_co_off=self.pmos_inst[self.size-1].ur()+vector(xoff, -yoff)
                           
-        self.add_contact(("active", "contact", "metal1"), self.pwell_co_off, rotate=90)
+        self.add_contact(("active", "contact", "m1"), self.pwell_co_off, rotate=90)
         self.add_rect(layer="active",
                       offset=(self.pwell_co_off.x-contact.well.height,self.pwell_co_off.y),
-                      width=ceil(self.active_minarea/contact.well.width),
+                      width=ceil(self.minarea_active/contact.well.width),
                       height=contact.well.width)
 
-        extra_height = contact.well.width+2*self.extra_enclose
-        extra_width = max(ceil(self.active_minarea/contact.well.width)+2*self.extra_enclose, 
-                          ceil(self.extra_minarea/extra_height))
-        shift=vector(contact.well.height+self.extra_enclose,self.extra_enclose)
+        extra_height = contact.well.width+2*self.extra_layer_enclose
+        extra_width = max(ceil(self.minarea_active/contact.well.width)+2*self.extra_layer_enclose, 
+                          ceil(self.minarea_extra_layer/extra_height))
+        shift=vector(contact.well.height+self.extra_layer_enclose,self.extra_layer_enclose)
         for off in [self.nwell_co_off-shift, self.pwell_co_off-shift]:
             self.add_rect(layer="extra_layer",
                           offset=off,
@@ -193,23 +193,23 @@ class data_pattern(design.design):
                           height=self.pmos.width)
 
         #connect all NMOS sources to gnd pin
-        pos1=self.nmos_inst[0].get_pin("S").lc()-vector(self.pin_off-self.m_pitch("m1"),0)
+        pos1=self.nmos_inst[0].get_pin("S").lc()-vector(self.pin_off-self.m1_pitch,0)
         pos2=(self.nwell_co_off.x, self.nmos_inst[self.size-1].get_pin("S").lc().y)
-        self.add_path("metal1",[pos1,pos2])
+        self.add_path("m1",[pos1,pos2])
         
         #connect all PMOS drains to vdd pin
-        pos1=self.pmos_inst[0].get_pin("D").lc()-vector(self.pin_off-self.m_pitch("m1"),0)
+        pos1=self.pmos_inst[0].get_pin("D").lc()-vector(self.pin_off-self.m1_pitch,0)
         pos2=(self.nwell_co_off.x, self.pmos_inst[self.size-1].get_pin("D").lc().y)
-        self.add_path("metal1",[pos1,pos2])
+        self.add_path("m1",[pos1,pos2])
 
         #connect all NMOS drains to PMOS sources
         for i in range(self.size):
             pos1=self.pmos_inst[i].get_pin("S").uc()
             pos2=self.nmos_inst[i].get_pin("D").uc()
-            self.add_path("metal1",[pos1,pos2], width=contact.m1m2.width)
+            self.add_path("m1",[pos1,pos2], width=contact.m1m2.width)
             via_off = vector(pos1.x, self.pmos_inst[0].by())
             self.add_via_center(self.m1_stack, via_off)
-            self.add_path("metal2",[via_off, (via_off.x, self.pmos_inst[0].uy()+self.m_pitch("m1"))])
+            self.add_path("m2",[via_off, (via_off.x, self.pmos_inst[0].uy()+self.m1_pitch)])
 
         #connect all dummy polies to avoid min-space poly DRC
         if info["tx_dummy_poly"]:
@@ -236,51 +236,51 @@ class data_pattern(design.design):
         #output pins
         for i in range(self.size):
             pin_off=(self.pmos_inst[i].get_pin("S").uc().x-0.5*self.m2_width, 
-                     self.pmos_inst[0].uy()+self.m_pitch("m1")-self.m2_width)
+                     self.pmos_inst[0].uy()+self.m1_pitch-self.m2_width)
             self.add_layout_pin(text="out{0}".format(i),
-                                layer="metal2",
+                                layer="m2",
                                 offset=pin_off,
                                 width=self.m2_width,
                                 height=self.m2_width)
 
         #power pins
-        vdd_off=self.pmos_inst[0].get_pin("D").lc()-vector(self.pin_off-2*self.m_pitch("m1"),0)
-        gnd_off=self.nmos_inst[0].get_pin("S").lc()-vector(self.pin_off-self.m_pitch("m1"),0)
+        vdd_off=self.pmos_inst[0].get_pin("D").lc()-vector(self.pin_off-2*self.m1_pitch,0)
+        gnd_off=self.nmos_inst[0].get_pin("S").lc()-vector(self.pin_off-self.m1_pitch,0)
         height =self.nmos.width+self.pmos.width
-        self.add_path("metal2", [(vdd_off.x, 0),(vdd_off.x, height)])
-        self.add_path("metal2", [(gnd_off.x, 0),(gnd_off.x, height)])
+        self.add_path("m2", [(vdd_off.x, 0),(vdd_off.x, height)])
+        self.add_path("m2", [(gnd_off.x, 0),(gnd_off.x, height)])
         self.add_via_center(self.m1_stack, vdd_off, rotate=90)
         self.add_via_center(self.m1_stack, gnd_off, rotate=90)
         
         self.add_layout_pin(text="vdd",
-                            layer="metal2",
+                            layer="m2",
                             offset=(vdd_off.x-0.5*self.m2_width, 0),
                             width=self.m2_width,
                             height=self.m2_width)
         self.add_layout_pin(text="gnd",
-                            layer="metal2",
+                            layer="m2",
                             offset=(gnd_off.x-0.5*self.m2_width, 0),
                             width=self.m2_width,
                             height=self.m2_width)
 
         #input pins
-        xshift=self.pin_off-contact.poly.height+self.via_shift("co")
+        xshift=self.pin_off-contact.poly.height+self.co_via_shift
         data1_off=self.pmos_inst[0].get_pin("G").lc()- vector(xshift, 0.5*self.poly_width+contact.poly.width)
         data0_off=self.nmos_inst[0].get_pin("G").lc()-vector(xshift,-0.5*self.poly_width)
         self.add_contact(self.poly_stack, data1_off, rotate=90)
         self.add_contact(self.poly_stack, data0_off, rotate=90)
         
-        pos1=(data1_off.x-2*self.m_pitch("m1"), data1_off.y)
+        pos1=(data1_off.x-2*self.m1_pitch, data1_off.y)
         pos2=(data1_off.x, data1_off.y)
-        self.add_path("metal1", [pos1, pos2])
+        self.add_path("m1", [pos1, pos2])
 
         pos1=self.pmos_inst[0].get_pin("G").lc()- vector(xshift+0.5*contact.poly.height, contact.poly.width)
         pos2=self.nmos_inst[0].get_pin("G").lc()- vector(xshift+0.5*contact.poly.height, -contact.poly.width)
-        self.add_path("metal1", [pos1, pos2])
+        self.add_path("m1", [pos1, pos2])
         
         
         self.add_layout_pin(text="enable",
-                            layer="metal1",
-                            offset=(data1_off.x-2*self.m_pitch("m1"),data1_off.y-0.5*self.m1_width ),
+                            layer="m1",
+                            offset=(data1_off.x-2*self.m1_pitch,data1_off.y-0.5*self.m1_width ),
                             width=self.m1_width,
                             height=self.m1_width)

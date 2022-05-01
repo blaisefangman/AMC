@@ -176,7 +176,7 @@ class hierarchical_decoder(design.design):
         else:
             self.row_decoder_width = self.dec5_4.width 
 
-        self.routing_width = self.metal1_pitch*self.num_of_predecoder_out
+        self.routing_width = self.m1_pitch*self.num_of_predecoder_out
         
         # Calculates height and width of hierarchical decoder 
         if self.no_of_pre2x4>0 and self.no_of_pre3x8>0 :
@@ -358,11 +358,11 @@ class hierarchical_decoder(design.design):
         # direction assuming the predecodes are placed at (self.routing_width,0)
         self.rail_x_offsets = []
         for i in range(self.num_of_predecoder_out):
-            x_offset = self.metal1_pitch * i
-            self.rail_x_offsets.append(x_offset+0.5*self.metal2_width)
-            self.add_rect(layer="metal2",
+            x_offset = self.m1_pitch * i
+            self.rail_x_offsets.append(x_offset+0.5*self.m2_width)
+            self.add_rect(layer="m2",
                           offset=vector(x_offset,0),
-                          width=self.metal2_width,
+                          width=self.m2_width,
                           height=self.height)
 
         self.connect_rails_to_predecodes()
@@ -428,7 +428,7 @@ class hierarchical_decoder(design.design):
             for num in range(len(mod)):
                 vdd_pin = mod[num].get_pins("vdd")
                 for pin in vdd_pin:
-                    self.add_rect(layer=pin.layer[0:6],
+                    self.add_rect(layer=pin.layer[0:2],
                                   offset=(0, pin.by()),
                                   width=self.width,
                                   height=contact.m1m2.width)
@@ -440,7 +440,7 @@ class hierarchical_decoder(design.design):
 
                 gnd_pin = mod[num].get_pins("gnd")
                 for pin in gnd_pin:
-                    self.add_rect(layer=pin.layer[0:6],
+                    self.add_rect(layer=pin.layer[0:2],
                                   offset=(0,pin.by()),
                                   width=self.width,
                                   height=contact.m1m2.width)
@@ -453,5 +453,5 @@ class hierarchical_decoder(design.design):
     def connect_rail(self, rail_index, pin):
         """ Connect the routing rail to the given metal1 pin  """
         rail_pos = vector(self.rail_x_offsets[rail_index],pin.lc().y)
-        self.add_path("metal1", [rail_pos, (pin.uc().x, pin.lc().y)])
-        self.add_via_center(self.metal1_stack, rail_pos, rotate=90)
+        self.add_path("m1", [rail_pos, (pin.uc().x, pin.lc().y)])
+        self.add_via_center(self.m1_stack, rail_pos, rotate=90)

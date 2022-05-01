@@ -30,7 +30,7 @@ class contact_test(AMC_test):
 
         import contact
 
-        for layer_stack in [("active", "contact", "metal1"), ("metal1", "via1", "metal2")]:
+        for layer_stack in [("active", "contact", "m1"), ("m1", "via1", "m2")]:
 
             # Check single 1 x 1 contact"
             debug.info(2, "1 x 1 {} test".format(layer_stack))

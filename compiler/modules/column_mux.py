@@ -31,7 +31,7 @@ class column_mux(design.design):
         self.bitcell = bitcell()
         
         # This is to avoid DRC violation with arrays above and below column_mux
-        self.pin_height = 5*self.metal1_width
+        self.pin_height = 5*self.m1_width
         self.width = self.bitcell.width
 
         self.ptx_width = 2*self.tx_width
@@ -56,7 +56,7 @@ class column_mux(design.design):
             first NMOS at left and second NMOS at right"""
         
         # If NMOS size if bigger than bicell_width use multi finger NMOS
-        n = int(math.floor((0.5* (self.bitcell.width-6*self.metal1_space)) / self.tx_width))
+        n = int(math.floor((0.5* (self.bitcell.width-6*self.m1_space)) / self.tx_width))
         m = (self.ptx_width/n)
         if m > self.tx_width:
             num_fing = int(math.ceil(self.ptx_width/n))
@@ -125,24 +125,24 @@ class column_mux(design.design):
 
         # bl and br
         self.add_layout_pin(text="bl", 
-                            layer="metal2", 
+                            layer="m2", 
                             offset=bl_pos + vector(0,self.top-contact.m1m2.width),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         self.add_layout_pin(text="br", 
-                            layer="metal2", 
+                            layer="m2", 
                             offset=br_pos + vector(0,self.top-contact.m1m2.width),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         
         # bl_out and br_out
         self.add_layout_pin(text="bl_out", 
-                            layer="metal2", 
+                            layer="m2", 
                             offset=bl_pos+ vector(0,-contact.well.height-self.pin_height),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
         self.add_layout_pin(text="br_out", 
-                            layer="metal2", 
+                            layer="m2", 
                             offset=br_pos+ vector(0,-contact.well.height-self.pin_height),
                             width=contact.m1m2.width, 
                             height=contact.m1m2.width)
@@ -150,9 +150,9 @@ class column_mux(design.design):
     def add_m1_minarea(self, pin):
         """ add metal1 in active contact area to avoid min_area vioalation """
         
-        self.add_rect_center(layer="metal1", 
+        self.add_rect_center(layer="m1", 
                              offset=pin, 
-                             width=self.minarea_metal1/contact.m1m2.width, 
+                             width=self.minarea_m1/contact.m1m2.width, 
                              height=contact.m1m2.width)
     
     def connect_bitlines(self):
@@ -166,45 +166,45 @@ class column_mux(design.design):
         nmos2_s_pin = vector(self.nmos2.get_pin("S").uc().x, self.nmos2.get_pin("S").lc().y)
         nmos2_d_pin = vector(self.nmos2.get_pin("D").uc().x, self.nmos2.get_pin("D").lc().y)
         
-        self.add_via_center(self.metal1_stack, nmos1_s_pin, rotate=90)
-        self.add_via_center(self.metal1_stack, nmos1_d_pin+vector(0, contact.m1m2.width), rotate=90)
-        self.add_via_center(self.metal1_stack, nmos2_s_pin, rotate=90)
-        self.add_via_center(self.metal1_stack, nmos2_d_pin+vector(0, contact.m1m2.width), rotate=90)
+        self.add_via_center(self.m1_stack, nmos1_s_pin, rotate=90)
+        self.add_via_center(self.m1_stack, nmos1_d_pin+vector(0, contact.m1m2.width), rotate=90)
+        self.add_via_center(self.m1_stack, nmos2_s_pin, rotate=90)
+        self.add_via_center(self.m1_stack, nmos2_d_pin+vector(0, contact.m1m2.width), rotate=90)
         
-        shift=0.5*(self.minarea_metal1/contact.m1m2.width)
+        shift=0.5*(self.minarea_m1/contact.m1m2.width)
         self.add_m1_minarea(vector(self.nmos1.lx()+shift, nmos1_s_pin.y))
         self.add_m1_minarea(vector(self.nmos1.lx()+shift, nmos1_d_pin.y))
         self.add_m1_minarea(vector(self.nmos2.rx()-shift, nmos2_s_pin.y))
         self.add_m1_minarea(vector(self.nmos2.rx()-shift, nmos2_d_pin.y))
         
-        self.add_path("metal2",[(bl_pin.uc().x, -contact.well.height-self.pin_height),nmos1_s_pin], 
+        self.add_path("m2",[(bl_pin.uc().x, -contact.well.height-self.pin_height),nmos1_s_pin], 
                       width=contact.m1m2.width)
-        self.add_path("metal2", [(bl_pin.uc().x,self.top),(nmos1_d_pin.x, nmos1_d_pin.y+contact.m1m2.width)], 
+        self.add_path("m2", [(bl_pin.uc().x,self.top),(nmos1_d_pin.x, nmos1_d_pin.y+contact.m1m2.width)], 
                       width=contact.m1m2.width)
-        self.add_path("metal2",[(br_pin.uc().x, -contact.well.height-self.pin_height),nmos2_s_pin], 
+        self.add_path("m2",[(br_pin.uc().x, -contact.well.height-self.pin_height),nmos2_s_pin], 
                       width=contact.m1m2.width)
-        self.add_path("metal2",[(br_pin.uc().x,self.top), (nmos2_d_pin.x, nmos2_d_pin.y+contact.m1m2.width)], 
+        self.add_path("m2",[(br_pin.uc().x,self.top), (nmos2_d_pin.x, nmos2_d_pin.y+contact.m1m2.width)], 
                       width=contact.m1m2.width)
 
     def add_gnd_rail(self):
         """ Add the gnd rails that span the whole cell"""
 
-        self.gnd_position = vector(0, self.nmos1.by()-self.metal1_width)
-        self.add_rect(layer="metal1", 
+        self.gnd_position = vector(0, self.nmos1.by()-self.m1_width)
+        self.add_rect(layer="m1", 
                        offset=self.gnd_position, 
                        width = self.width,
-                       height=self.metal1_width)
+                       height=self.m1_width)
         self.add_layout_pin(text="gnd", 
-                            layer="metal1", 
+                            layer="m1", 
                             offset=self.gnd_position,
-                            width = self.metal1_width, 
-                            height=self.metal1_width)
+                            width = self.m1_width, 
+                            height=self.m1_width)
         
     def add_well_contact(self):
         """ Add a well and implant over the whole cell. Also, add the pwell contact"""
         
         well_contact_offset = vector(self.well_enclose_active + contact.well.width, 
-                                     self.nmos1.by() - self.metal1_width - contact.well.height)
+                                     self.nmos1.by() - self.m1_width - contact.well.height)
         if info["has_pimplant"]:
             implant_type="p"
         else:
@@ -215,7 +215,7 @@ class column_mux(design.design):
         else:
             well_type=None
         
-        self.add_contact(layers=("active", "contact", "metal1"), 
+        self.add_contact(layers=("active", "contact", "m1"), 
                          offset=well_contact_offset, 
                          implant_type=implant_type, 
                          well_type=well_type, 
@@ -223,10 +223,10 @@ class column_mux(design.design):
         
         active_width= self.minarea_active/contact.well.first_layer_height
         active_height = contact.well.first_layer_height
-        active_offse= vector(self.well_enclose_active,  well_contact_offset.y+ \
-                      self.m1_extend_contact-self.active_extend_contact)
+        active_offset= vector(self.well_enclose_active,  well_contact_offset.y+ \
+                      self.m1_extend_active_contact-self.active_extend_active_contact)
         self.add_rect(layer="active", 
-                      offset=active_offse, 
+                      offset=active_offset, 
                       width = active_width,
                       height= active_height)
 
@@ -259,7 +259,7 @@ class column_mux(design.design):
         extra_height = active_height+2*self.extra_layer_enclose
         #extra_width = self.minarea_extra_layer/ extra_height
         extra_width = self.width
-        extra_off= vector(0, active_offse[1]-self.extra_layer_enclose)
+        extra_off= vector(0, active_offset[1]-self.extra_layer_enclose)
         self.add_rect(layer="extra_layer",
                       offset=extra_off,
                       width= extra_width,

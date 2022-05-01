@@ -75,7 +75,7 @@ class tgate_array(design.design):
 
     def add_well_contacts(self):
         """ Add pwell and nwell contact"""
-        well_xoff=self.tgate.nmos.height+2*self.m_pitch("m1") - self.implant_space
+        well_xoff=self.tgate.nmos.height+2*self.m1_pitch - self.implant_space
         well_yoff=self.tgate.height* self.size
         
         layers=[]
@@ -84,7 +84,7 @@ class tgate_array(design.design):
         if info["has_pwell"]:
             layers.append("pwell")
 
-        width=self.tgate.nmos.height+2*self.m_pitch("m1") - self.implant_space
+        width=self.tgate.nmos.height+2*self.m1_pitch - self.implant_space
         for layer in layers:
             self.add_rect(layer=layer,
                           offset=(0, well_yoff),
@@ -97,7 +97,7 @@ class tgate_array(design.design):
         if info["has_nwell"]:
             layers.append("nwell")
 
-        width=self.tgate.pmos.height+2*self.m_pitch("m1") + self.implant_space +self.poly_space
+        width=self.tgate.pmos.height+2*self.m1_pitch + self.implant_space +self.poly_space
         for layer in layers:
             self.add_rect(layer=layer,
                           offset=(well_xoff, well_yoff),
@@ -107,48 +107,47 @@ class tgate_array(design.design):
         pin=["gnd", "vdd"]
         for i in range(2):
             x_off = self.well_enclose_active + i*well_xoff
-            y_off = well_yoff + self.well_enclose_active + i*self.m_pitch("m2")
-            self.add_contact(("active", "contact", "metal1") , (x_off, y_off))
+            y_off = well_yoff + self.well_enclose_active + i*self.m2_pitch
+            self.add_contact(("active", "contact", "m1") , (x_off, y_off))
             
-            self.add_rect(layer="metal1",
+            self.add_rect(layer="m1",
                           offset=(0, y_off),
                           width=self.tgate.width,
                           height=contact.m1m2.width)
             
             self.add_rect(layer="active",
                           offset=(x_off, y_off),
-                          width=self.active_minarea/contact.well.height,
+                          width=self.minarea_active/contact.well.height,
                           height=contact.well.height)
                           
             self.add_layout_pin(text=pin[i],
-                                layer="metal1",
+                                layer="m1",
                                 offset=(self.tgate.width/2,y_off),
                                 width=self.m1_width,
                                 height=self.m1_width)
                           
-        extra_off= (0, well_yoff)+(0,drc["extra_to_poly"])
+        extra_off= (0, well_yoff)+(0,drc["extra_layer_to_poly"])
         self.add_rect(layer="extra_layer",
-                      layer_dataType = 122,
                       offset=extra_off,
                       width= self.tgate.width,
-                      height= self.tgate.width/2-drc["extra_to_poly"])
+                      height= self.tgate.width/2-drc["extra_layer_to_poly"])
 
     def add_layout_pins(self):
         """ Add all input, output and power pins"""
         
         for i in range(self.size):
             self.add_layout_pin(text="in1{0}".format(i),
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.tgate_off[i].get_pin("in1").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
             self.add_layout_pin(text="in2{0}".format(i),
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.tgate_off[i].get_pin("in2").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
             self.add_layout_pin(text="out{0}".format(i),
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.tgate_off[i].get_pin("out").ll(),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -158,9 +157,9 @@ class tgate_array(design.design):
         for i in range(2):
             off=self.tgate_off[0].get_pin(pins[i]).uc()
             y_off=self.tgate_off[self.size-1].uy() + self.tgate.width/2
-            self.add_path("metal2", [off, (off.x, y_off)])
+            self.add_path("m2", [off, (off.x, y_off)])
             self.add_layout_pin(text=pins[i],
-                            layer="metal2",
+                            layer="m2",
                             offset=(off.x-0.5*self.m2_width, y_off-self.m2_width),
                             width=self.m2_width,
                             height=self.m2_width)

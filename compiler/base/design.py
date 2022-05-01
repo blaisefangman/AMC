@@ -194,15 +194,32 @@ class design(hierarchy_design):
             if layer_id in ["active", "nwell"]:
                 continue
 
-            # Add the pitch
-            setattr(design,
-                    "{}_pitch".format(layer_id),
-                    design.compute_pitch(layer_id, True))
+            # Async and Sync design currently calculate different pitch values
+            # Should be merged later
+            if OPTS.mode == "async":
+                setattr(design,
+                        "{}_pitch".format(layer_id),
+                        design.old_compute_pitch(layer_id))
+                setattr(design,
+                        "{}_nonpref_pitch".format(layer_id),
+                        design.old_compute_pitch(layer_id))
+            else:
+                # Add the pitch
+                setattr(design,
+                        "{}_pitch".format(layer_id),
+                        design.compute_pitch(layer_id, True))
 
-            # Add the non-preferrd pitch (which has vias in the "wrong" way)
-            setattr(design,
-                    "{}_nonpref_pitch".format(layer_id),
-                    design.compute_pitch(layer_id, False))
+                # Add the non-preferrd pitch (which has vias in the "wrong" way)
+                setattr(design,
+                        "{}_nonpref_pitch".format(layer_id),
+                        design.compute_pitch(layer_id, False))
+
+        if OPTS.mode == "async":
+            # Set DRC contants for co/via shift used in async compiler
+            for via in ["co", "v1", "v2"]:
+                setattr(design,
+                        "{}_via_shift".format(via),
+                        design.via_shift(via))
 
         if False:
             from tech import preferred_directions
@@ -223,7 +240,8 @@ class design(hierarchy_design):
             import sys
             sys.exit(1)
 
-    def via_shift(self, via):
+    @staticmethod
+    def via_shift(via):
         """ These are some DRC constants for co/via shift used in many places in the compiler."""
         import contact
         if via =="co":
@@ -237,27 +255,9 @@ class design(hierarchy_design):
 
     @staticmethod
     def compute_pitch(layer, preferred=True):
-
         """
         This is the preferred direction pitch
         i.e. we take the minimum or maximum contact dimension
-        """
-        from tech import drc
-        import contact
-        if layer =="metal1":
-            contact=contact.m1m2
-        elif layer =="metal2":
-            contact=contact.m2m3
-        elif layer =="metal3":
-            contact=contact.m3m4
-        else:
-            return 0
-        n=int(layer[-1])
-        metal_space=max(drc["metal{0}_to_metal{1}".format(n, n)],
-                drc["metal{0}_to_metal{1}".format(n+1, n+1)])
-        contact_space=max(contact.width, contact.height)
-        metal_pitch = metal_space + contact_space
-        return metal_pitch
         """
         # Find the layer stacks this is used in
         from tech import layer_stacks
@@ -270,7 +270,33 @@ class design(hierarchy_design):
                 pitches.append(design.compute_layer_pitch(stack[::-1], True))
 
         return max(pitches)
+
+    @staticmethod
+    def old_compute_pitch(layer):
         """
+        Computes pitch. Async design currently needs this pitch calculation,
+        should be merged later after more discussion.
+        """
+        from tech import drc
+        import contact
+        if layer =="m1":
+            contact = contact.m1m2
+            layers = ["m1", "m2"]
+        elif layer =="m2":
+            contact = contact.m2m3
+            layers = ["m2", "m3"]
+        elif layer =="m3":
+            contact = contact.m3m4
+            layers = ["m3", "m4"]
+        else:
+            return 0
+
+        # For m1, should get max of m1_to_m1 and m2_to_m2
+        metal_space=max(drc["{0}_to_{1}".format(layers[0], layers[0])],
+                drc["{0}_to_{1}".format(layers[1], layers[1])])
+        contact_space=max(contact.width, contact.height)
+        metal_pitch = metal_space + contact_space
+        return metal_pitch
 
     @staticmethod
     def get_preferred_direction(layer):

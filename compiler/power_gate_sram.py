@@ -68,13 +68,13 @@ class power_gate_sram(design.design):
                           self.w_per_row*self.num_inbanks*self.num_outbanks
         
 
-        self.strap_w = 2*self.m_pitch("m1")
+        self.strap_w = 2*self.m1_pitch
         via_pitch = drc["minwidth_via1"]+drc["via1_to_via1"]
-        self.num_via = int(ceil((self.strap_w+drc["via1_to_via1"]-2*drc["metal1_extend_via1"]) / via_pitch))
-        via1=contact.contact(layer_stack=("metal1", "via1", "metal2"), dimensions=[1,self.num_via])
-        via2=contact.contact(layer_stack=("metal2", "via2", "metal3"), dimensions=[1,self.num_via])
+        self.num_via = int(ceil((self.strap_w+drc["via1_to_via1"]-2*drc["m1_extend_via1"]) / via_pitch))
+        via1=contact.contact(layer_stack=("m1", "via1", "m2"), dimensions=[1,self.num_via])
+        via2=contact.contact(layer_stack=("m2", "via2", "m3"), dimensions=[1,self.num_via])
         self.strap_w = max(via1.height, via2.height)
-        self.gap = max(self.well_space, 2*self.m_pitch("m2"))
+        self.gap = max(self.well_space, 2*self.m2_pitch)
         
         self.add_pins()
         self.create_modules()
@@ -133,8 +133,8 @@ class power_gate_sram(design.design):
             if self.branch_factors[1]>1:
                 self.ybot = self.sram_inst.get_pin("data_in[0]").by()
                 self.ytop2=self.ytop = self.sram_inst.get_pin("data_out[{}]".format(self.word_size-1)).uy()+\
-                                       (2*self.word_size+10)*self.m_pitch("m1")
-                self.xleft=self.sram_inst.get_pin("sleep").lx()-self.m_pitch("m1")
+                                       (2*self.word_size+10)*self.m1_pitch
+                self.xleft=self.sram_inst.get_pin("sleep").lx()-self.m1_pitch
                 self.xright=self.sram_inst.get_pin("r").rx()
             else:
                 self.ybot = self.sram_inst.get_pin("data_in[0]").by()
@@ -147,7 +147,7 @@ class power_gate_sram(design.design):
         self.right_side = self.sram_inst.rx()-self.xright
         self.bot_side = self.ybot - self.sram_inst.by()
         if (self.bank_orientations[0]=="V" and self.bank_orientations[1]=="V"):
-            self.bot_side = self.bot_side - self.word_size*self.m_pitch("m1")
+            self.bot_side = self.bot_side - self.word_size*self.m1_pitch
         self.top_side = self.sram_inst.uy() - self.ytop
         
         mod_width = self.pg.width*self.size + self.dc2.width + self.gap
@@ -169,9 +169,9 @@ class power_gate_sram(design.design):
                      i*(self.sram_inst.height+self.hstrap_h)
                 pos1=vector(j*(self.vstrap_w-self.strap_p), yoff)
                 pos2=vector(2*self.vstrap_w+self.sram_inst.width-j*self.vstrap_w+j*self.strap_p, yoff)
-                self.add_path("metal3", [pos1, pos2], width=self.strap_w)
+                self.add_path("m3", [pos1, pos2], width=self.strap_w)
                 if j==0:
-                    self.add_layout_pin(text="vdd", layer="metal3", 
+                    self.add_layout_pin(text="vdd", layer="m3", 
                                         offset=pos1-vector(0, 0.5*self.strap_w), 
                                         width=pos2.x-pos1.x, height=self.strap_w)
         
@@ -184,7 +184,7 @@ class power_gate_sram(design.design):
                 self.v_rail_pos.append(xoff)
                 pos1=(xoff, j*(self.hstrap_h-self.strap_p))
                 pos2=(xoff, 2*self.hstrap_h+self.sram_inst.height-j*(self.hstrap_h-self.strap_p))
-                self.add_path("metal2", [pos1, pos2], width=self.strap_w)
+                self.add_path("m2", [pos1, pos2], width=self.strap_w)
 
         
         for i in range(2):
@@ -199,22 +199,22 @@ class power_gate_sram(design.design):
                 xoff=0.5*self.strap_p+xshift+i*(self.sram_inst.width+self.vstrap_w)
                 yoff1=0.5*self.strap_p+yshift
                 yoff2= yoff1+self.sram_inst.height+2*self.hstrap_h-self.strap_p-2*yshift
-                self.add_via_center(self.m2_stack, (xoff, yoff1), [self.num_via, self.num_via])
-                self.add_via_center(self.m2_stack, (xoff, yoff2), [self.num_via, self.num_via])
+                self.add_via_center(self.m2_stack, (xoff, yoff1), size=[self.num_via, self.num_via])
+                self.add_via_center(self.m2_stack, (xoff, yoff2), size=[self.num_via, self.num_via])
     
         #connect vvdd of sram module to vvdd straps
         for i in range(len(self.sram_inst.get_pins("vdd"))):
             pos=self.sram_inst.get_pins("vdd")[i]
-            self.add_path("metal3", [(pos.lx(), pos.lc().y), (self.sram_inst.lx()-self.strap_p, pos.lc().y)], width=pos.height())
-            self.add_path("metal3", [(pos.rx(), pos.lc().y), (self.sram_inst.rx()+self.strap_p, pos.lc().y)], width=pos.height())
-            self.add_via_center(self.m2_stack, (self.sram_inst.lx()-0.5*self.strap_p, pos.lc().y), [self.num_via, self.num_via])
-            self.add_via_center(self.m2_stack, (self.sram_inst.rx()+0.5*self.strap_p, pos.lc().y), [self.num_via, self.num_via])
+            self.add_path("m3", [(pos.lx(), pos.lc().y), (self.sram_inst.lx()-self.strap_p, pos.lc().y)], width=pos.height())
+            self.add_path("m3", [(pos.rx(), pos.lc().y), (self.sram_inst.rx()+self.strap_p, pos.lc().y)], width=pos.height())
+            self.add_via_center(self.m2_stack, (self.sram_inst.lx()-0.5*self.strap_p, pos.lc().y), size=[self.num_via, self.num_via])
+            self.add_via_center(self.m2_stack, (self.sram_inst.rx()+0.5*self.strap_p, pos.lc().y), size=[self.num_via, self.num_via])
         
         
     def add_modules(self):
         
-        self.strap_p = self.strap_w + 4*self.m_pitch("m2")
-        self.vstrap_w= 2*self.strap_p + max(self.pg.width, self.dc1.width)+ 2*self.m_pitch("m1")
+        self.strap_p = self.strap_w + 4*self.m2_pitch
+        self.vstrap_w= 2*self.strap_p + max(self.pg.width, self.dc1.width)+ 2*self.m1_pitch
         self.hstrap_h=  2*self.strap_p + self.pg.height
     
         self.sram_inst=self.add_inst(name="power_gated_sram",mod=self.sram_mod, offset=(self.vstrap_w,self.hstrap_h))
@@ -251,7 +251,7 @@ class power_gate_sram(design.design):
         else:
             pass
         
-        if self.sram_inst.get_pin("r").layer[0:6] == "metal1":
+        if self.sram_inst.get_pin("r").layer[0:2] == "m1":
             for i in range(self.addr_size):
                 pin_list.append("addr[{0}]".format(i))
             pin_list.extend(["reset", "r", "w",  "rw", "ack", "rack", "rreq", "wreq", "wack", "sleep"])
@@ -261,19 +261,19 @@ class power_gate_sram(design.design):
                 off=vector(0,pin.by())
                 width=pin.lx()+self.m1_width
                 if i[0:2] == "bm":
-                    self.add_rect(layer="metal3", offset=off, width=width, height=pin.height())
+                    self.add_rect(layer="m3", offset=off, width=width, height=pin.height())
                 else:
-                    self.add_rect(layer="metal1", offset=off, width=width, height=pin.height())
+                    self.add_rect(layer="m1", offset=off, width=width, height=pin.height())
                 self.add_layout_pin(text=i, layer=pin.layer, offset=off, width=width, height=pin.height())
         
         for pin in self.sram_inst.get_pins("gnd"):
             off=vector(0,pin.by())
             width=self.sram_inst.width
-            self.add_rect(layer="metal3", offset=off, width=width, height=pin.height())
+            self.add_rect(layer="m3", offset=off, width=width, height=pin.height())
             self.add_layout_pin(text="gnd", layer=pin.layer, offset=off, width=width, height=pin.height())
         
         
-        if self.sram_inst.get_pin("r").layer[0:6] == "metal2":
+        if self.sram_inst.get_pin("r").layer[0:2] == "m2":
             pin_list2=[]
             for i in range(self.addr_size):
                 pin_list2.append("addr[{0}]".format(i))
@@ -326,7 +326,7 @@ class power_gate_sram(design.design):
                 self.connect_inst(["sleep{}".format(index-1), "sleep{}".format(index), "vdd", "gnd"])
             if i>0 and i<self.mh_pmos:
                 pin = self.pmos_inst[self.size-1].get_pin("sleep")
-                self.add_path("metal1", [(self.pmos_inst[self.size-1].rx(), pin.uc().y), self.dc_inst.get_pin("in").lc()])
+                self.add_path("m1", [(self.pmos_inst[self.size-1].rx(), pin.uc().y), self.dc_inst.get_pin("in").lc()])
             self.create_pmos_group(orien="H", pos=vector(xpos+self.dc2.width, ypos+0.5*contact.m1m2.width), num=index)
             self.cnt_pmos_hstrap(vvddshift=-xshift, vddshift=-xshift)
             self.cnt_pmos_hsleep(index=0)
@@ -352,7 +352,7 @@ class power_gate_sram(design.design):
             self.cnt_pmos_vstrap()
             self.cnt_pmos_vsleep(mod=self.pmos_inst[0])
             self.cnt_vbuffer_gnd(index=0, direction="d")
-            self.gnd_xpos=self.dc_inst.get_pin("gnd").lx()-2*self.m_pitch("m1")
+            self.gnd_xpos=self.dc_inst.get_pin("gnd").lx()-2*self.m1_pitch
 
         for i in range(self.bv_pmos):
             ypos = self.ybot-i*(self.pmos_grp_h+self.dc1.height+3*self.gap)
@@ -370,7 +370,7 @@ class power_gate_sram(design.design):
             self.cnt_pmos_vstrap()
             self.cnt_pmos_vsleep(mod=self.pmos_inst[0])
             self.cnt_vbuffer_gnd(index=0, direction="d")
-            self.gnd_xpos=self.dc_inst.get_pin("gnd").lx()-2*self.m_pitch("m1")
+            self.gnd_xpos=self.dc_inst.get_pin("gnd").lx()-2*self.m1_pitch
 
         #BOTTOM
         self.gnd_ypos = None
@@ -390,7 +390,7 @@ class power_gate_sram(design.design):
                 pos1= self.pmos_inst[0].get_pin("sleep").lc()
                 pos2= (pos1.x-self.m1_width, pos1.y)
                 pos3= self.dc_inst.get_pin("in").lc()
-                self.add_path("metal1", [pos1,pos2,pos3])
+                self.add_path("m1", [pos1,pos2,pos3])
 
             self.create_pmos_group(orien="H", pos=vector(xpos-self.dc2.width-self.size*self.pg.width, ypos+0.5*contact.m1m2.width), num=index)
             self.cnt_pmos_hstrap(vvddshift=xshift, vddshift=xshift)
@@ -410,13 +410,13 @@ class power_gate_sram(design.design):
                     pos1= self.pmos_inst[0].get_pin("sleep").lc()
                     pos2= (pos1.x-self.m1_width, pos1.y)
                     pos3= self.dc_inst.get_pin("in").lc()
-                    self.add_path("metal1", [pos1,pos2,pos3])
+                    self.add_path("m1", [pos1,pos2,pos3])
             
             if (i>0 and i<self.lh_pmos):
                 pos1= self.pmos_inst[0].get_pin("sleep").lc()
                 pos2= (pos1.x-self.m1_width, pos1.y)
                 pos3= self.dc_inst.get_pin("in").lc()
-                self.add_path("metal1", [pos1,pos2,pos3])
+                self.add_path("m1", [pos1,pos2,pos3])
 
             self.create_pmos_group(orien="H", pos=vector(xpos-self.dc2.width-self.size*self.pg.width, ypos+0.5*contact.m1m2.width), num=index)
             self.cnt_pmos_hstrap(vvddshift=xshift, vddshift=xshift)
@@ -429,7 +429,7 @@ class power_gate_sram(design.design):
          """ connect the vdd ports of sleep buffers to vdd strap"""
          pin = self.dc_inst.get_pin("vdd")
          pos = vector(self.v_rail_pos[2], pin.lc().y)
-         self.add_path("metal1", [pin.lc(), pos])
+         self.add_path("m1", [pin.lc(), pos])
          self.add_via_center(self.m1_stack, pos, size=[self.num_via, 1])
     
     def cnt_hbuffer_power(self, pin, index, direction):
@@ -444,7 +444,7 @@ class power_gate_sram(design.design):
               xpos2=self.v_rail_pos[1]
          pos1 = vector(xpos1, pin.lc().y)
          pos2 = vector(xpos2, pin.lc().y)
-         self.add_path("metal1", [pos1, pos2], width=pin.height())
+         self.add_path("m1", [pos1, pos2], width=pin.height())
     
     def cnt_vbuffer_gnd(self, index, direction):
          """ connect the vdd ports of sleep buffers to vdd strap"""
@@ -454,9 +454,9 @@ class power_gate_sram(design.design):
              ypos=self.pmos_inst[index].uy()+self.gap
          else:
              ypos=self.pmos_inst[index].by()-2*self.gap
-         pos1 = vector(pin.lx()-2*self.m_pitch("m1"), pin.by())
+         pos1 = vector(pin.lx()-2*self.m1_pitch, pin.by())
          pos2 = vector(pos1.x, ypos)
-         self.add_path("metal2", [pos1, pos2])
+         self.add_path("m2", [pos1, pos2])
     
     def cnt_pmos_vstrap(self):
             """ connect vvdd and vdd ports of sleep-transistors to vertical straps """ 
@@ -465,23 +465,23 @@ class power_gate_sram(design.design):
             
             pos1=self.pmos_inst[self.size-1].get_pins("vvdd")[0].uc()
             pos4=self.pmos_inst[self.size-1].get_pins("vvdd")[1].uc()
-            pos2=vector(pos1.x, self.pmos_inst[self.size-1].uy()+2*self.m_pitch("m1"))
-            pos3=vector(pos4.x, self.pmos_inst[self.size-1].uy()+2*self.m_pitch("m1"))
-            pos3b=vector(pos4.x, self.pmos_inst[self.size-1].uy()+self.m_pitch("m1"))
+            pos2=vector(pos1.x, self.pmos_inst[self.size-1].uy()+2*self.m1_pitch)
+            pos3=vector(pos4.x, self.pmos_inst[self.size-1].uy()+2*self.m1_pitch)
+            pos3b=vector(pos4.x, self.pmos_inst[self.size-1].uy()+self.m1_pitch)
             pos5=(self.v_rail_pos[3],pos3b.y)
-            self.add_path("metal2", [pos1, pos2, pos3, pos4])
-            self.add_wire(self.m1_stack, [pos4, pos3b, pos5])
-            self.add_via_center(self.m1_stack, pos5, [self.num_via, 1])
+            self.add_path("m2", [pos1, pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos4, pos3b, pos5], widen_short_wires=False)
+            self.add_via_center(self.m1_stack, pos5, size=[self.num_via, 1])
 
             pos1=self.pmos_inst[0].get_pins("vdd")[0].uc()
             pos4=self.pmos_inst[0].get_pins("vdd")[1].uc()
-            pos2=vector(pos1.x, self.pmos_inst[0].by()-2*self.m_pitch("m1"))
-            pos3=vector(pos4.x, self.pmos_inst[0].by()-2*self.m_pitch("m1"))
-            pos3b=vector(pos1.x, self.pmos_inst[0].by()-self.m_pitch("m1"))
+            pos2=vector(pos1.x, self.pmos_inst[0].by()-2*self.m1_pitch)
+            pos3=vector(pos4.x, self.pmos_inst[0].by()-2*self.m1_pitch)
+            pos3b=vector(pos1.x, self.pmos_inst[0].by()-self.m1_pitch)
             pos5=(self.v_rail_pos[2],pos3b.y)
-            self.add_path("metal2", [pos1, pos2, pos3, pos4])
-            self.add_wire(self.m1_stack, [pos1, pos3b, pos5])
-            self.add_via_center(self.m1_stack, pos5, [self.num_via, 1])
+            self.add_path("m2", [pos1, pos2, pos3, pos4])
+            self.add_wire(self.m1_stack, [pos1, pos3b, pos5], widen_short_wires=False)
+            self.add_via_center(self.m1_stack, pos5, size=[self.num_via, 1])
 
     def cnt_pmos_hstrap(self, vvddshift, vddshift):
         """ connect vvdd and vdd ports of sleep-transistors to horizantal straps """ 
@@ -489,10 +489,10 @@ class power_gate_sram(design.design):
         yoff = self.pmos_inst[0].get_pin("sleep").lc().y
         for j in range(self.size):
             for pin in self.pmos_inst[j].get_pins("vdd"):
-                self.add_path("metal2", [(pin.uc().x, yoff), (pin.uc().x, yoff-vvddshift)])
+                self.add_path("m2", [(pin.uc().x, yoff), (pin.uc().x, yoff-vvddshift)])
                 self.add_via_center(self.m2_stack, (pin.uc().x, yoff-vvddshift), size=[1, self.num_via])
             for pin in self.pmos_inst[j].get_pins("vvdd"):
-                self.add_path("metal2", [(pin.uc().x, yoff), (pin.uc().x, yoff+vddshift)])
+                self.add_path("m2", [(pin.uc().x, yoff), (pin.uc().x, yoff+vddshift)])
                 self.add_via_center(self.m2_stack, (pin.uc().x, yoff+vddshift), size=[1, self.num_via])
 
     def cnt_pmos_vsleep(self, mod):
@@ -500,27 +500,27 @@ class power_gate_sram(design.design):
 
             pin = self.pmos_inst[0].get_pin("sleep")
             pos1=self.dc_inst.get_pin("out")
-            pos2=vector(pos1.rx()+self.m_pitch("m1"), pos1.lc().y)
+            pos2=vector(pos1.rx()+self.m1_pitch, pos1.lc().y)
             pos3=vector(pos2.x, mod.get_pin("sleep").lc().y)
-            self.add_wire(self.m1_stack, [pos1.lc(), pos2, pos3])
+            self.add_wire(self.m1_stack, [pos1.lc(), pos2, pos3], widen_short_wires=False)
             shift = 0.5*(self.m3_width-self.m1_width)
             for i in range(self.size):
                 pin=self.pmos_inst[i].get_pin("sleep")
                 if i%2:
                     self.add_via_center(self.m2_stack, (pos2.x, pin.lc().y+shift), rotate=90)
-                    self.add_path("metal3", [pin.lc(), (pos2.x, pin.lc().y+shift)])
+                    self.add_path("m3", [pin.lc(), (pos2.x, pin.lc().y+shift)])
                 else:
                     self.add_via_center(self.m2_stack, (pos2.x, pin.lc().y-shift), rotate=90)
-                    self.add_path("metal3", [pin.lc(), (pos2.x, pin.lc().y-shift)])
+                    self.add_path("m3", [pin.lc(), (pos2.x, pin.lc().y-shift)])
     
     def cnt_buffer_vsleep(self, mod):
             """ connect output of vertical sleep buffer to sleep port of sleep-transistors """ 
 
             pin = mod.get_pin("sleep")
-            pos1=vector(pin.lx()-self.m_pitch("m1"), pin.lc().y)
+            pos1=vector(pin.lx()-self.m1_pitch, pin.lc().y)
             pos2=vector(pos1.x, self.dc_inst.get_pin("in").lc().y)
             pos3=self.dc_inst.get_pin("in").lc()
-            self.add_wire(self.m1_stack, [pin.lc(), pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [pin.lc(), pos1, pos2, pos3], widen_short_wires=False)
     
     def cnt_pmos_hsleep(self, index):
         """ connect output of horizontal sleep buffer to sleep port of sleep-transistors """ 
@@ -536,7 +536,7 @@ class power_gate_sram(design.design):
         mid_pos=(xpos, pin2.y)
         mid_pos2=(xpos, pin.lc().y)
         mid_pos3=(xpos2, pin.lc().y)
-        self.add_path("metal1", [pin2, mid_pos, mid_pos2, mid_pos3])
+        self.add_path("m1", [pin2, mid_pos, mid_pos2, mid_pos3])
     
     def cnt_corner_sleep(self, index, direction):
         """ connect output of sleep buffer to sleep port of sleep-transistors in perpendicular direction""" 
@@ -548,12 +548,12 @@ class power_gate_sram(design.design):
             pos1=vector(self.pmos_inst[index].rx(), pin.lc().y)
         else:
             pos1=vector(pin.lx(), pin.lc().y)
-            pos2=vector(pos1.x-self.m_pitch("m1"), pos1.y)
+            pos2=vector(pos1.x-self.m1_pitch, pos1.y)
         
         if direction=="h":
-            pos2=vector(pos4.x-self.m_pitch("m1"), pos1.y)
+            pos2=vector(pos4.x-self.m1_pitch, pos1.y)
             gnd_pin1=vector(self.pmos_inst[index].lx(), self.gnd_ypos)
-            gnd_pin2=vector(self.dc_inst.get_pin("gnd").lx()-2*self.m_pitch("m1"), gnd_pin1.y)
+            gnd_pin2=vector(self.dc_inst.get_pin("gnd").lx()-2*self.m1_pitch, gnd_pin1.y)
             gnd_pin3=vector(gnd_pin2.x, self.dc_inst.get_pin("gnd").uy())
         else:
             gnd_pin1=vector(self.gnd_xpos, self.pmos_inst[index].uy())
@@ -561,8 +561,8 @@ class power_gate_sram(design.design):
             gnd_pin3=self.dc_inst.get_pin("gnd").lc()
         
         pos3=vector(pos2.x, pos4.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4])
-        self.add_wire(self.m1_stack, [gnd_pin1, gnd_pin2, gnd_pin3])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
+        self.add_wire(self.m1_stack, [gnd_pin1, gnd_pin2, gnd_pin3], widen_short_wires=False)
 
     def cnt_sleep_pin2(self):
         """ connect sleep pin of sram to sleep pin of pmos tx """
@@ -570,16 +570,16 @@ class power_gate_sram(design.design):
         pin1=self.pmos_inst[self.size-1].get_pin("sleep")
         pin2=self.dc_inst.get_pin("in")
 
-        pos1=vector(self.v_rail_pos[2] - self.strap_w - self.m_pitch("m1"), pin1.lc().y)
+        pos1=vector(self.v_rail_pos[2] - self.strap_w - self.m1_pitch, pin1.lc().y)
         pos2=vector(pos1.x, pin2.lc().y)
-        self.add_wire(self.m1_stack, [(self.pmos_inst[self.size-1].rx(), pin1.lc().y), pos1, pos2, pin2.lc()])
+        self.add_wire(self.m1_stack, [(self.pmos_inst[self.size-1].rx(), pin1.lc().y), pos1, pos2, pin2.lc()], widen_short_wires=False)
 
         pin1=self.pmos_inst[self.size-1]
         pin2=self.dc_inst.get_pin("gnd")
 
-        pos1=vector(self.v_rail_pos[2] - self.strap_w - 2*self.m_pitch("m1"), pin1.by())
+        pos1=vector(self.v_rail_pos[2] - self.strap_w - 2*self.m1_pitch, pin1.by())
         pos2=vector(pos1.x, pin2.lc().y)
-        self.add_wire(self.m1_stack, [(pin1.rx(), pin1.by()), pos1, pos2, pin2.lc()])
+        self.add_wire(self.m1_stack, [(pin1.rx(), pin1.by()), pos1, pos2, pin2.lc()], widen_short_wires=False)
 
     
     def cnt_sleep_pin(self):
@@ -588,30 +588,30 @@ class power_gate_sram(design.design):
         pin1=self.dc_inst.get_pin("in")
         pin2=self.sram_inst.get_pin("sleep")
 
-        if pin2.layer[:6] == "metal1":
+        if pin2.layer[:2] == "m1":
             if pin1.by() > pin2.by():
-                pos1=vector(0.5*self.vstrap_w-self.m_pitch("m1"), pin1.lc().y)
+                pos1=vector(0.5*self.vstrap_w-self.m1_pitch, pin1.lc().y)
                 pos2=vector(pos1.x, pin2.lc().y)
-                self.add_wire(self.m1_stack, [pin1.lc(), pos1, pos2, pin2.lc()])
+                self.add_wire(self.m1_stack, [pin1.lc(), pos1, pos2, pin2.lc()], widen_short_wires=False)
             else:
-                pos1=vector(pin2.rx()+self.m_pitch("m1"), pin2.lc().y)
+                pos1=vector(pin2.rx()+self.m1_pitch, pin2.lc().y)
                 pos2=vector(pos1.x, self.sram_inst.get_pin("vdd").uy())
-                pos3=vector(pin1.lx()-self.m_pitch("m1"), pos2.y)
+                pos3=vector(pin1.lx()-self.m1_pitch, pos2.y)
                 pos4=vector(pos3.x, pin1.lc().y)
-                self.add_wire(self.m1_stack, [pin2.lc(), pos1, pos2, pos3, pos4, pin1.lc()])
+                self.add_wire(self.m1_stack, [pin2.lc(), pos1, pos2, pos3, pos4, pin1.lc()], widen_short_wires=False)
         
         else:
             pos1=vector(pin2.uc().x, self.sram_inst.get_pin("gnd").uy())
-            pos2=vector(0.5*self.vstrap_w-self.m_pitch("m1"), pos1.y)
+            pos2=vector(0.5*self.vstrap_w-self.m1_pitch, pos1.y)
             pos3=vector(pos2.x, pin1.lc().y)
-            self.add_wire(self.m1_stack, [pin2.uc(), pos1, pos2, pos3, pin1.lc()])
+            self.add_wire(self.m1_stack, [pin2.uc(), pos1, pos2, pos3, pin1.lc()], widen_short_wires=False)
 
         pin1=self.dc_inst.get_pin("gnd")
         pin2=self.sram_inst.get_pin("gnd")
         pos0=pin1.lc()
-        pos1=vector(0.5*self.vstrap_w+self.m_pitch("m1"), pin1.lc().y)
+        pos1=vector(0.5*self.vstrap_w+self.m1_pitch, pin1.lc().y)
         pos2=vector(pos1.x, pin2.lc().y)
-        self.add_wire(self.m1_stack, [pos0, pos1, pos2])
+        self.add_wire(self.m1_stack, [pos0, pos1, pos2], widen_short_wires=False)
         self.add_via_center(self.m2_stack, pos2, size=[1, self.num_via])
         
     def create_pmos_group(self, orien, pos, num):
@@ -619,7 +619,7 @@ class power_gate_sram(design.design):
         
         self.pmos_inst={}
         if orien == "V":
-            pos+=vector(4*self.m_pitch("m1")+contact.m1m2.width, 0)
+            pos+=vector(4*self.m1_pitch+contact.m1m2.width, 0)
             off=pos
             for i in range(self.size):
                 if i%2:

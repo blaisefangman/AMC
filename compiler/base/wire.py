@@ -22,7 +22,7 @@ class wire(wire_path):
     The widen option will avoid via-to-via spacing problems for really short segments
     (added as an option so we can disable it in bus connections)
     """
-    def __init__(self, obj, layer_stack, position_list, widen_short_wires=False):
+    def __init__(self, obj, layer_stack, position_list, widen_short_wires=True):
         self.obj = obj
         self.layer_stack = layer_stack
         self.position_list = position_list

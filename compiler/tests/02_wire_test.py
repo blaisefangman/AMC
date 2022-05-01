@@ -32,8 +32,8 @@ class wire_test(AMC_test):
         import design
         
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] + tech.drc["minwidth_metal1"])
-        layer_stack = ("metal1", "via1", "metal2")
+        min_space = 2 * (tech.drc["minwidth_m2"] + tech.drc["minwidth_m1"])
+        layer_stack = ("m1", "via1", "m2")
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -48,8 +48,8 @@ class wire_test(AMC_test):
         self.local_drc_check(w)
 
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] + tech.drc["minwidth_metal1"])
-        layer_stack = ("metal2", "via1", "metal1")
+        min_space = 2 * (tech.drc["minwidth_m2"] + tech.drc["minwidth_m1"])
+        layer_stack = ("m2", "via1", "m1")
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -63,8 +63,8 @@ class wire_test(AMC_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] + tech.drc["minwidth_metal3"])
-        layer_stack = ("metal2", "via2", "metal3")
+        min_space = 2 * (tech.drc["minwidth_m2"] + tech.drc["minwidth_m3"])
+        layer_stack = ("m2", "via2", "m3")
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],
@@ -79,8 +79,8 @@ class wire_test(AMC_test):
         wire.wire(w, layer_stack, position_list)
         self.local_drc_check(w)
 
-        min_space = 2 * (tech.drc["minwidth_metal2"] + tech.drc["minwidth_metal3"])
-        layer_stack = ("metal3", "via2", "metal2")
+        min_space = 2 * (tech.drc["minwidth_m2"] + tech.drc["minwidth_m3"])
+        layer_stack = ("m3", "via2", "m2")
         position_list = [[0, 0],
                          [0, 3 * min_space],
                          [1 * min_space, 3 * min_space],

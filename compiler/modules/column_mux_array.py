@@ -63,7 +63,7 @@ class column_mux_array(design.design):
         """ For every column, add a column_mux cell"""
         
         # one set of metal1 routes for select signals and bl & br outputs plus space 
-        self.route_height = (self.words_per_row + 3) * self.metal2_pitch
+        self.route_height = (self.words_per_row + 3) * self.m2_pitch
 
         self.mux_inst = []
         for col_num in range(self.columns):
@@ -91,16 +91,16 @@ class column_mux_array(design.design):
         """ Create select input rails below the column_mux transistors  """
         
         for j in range(self.words_per_row):
-            offset = vector(0, self.route_height - (j+1)*self.metal2_pitch)
-            self.add_rect(layer="metal1", 
+            offset = vector(0, self.route_height - (j+1)*self.m2_pitch)
+            self.add_rect(layer="m1", 
                           offset=offset, 
                           width=self.width, 
-                          height=self.metal1_width)
+                          height=self.m1_width)
             self.add_layout_pin(text="sel[{}]".format(j), 
-                                layer="metal1", 
+                                layer="m1", 
                                 offset=offset, 
-                                width=self.metal1_width, 
-                                height=self.metal1_width)
+                                width=self.m1_width, 
+                                height=self.m1_width)
 
     def add_vertical_poly_rail(self):
         """  Connect the poly to the selsect rails """
@@ -111,28 +111,28 @@ class column_mux_array(design.design):
             sel_height = self.get_pin("sel[{}]".format(sel_index)).by()
             offset = (gate_offset.x, self.get_pin("sel[{}]".format(sel_index)).cy())
             
-            if (self.mux_inst[0].get_pin("br").lx() - self.mux_inst[0].get_pin("bl").rx()) < 3*self.metal2_width:
+            if (self.mux_inst[0].get_pin("br").lx() - self.mux_inst[0].get_pin("bl").rx()) < 3*self.m2_width:
                 self.add_path("poly", [offset, gate_offset])
                 self.add_contact_center(self.poly_stack, offset, rotate=90)
             
             else:
                 off=self.mux_inst[col].get_pin("sel").cc()
                 self.add_contact_center(self.poly_stack,off , rotate=90)
-                self.add_contact_center(self.metal1_stack, off, rotate=90)
+                self.add_contact_center(self.m1_stack, off, rotate=90)
                 
-                self.add_path("metal2", [offset, gate_offset])
-                self.add_contact_center(self.metal1_stack, offset, rotate=90)
+                self.add_path("m2", [offset, gate_offset])
+                self.add_contact_center(self.m1_stack, offset, rotate=90)
                 
                 width = max(contact.poly.second_layer_height, contact.m1m2.first_layer_height)
-                self.add_rect_center(layer="metal1", 
+                self.add_rect_center(layer="m1", 
                                      offset = off, 
                                      width=width, 
-                                     height=1.5 * (self.minarea_metal1 / width))
+                                     height=1.5 * (self.minarea_m1 / width))
             
             # add implant for poly-enclosure drc violation
             implant_offset = (self.mux_inst[0].lx(), self.mux_inst[0].by()-self.route_height)
             implant_width = self.width
-            if (info["has_pimplant"] and drc["implant_enclosure_poly"]>0):
+            if (info["has_pimplant"] and drc["implant_enclose_poly"]>0):
                 self.add_rect(layer= "pimplant", 
                               offset= implant_offset, 
                               width = implant_width,
@@ -145,56 +145,56 @@ class column_mux_array(design.design):
             bl_offset = self.mux_inst[j].get_pin("bl_out").ll()
             br_offset = self.mux_inst[j].get_pin("br_out").ll()
 
-            bl_out_offset = bl_offset - vector(0,(self.words_per_row+1)*self.metal2_pitch+self.metal1_space)
-            br_out_offset = br_offset - vector(0,(self.words_per_row+2)*self.metal2_pitch+self.metal1_space)
+            bl_out_offset = bl_offset - vector(0,(self.words_per_row+1)*self.m2_pitch+self.m1_space)
+            br_out_offset = br_offset - vector(0,(self.words_per_row+2)*self.m2_pitch+self.m1_space)
 
             if (j % self.words_per_row) == 0:
                 width = self.mux_inst[self.words_per_row-1].get_pin("bl_out").rx() -\
                         self.mux_inst[0].get_pin("bl_out").lx()
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="m1",
                               offset=bl_out_offset,
                               width=width,
                               height=contact.m1m2.width)
                 width = self.mux_inst[self.words_per_row-1].get_pin("br_out").rx() -\
                         self.mux_inst[0].get_pin("br_out").lx()
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="m1",
                               offset=br_out_offset,
                               width=width,
                               height=contact.m1m2.width)
 
                 # Extend the bitline output rails downward on the first bit of each n-way mux
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=bl_out_offset.scale(1,0), 
-                              width=self.metal2_width, 
+                              width=self.m2_width, 
                               height=self.route_height)
                 self.add_layout_pin(text="bl_out[{}]".format(int(j/self.words_per_row)), 
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=bl_out_offset.scale(1,0), 
-                                    width=self.metal2_width, 
-                                    height=self.metal2_width)
+                                    width=self.m2_width, 
+                                    height=self.m2_width)
 
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=br_out_offset.scale(1,0), 
-                              width=self.metal2_width, 
+                              width=self.m2_width, 
                               height=self.route_height)
                 self.add_layout_pin(text="br_out[{}]".format(int(j/self.words_per_row)),
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=br_out_offset.scale(1,0), 
-                                    width=self.metal2_width, 
-                                    height=self.metal2_width)
+                                    width=self.m2_width, 
+                                    height=self.m2_width)
             
             else:
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=bl_out_offset, 
-                              width=self.metal2_width, 
+                              width=self.m2_width, 
                               height=self.route_height-bl_out_offset.y)
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=br_out_offset, 
-                              width=self.metal2_width, 
+                              width=self.m2_width, 
                               height=self.route_height-br_out_offset.y)
             
-            self.add_via(self.metal1_stack, bl_out_offset+vector(contact.m1m2.height, 0), rotate=90)
-            self.add_via(self.metal1_stack, br_out_offset+vector(contact.m1m2.height, 0), rotate=90)
+            self.add_via(self.m1_stack, bl_out_offset+vector(contact.m1m2.height, 0), rotate=90)
+            self.add_via(self.m1_stack, br_out_offset+vector(contact.m1m2.height, 0), rotate=90)
 
     def add_layout_pins(self):
         """ Add the pins after height is determined """
@@ -203,30 +203,30 @@ class column_mux_array(design.design):
             mux_inst = self.mux_inst[col_num]
             
             offset = mux_inst.get_pin("bl").ll()
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=offset,
-                          width= self.metal2_width, 
+                          width= self.m2_width, 
                           height=self.height-offset.y)
             self.add_layout_pin(text="bl[{}]".format(col_num), 
-                                layer="metal2", 
+                                layer="m2", 
                                 offset=offset,
-                                width= self.metal2_width, 
-                                height=self.metal2_width)
+                                width= self.m2_width, 
+                                height=self.m2_width)
 
             offset = mux_inst.get_pin("br").ll()
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=offset,
-                          width= self.metal2_width, 
+                          width= self.m2_width, 
                           height=self.height-offset.y)
             self.add_layout_pin(text="br[{}]".format(col_num), 
-                                layer="metal2", 
+                                layer="m2", 
                                 offset=offset,
-                                width= self.metal2_width, 
-                                height=self.metal2_width)
+                                width= self.m2_width, 
+                                height=self.m2_width)
 
             gnd_pin = self.mux_inst[0].get_pin("gnd")
             self.add_layout_pin(text="gnd", 
                                 layer=gnd_pin.layer, 
                                 offset=gnd_pin.ll(),
-                                width = self.metal1_width, 
-                                height=self.metal1_width)
+                                width = self.m1_width, 
+                                height=self.m1_width)

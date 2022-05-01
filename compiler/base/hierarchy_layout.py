@@ -65,11 +65,12 @@ class layout():
 
         self.gds_read()
 
-        try:
-            from tech import power_grid
-            self.pwr_grid_layers = [power_grid[0], power_grid[2]]
-        except ImportError:
-            self.pwr_grid_layers = ["m3", "m4"]
+        if OPTS.mode == "sync":
+            try:
+                from tech import power_grid
+                self.pwr_grid_layers = [power_grid[0], power_grid[2]]
+            except ImportError:
+                self.pwr_grid_layers = ["m3", "m4"]
 
     ############################################################
     # GDS layout
@@ -113,7 +114,7 @@ class layout():
             # we lose a rail after every 2 gates
             base_offset = vector(x_offset,
                                  (inv_num + 1) * height - \
-                                 (inv_num % 2) * drc["minwidth_metal1"])
+                                 (inv_num % 2) * drc["minwidth_m1"])
             y_dir = -1
 
         return (base_offset, y_dir)
@@ -763,7 +764,7 @@ class layout():
         mid2 = vector(mid1, end.y)
         self.add_path(layer, [start, mid1, mid2, end])
 
-    def add_wire(self, layers, coordinates, widen_short_wires=False):
+    def add_wire(self, layers, coordinates, widen_short_wires=True):
         """Connects a routing path on given layer,coordinates,width.
         The layers are the (horizontal, via, vertical). """
         import wire
@@ -783,7 +784,8 @@ class layout():
                             mirror=mirror,
                             rotate=rotate,
                             implant_type=implant_type,
-                            well_type=well_type)
+                            well_type=well_type,
+                            add_extra_layer=add_extra_layer)
     
     def add_contact_center(self, layers, offset, size=[1,1], mirror="R0", rotate=0,
                           implant_type=None, well_type=None, add_extra_layer=None):
@@ -794,10 +796,11 @@ class layout():
                                    mirror=mirror,
                                    rotate=rotate,
                                    implant_type=implant_type,
-                                   well_type=well_type)
+                                   well_type=well_type,
+                                   add_extra_layer=add_extra_layer)
 
     def add_via(self, layers, offset, size=[1, 1], directions=None, implant_type=None,
-               well_type=None, mirror="R0", rotate=0):
+               well_type=None, mirror="R0", rotate=0, add_extra_layer=None):
         """ Add a three layer via structure. """
         from sram_factory import factory
         via = factory.create(module_type="contact",
@@ -805,7 +808,8 @@ class layout():
                              dimensions=size,
                              directions=directions,
                              implant_type=implant_type,
-                             well_type=well_type)
+                             well_type=well_type,
+                             add_extra_layer=add_extra_layer)
         inst = self.add_inst(name=via.name,
                              mod=via,
                              offset=offset,
@@ -816,7 +820,7 @@ class layout():
         return inst
 
     def add_via_center(self, layers, offset, directions=None, size=[1, 1], implant_type=None,
-                      well_type=None, mirror="R0", rotate=0):
+                      well_type=None, mirror="R0", rotate=0, add_extra_layer=None):
         """
         Add a three layer via structure by the center coordinate
         accounting for mirroring and rotation.
@@ -827,7 +831,8 @@ class layout():
                              dimensions=size,
                              directions=directions,
                              implant_type=implant_type,
-                             well_type=well_type)
+                             well_type=well_type,
+                             add_extra_layer=add_extra_layer)
         height = via.height
         width = via.width
 

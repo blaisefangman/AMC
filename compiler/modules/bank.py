@@ -61,9 +61,9 @@ class bank(design.design):
         self.add_modules()
         self.route_layout()
         self.offset_all_coordinates()
-        self.ctrl_shift = self.ctrl_logic_inst.get_pin("reset").lx()-4*self.metal1_pitch
+        self.ctrl_shift = self.ctrl_logic_inst.get_pin("reset").lx()-4*self.m1_pitch
         if self.power_gate:
-            self.ctrl_shift-=5*self.metal1_pitch
+            self.ctrl_shift-=5*self.m1_pitch
 
     def compute_sizes(self):
         """  Computes the required sizes and spaces to create the bank """
@@ -78,14 +78,14 @@ class bank(design.design):
         self.m1m2_m2m3_fix = contact.m2m3.width - contact.m1m2.width
 
         # Width for vdd & gnd rail
-        self.pow_width = 2*self.metal1_pitch
+        self.pow_width = 2*self.m1_pitch
         
         via_pitch = drc["minwidth_via1"]+drc["via1_to_via1"]
-        self.num_via = int(ceil((self.pow_width+drc["via1_to_via1"]-2*drc["metal1_extend_via1"]) / via_pitch))
-        via1=contact.contact(layer_stack=("metal1", "via1", "metal2"), dimensions=[1,self.num_via])
-        via2=contact.contact(layer_stack=("metal2", "via2", "metal3"), dimensions=[1,self.num_via])
+        self.num_via = int(ceil((self.pow_width+drc["via1_to_via1"]-2*drc["m1_extend_via1"]) / via_pitch))
+        via1=contact.contact(layer_stack=("m1", "via1", "m2"), dimensions=[1,self.num_via])
+        via2=contact.contact(layer_stack=("m2", "via2", "m3"), dimensions=[1,self.num_via])
         self.pow_width = max(via1.height, via2.height)
-        self.pow_pitch = self.pow_width + self.metal1_pitch
+        self.pow_pitch = self.pow_width + self.m1_pitch
         
         if self.two_level_bank:
             self.go_name="go_s[{0}]"
@@ -118,25 +118,25 @@ class bank(design.design):
             self.num_split_ctrl_lines = 4
         
         # Bus_size for read-complete and write-complete signals +  one space on each side
-        self.comp_bus_width=(2 + self.data_ready_size + self.write_comp_size)*self.metal2_pitch
+        self.comp_bus_width=(2 + self.data_ready_size + self.write_comp_size)*self.m2_pitch
 
         # This is the ctrl bus to route pchg, sen, wen and col_mux_sel to each column
-        self.ctrl_bus_width=2*self.pow_pitch+self.metal2_pitch*(self.num_ctrl_lines+2)
+        self.ctrl_bus_width=2*self.pow_pitch+self.m2_pitch*(self.num_ctrl_lines+2)
         if self.w_per_row > 1: 
-            self.ctrl_bus_width=self.ctrl_bus_width+self.metal2_pitch*self.w_per_row
+            self.ctrl_bus_width=self.ctrl_bus_width+self.m2_pitch*self.w_per_row
         
         # This is the space between col_mux_drv and col_mux_array
-        self.ctrl_go_width=2*self.metal2_pitch
+        self.ctrl_go_width=2*self.m2_pitch
         
         if self.num_subanks > 1:
-            self.ctrl_go_width=4*self.metal2_pitch
+            self.ctrl_go_width=4*self.m2_pitch
             if self.w_per_row > 1:
-                self.ctrl_go_width=(self.w_per_row+3)*self.metal2_pitch
+                self.ctrl_go_width=(self.w_per_row+3)*self.m2_pitch
        
             if self.two_level_bank:
-                self.ctrl_go_width=(self.w_per_row+13)*self.metal2_pitch
+                self.ctrl_go_width=(self.w_per_row+13)*self.m2_pitch
         if self.mask: 
-            self.ctrl_go_width = self.ctrl_go_width + self.metal2_pitch
+            self.ctrl_go_width = self.ctrl_go_width + self.m2_pitch
     
     def add_pins(self):
         """ Add DATA, ADDR and ctrl pins for bank module """
@@ -345,7 +345,7 @@ class bank(design.design):
                                      self.ctrl_bus_width+self.ctrl_go_width, 
                                      self.w_complete.wc_x_shift+self.ctrl_bus_width-2*self.pow_pitch)
         
-        self.subank_width= self.bitcell_ary_off+self.bitcell_array.width+2*self.pow_pitch+self.metal1_pitch
+        self.subank_width= self.bitcell_ary_off+self.bitcell_array.width+2*self.pow_pitch+self.m1_pitch
 
         self.cell_ary_inst={}
         self.bitcell_ary_drv_inst={}
@@ -371,7 +371,7 @@ class bank(design.design):
 
             x_offset=i*self.subank_width+ self.ctrl_bus_width 
             if self.two_level_bank:
-                x_offset = x_offset + 3*self.metal1_pitch 
+                x_offset = x_offset + 3*self.m1_pitch 
             if self.num_subanks > 1:   
                 self.bitcell_ary_drv_inst[i] = self.add_inst(name="bitcell_drv_{0}".format(i), 
                                                              mod=self.bitcell_array_drv, 
@@ -389,10 +389,10 @@ class bank(design.design):
                     bit_ary_drv_out = self.bitcell_ary_drv_inst[i].get_pin("out[{0}]".format(k))
                     bitcell_wl = self.cell_ary_inst[i].get_pin("wl[{0}]".format(k))
                     
-                    if bitcell_wl.layer=="metal1":
-                        layer ="metal1"
+                    if bitcell_wl.layer=="m1":
+                        layer ="m1"
                     else:
-                        layer ="metal3"
+                        layer ="m3"
                     
                     self.add_path(layer, [bit_ary_drv_out.lc(), bitcell_wl.lc()])
 
@@ -429,8 +429,8 @@ class bank(design.design):
                 # Connecting output of pchg_array drv to pchg[i] in precharge array
                 pchg_drv_out = self.pchg_drv_inst[i].get_pin("out[0]").lc()
                 precharge_en = self.pchg_ary_inst[i].get_pin("en").lc()
-                mid_pos=(precharge_en.x-0.5*self.metal1_pitch, pchg_drv_out.y)
-                self.add_wire(self.metal1_stack, [pchg_drv_out,mid_pos,precharge_en])
+                mid_pos=(precharge_en.x-0.5*self.m1_pitch, pchg_drv_out.y)
+                self.add_wire(self.m1_stack, [pchg_drv_out,mid_pos,precharge_en], widen_short_wires=False)
 
     def add_col_mux_array(self):
         """ Add column-mux when words_per_row > 1 and its driver (sel[i] is Anded with go signal) """ 
@@ -511,17 +511,17 @@ class bank(design.design):
 
         if (self.num_subanks ==1 and self.two_level_bank):
             #en2_M
-            self.merge_xoffset[0]=self.d_split_ary_inst[0].lx()-self.metal2_pitch
+            self.merge_xoffset[0]=self.d_split_ary_inst[0].lx()-self.m2_pitch
             #en1_M
-            self.merge_xoffset[1]=self.merge_xoffset[0]-self.metal2_pitch        
+            self.merge_xoffset[1]=self.merge_xoffset[0]-self.m2_pitch        
             #en2_s
-            self.split_xoffset[0]=self.merge_xoffset[1]-self.metal2_pitch
+            self.split_xoffset[0]=self.merge_xoffset[1]-self.m2_pitch
             #en1_s
-            self.split_xoffset[1]=self.split_xoffset[0]-self.metal2_pitch
+            self.split_xoffset[1]=self.split_xoffset[0]-self.m2_pitch
             #reset
-            self.split_xoffset[2]=self.split_xoffset[1]-self.metal2_pitch
+            self.split_xoffset[2]=self.split_xoffset[1]-self.m2_pitch
             #S/M
-            self.split_xoffset[3]=self.split_xoffset[2]-self.metal2_pitch
+            self.split_xoffset[3]=self.split_xoffset[2]-self.m2_pitch
         
         if self.num_subanks > 1:
             if self.w_per_row>1:
@@ -529,7 +529,7 @@ class bank(design.design):
                 shift = 0
             else:
                 index = 0
-                shift = self.metal2_width
+                shift = self.m2_width
                 
             for i in range(self.num_subanks):
                 # Connecting output of go driver to ctrl in of sub_arrays
@@ -537,27 +537,27 @@ class bank(design.design):
                     for k in range(self.w_per_row):
                         en = self.mux_ary_inst[i].get_pin("sel[{0}]".format(self.w_per_row-1-k)).lc()
                         out = self.go_drv_inst[i].get_pin("out[{0}]".format(k))
-                        mid_pos1 = vector(out.rx()+(k+1)*self.metal1_pitch, out.lc().y)
+                        mid_pos1 = vector(out.rx()+(k+1)*self.m1_pitch, out.lc().y)
                         mid_pos2 = vector(mid_pos1.x, en.y)
-                        self.add_wire(self.metal1_stack, [out.lc(), mid_pos1, mid_pos2, en])
+                        self.add_wire(self.m1_stack, [out.lc(), mid_pos1, mid_pos2, en], widen_short_wires=False)
             
                 mod=[self.w_drv_ary_inst[i], self.s_amp_ary_inst[i]]
                 for j in range(2):
                 
                     en = mod[j].get_pin("en").lc()
                     out = self.go_drv_inst[i].get_pin("out[{0}]".format(index+1-j))
-                    mid_pos1 = vector(out.rx()+(index+j+1)*self.metal1_pitch+0.5*self.metal1_space, out.lc().y)
+                    mid_pos1 = vector(out.rx()+(index+j+1)*self.m1_pitch+0.5*self.m1_space, out.lc().y)
                     mid_pos2 = vector(mid_pos1.x, en.y)
-                    self.add_wire(self.metal1_stack, [out.lc(), mid_pos1, mid_pos2, en])
+                    self.add_wire(self.m1_stack, [out.lc(), mid_pos1, mid_pos2, en], widen_short_wires=False)
                 
                     inp = self.go_drv_inst[i].get_pin("in[{0}]".format(index+j)).lc()
-                    xoff=i*self.subank_width+ (j+1)*self.metal2_pitch+self.metal2_width
+                    xoff=i*self.subank_width+ (j+1)*self.m2_pitch+self.m2_width
                     if self.w_per_row>1:
-                        xoff=i*self.subank_width+(j+1+self.w_per_row)*self.metal2_pitch
+                        xoff=i*self.subank_width+(j+1+self.w_per_row)*self.m2_pitch
 
                     pos=vector(xoff, inp.y)
-                    self.add_path("metal1", [inp, pos])
-                    self.add_via_center(self.metal1_stack, pos)
+                    self.add_path("m1", [inp, pos])
+                    self.add_via_center(self.m1_stack, pos)
 
                 if self.two_level_bank:
                     y1=self.d_split_ary_inst[i].get_pin("en2_S").uy()
@@ -570,61 +570,61 @@ class bank(design.design):
                     
                     # "en1_S", "en2_S", "S", "en1_M", "en2_M", "M"
                     for j in range(6):
-                        xoffx=self.d_split_ary_inst[i].lx()-(2+j)*self.metal2_pitch-self.metal2_space
+                        xoffx=self.d_split_ary_inst[i].lx()-(2+j)*self.m2_pitch-self.m2_space
                         if self.mask:
-                            xoffx=xoffx-self.metal2_pitch
+                            xoffx=xoffx-self.m2_pitch
                         self.rail_Xindex.append(xoffx)
                         heightx = heightx 
-                        self.add_rect(layer="metal2",
+                        self.add_rect(layer="m2",
                                            offset=(xoffx, yoff),
-                                           width=self.metal2_width,
+                                           width=self.m2_width,
                                            height=heightx- 2*(j//3)*self.inv.height)
                     
                         pos= vector(self.go_drv_inst[i].rx(), self.go_drv_inst[i].get_pin("out[{0}]".format(index+2+j)).by())
-                        self.add_via(self.metal2_stack, pos-vector(0, shift))
-                        self.add_via(self.metal1_stack, pos-vector(0, shift))
-                        height=util_ceil(self.minarea_metal2/contact.m1m2.width)
-                        self.add_rect(layer="metal2", offset=pos-vector(0, height), width=contact.m1m2.width, height=1.5*height)
+                        self.add_via(self.m2_stack, pos-vector(0, shift))
+                        self.add_via(self.m1_stack, pos-vector(0, shift))
+                        height=util_ceil(self.minarea_m2/contact.m1m2.width)
+                        self.add_rect(layer="m2", offset=pos-vector(0, height), width=contact.m1m2.width, height=1.5*height)
                     
                     pin=["en1_S", "en2_S", "S"]
                     for j in range(3):
                         en = self.d_split_ary_inst[i].get_pin(pin[j]).lc()
                         out = self.go_drv_inst[i].get_pin("out[{0}]".format(j+index+2)).lc()
-                        self.add_path("metal1",[en, (self.rail_Xindex[j], en.y)])
-                        self.add_via_center(self.metal1_stack, (self.rail_Xindex[j]+0.5*self.metal2_width, en.y))
-                        self.add_path("metal3",[out, (self.rail_Xindex[j],out.y)])
-                        self.add_via_center(self.metal2_stack, (self.rail_Xindex[j]+0.5*self.metal2_width, out.y))
+                        self.add_path("m1",[en, (self.rail_Xindex[j], en.y)])
+                        self.add_via_center(self.m1_stack, (self.rail_Xindex[j]+0.5*self.m2_width, en.y))
+                        self.add_path("m3",[out, (self.rail_Xindex[j],out.y)])
+                        self.add_via_center(self.m2_stack, (self.rail_Xindex[j]+0.5*self.m2_width, out.y))
 
                     pin=["en1_M", "en2_M", "M"]
                     for j in range(3):
                         en = self.d_merge_ary_inst[i].get_pin(pin[j]).lc()
                         out = self.go_drv_inst[i].get_pin("out[{0}]".format(j+index+5)).lc()
-                        self.add_path("metal1",[en, (self.rail_Xindex[j+3], en.y)])
-                        self.add_via_center(self.metal1_stack, (self.rail_Xindex[j+3]+0.5*self.metal2_width, en.y))
-                        self.add_path("metal3",[out, (self.rail_Xindex[j+3],out.y)])
-                        self.add_via_center(self.metal2_stack, (self.rail_Xindex[j+3]+0.5*self.metal2_width, out.y))
+                        self.add_path("m1",[en, (self.rail_Xindex[j+3], en.y)])
+                        self.add_via_center(self.m1_stack, (self.rail_Xindex[j+3]+0.5*self.m2_width, en.y))
+                        self.add_path("m3",[out, (self.rail_Xindex[j+3],out.y)])
+                        self.add_via_center(self.m2_stack, (self.rail_Xindex[j+3]+0.5*self.m2_width, out.y))
                     
                     
                     for k in range(4):
                         pos1= self.go_drv_inst[i].get_pin("in[{0}]".format(index+6-k-(k//2))).lc()-vector(0.5*contact.m1m2.width, 0)
-                        pos2=vector(pos1.x-(k+2)*self.metal2_pitch, pos1.y)+vector(0.5*contact.m1m2.width+0.5*self.metal2_width, 0)
+                        pos2=vector(pos1.x-(k+2)*self.m2_pitch, pos1.y)+vector(0.5*contact.m1m2.width+0.5*self.m2_width, 0)
                         pos3=vector(pos2.x, self.min_point_y)
-                        self.add_path("metal3", [pos1, pos2, pos3])
-                        self.add_via_center(self.metal2_stack, pos1, rotate=90)
-                        self.add_via_center(self.metal1_stack, pos1, rotate=90)
-                        height=util_ceil(self.minarea_metal2/contact.m1m2.height)
-                        self.add_rect_center(layer="metal2", offset=pos1, width=contact.m1m2.height, height=2*height)
+                        self.add_path("m3", [pos1, pos2, pos3])
+                        self.add_via_center(self.m2_stack, pos1, rotate=90)
+                        self.add_via_center(self.m1_stack, pos1, rotate=90)
+                        height=util_ceil(self.minarea_m2/contact.m1m2.height)
+                        self.add_rect_center(layer="m2", offset=pos1, width=contact.m1m2.height, height=2*height)
 
                     #reset
-                    self.split_xoffset[2]=self.d_split_ary_inst[0].lx()-self.metal2_pitch
+                    self.split_xoffset[2]=self.d_split_ary_inst[0].lx()-self.m2_pitch
                     #en1_M
-                    self.merge_xoffset[1]=self.go_drv_inst[0].get_pin("in[0]").lc().x-2*self.metal2_pitch+0.5*self.metal2_width
+                    self.merge_xoffset[1]=self.go_drv_inst[0].get_pin("in[0]").lc().x-2*self.m2_pitch+0.5*self.m2_width
                     #en2_M
-                    self.merge_xoffset[0]=self.merge_xoffset[1] - self.metal2_pitch        
+                    self.merge_xoffset[0]=self.merge_xoffset[1] - self.m2_pitch        
                     #en1_s
-                    self.split_xoffset[1]=self.merge_xoffset[0] - self.metal2_pitch
+                    self.split_xoffset[1]=self.merge_xoffset[0] - self.m2_pitch
                     #en2_s
-                    self.split_xoffset[0]=self.split_xoffset[1] - self.metal2_pitch
+                    self.split_xoffset[0]=self.split_xoffset[1] - self.m2_pitch
 
     def add_s_amp_array(self):
         """ Add s_amp array and its drv (sen[i] is Anded with go signal) """
@@ -666,8 +666,8 @@ class bank(design.design):
                     BC_BR = self.cell_ary_inst[i].get_pin("br[{0}]".format(j)).bc()
                     SA_BL = self.s_amp_ary_inst[i].get_pin("bl[{0}]".format(j)).uc()
                     SA_BR = self.s_amp_ary_inst[i].get_pin("br[{0}]".format(j)).uc()
-                    self.add_path("metal2", [BC_BL, SA_BL])
-                    self.add_path("metal2", [BC_BR, SA_BR])
+                    self.add_path("m2", [BC_BL, SA_BL])
+                    self.add_path("m2", [BC_BR, SA_BR])
 
     def add_data_ready(self):
         """ Add 2-input nand gate to detect data_ready on dout and dout_bar for read completion """
@@ -675,7 +675,7 @@ class bank(design.design):
         self.data_ready_inst={}
         for i in range(self.num_subanks):
             x_offset=i * self.subank_width + self.bitcell_ary_off
-            offset=vector(x_offset-self.ctrl_go_width+self.metal1_space-self.data_ready.width, self.y_offset+2*self.metal1_pitch)
+            offset=vector(x_offset-self.ctrl_go_width+self.m1_space-self.data_ready.width, self.y_offset+2*self.m1_pitch)
             self.data_ready_inst[i]=self.add_inst(name="data_ready_{0}".format(i),
                                                   mod=self.data_ready,
                                                   offset=offset.scale(1,-1))
@@ -690,18 +690,18 @@ class bank(design.design):
             dr_in_A = self.data_ready_inst[i].get_pin("bl") 
             dr_in_B = self.data_ready_inst[i].get_pin("br") 
             
-            self.add_path("metal1", [(data_out.x, dr_in_A.lc().y), dr_in_A.lc()])
-            self.add_path("metal1", [(data_out_bar.x, dr_in_B.lc().y), dr_in_B.lc()])
+            self.add_path("m1", [(data_out.x, dr_in_A.lc().y), dr_in_A.lc()])
+            self.add_path("m1", [(data_out_bar.x, dr_in_B.lc().y), dr_in_B.lc()])
             
-            self.add_via(self.metal1_stack, (data_out.x-0.5*self.metal2_width, dr_in_A.by()-self.via_shift("v1")))
-            self.add_via(self.metal1_stack, (data_out_bar.x-0.5*self.metal2_width, dr_in_B.by()-self.via_shift("v1")))
-            self.add_path("metal2", [data_out, (data_out.x, dr_in_A.lc().y)])
-            self.add_path("metal2", [data_out_bar, (data_out_bar.x, dr_in_B.lc().y)])
+            self.add_via(self.m1_stack, (data_out.x-0.5*self.m2_width, dr_in_A.by()-self.v1_via_shift))
+            self.add_via(self.m1_stack, (data_out_bar.x-0.5*self.m2_width, dr_in_B.by()-self.v1_via_shift))
+            self.add_path("m2", [data_out, (data_out.x, dr_in_A.lc().y)])
+            self.add_path("m2", [data_out_bar, (data_out_bar.x, dr_in_B.lc().y)])
 
     def add_w_drv_array(self):
         """ Add w_drv and w_drv drv (wen[i] is Anded with go signal) """ 
 
-        self.y_offset= self.y_offset+self.w_drv_array.height+ (self.num_subanks+2)*self.metal1_pitch
+        self.y_offset= self.y_offset+self.w_drv_array.height+ (self.num_subanks+2)*self.m1_pitch
         self.w_drv_ary_inst={}
         for i in range(self.num_subanks):
             x_offset=self.subank_width * i + self.bitcell_ary_off + self.bitcell_array.xleft_shift
@@ -742,8 +742,8 @@ class bank(design.design):
                 WD_BR = self.w_drv_ary_inst[i].get_pin("br[{0}]".format(j)).uc()
                 SA_BL = self.s_amp_ary_inst[i].get_pin("bl[{0}]".format(j)).uc()
                 SA_BR = self.s_amp_ary_inst[i].get_pin("br[{0}]".format(j)).uc()
-                self.add_path("metal2", [WD_BL, (WD_BL.x, self.s_amp_ary_inst[i].by())])
-                self.add_path("metal2", [WD_BR, (WD_BR.x, self.s_amp_ary_inst[i].by())])
+                self.add_path("m2", [WD_BL, (WD_BL.x, self.s_amp_ary_inst[i].by())])
+                self.add_path("m2", [WD_BR, (WD_BR.x, self.s_amp_ary_inst[i].by())])
             
     def add_w_complete(self):
         """ Add write_complete to detect completion of write on top of BL and BL_bar""" 
@@ -780,23 +780,23 @@ class bank(design.design):
     def route_bm_write_comp(self):        
         """ Route write mask bit from write driver to write complete if self.mask """ 
         
-        yoff= self.min_point_y+(self.w_per_row+self.num_ctrl_lines+self.num_subanks+4)*self.metal1_pitch
+        yoff= self.min_point_y+(self.w_per_row+self.num_ctrl_lines+self.num_subanks+4)*self.m1_pitch
         for i in range(self.num_subanks):
-            xoff1 = i*self.subank_width +3*self.metal2_pitch + contact.m1m2.height
+            xoff1 = i*self.subank_width +3*self.m2_pitch + contact.m1m2.height
             if self.w_per_row>1:
-                xoff1 = xoff1 + self.w_per_row*self.metal2_pitch
+                xoff1 = xoff1 + self.w_per_row*self.m2_pitch
             pos1 = self.w_comp_inst[i].get_pin("bm").lc()
             pos2 = vector(xoff1, pos1.y)
             pos3 = vector(xoff1, yoff)
-            pos4 = vector(self.w_drv_ary_inst[i].lx()-self.metal2_pitch, yoff)
+            pos4 = vector(self.w_drv_ary_inst[i].lx()-self.m2_pitch, yoff)
             if (self.two_level_bank and self.num_subanks>1):
-                pos4 = pos4 - vector(self.metal2_pitch, 0)
+                pos4 = pos4 - vector(self.m2_pitch, 0)
             if (self.two_level_bank and self.num_subanks==1):
-                pos4 = pos4 - vector(6*self.metal2_pitch, 0)
+                pos4 = pos4 - vector(6*self.m2_pitch, 0)
 
-            pos6 = vector(self.w_drv_ary_inst[i].get_pin("bm[0]").uc().x, self.w_drv_ary_inst[0].by()+self.metal1_width)
+            pos6 = vector(self.w_drv_ary_inst[i].get_pin("bm[0]").uc().x, self.w_drv_ary_inst[0].by()+self.m1_width)
             pos5 = vector(pos4.x, pos6.y)
-            self.add_wire(self.metal1_stack, [pos1, pos2, pos3, pos4, pos5, pos6])
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, pos6], widen_short_wires=False)
 
 
     def add_din_split_array(self):        
@@ -882,24 +882,24 @@ class bank(design.design):
         for k in range(self.num_rows):
             row_dec_out = self.row_dec_inst.get_pin("decode[{0}]".format(k)).lc()
             row_dec_drv_in = self.row_dec_drv_inst.get_pin("in[{0}]".format(k)).lc()
-            self.add_path("metal1",[row_dec_out, row_dec_drv_in])
+            self.add_path("m1",[row_dec_out, row_dec_drv_in])
             
             #The following routing is based on the metal layer of WL pin in cell_6t
             wl_pin_layer = self.bitcell_array.get_pin("wl[0]").layer
-            if wl_pin_layer[0:6] == "metal1":
-                route_layer = "metal3"
+            if wl_pin_layer[0:2] == "m1":
+                route_layer = "m3"
             else:
-                route_layer = "metal4"
+                route_layer = "m4"
             
             row_dec_drv_out = self.row_dec_drv_inst.get_pin("out[{0}]".format(k)).lc()
             bitcell_wl = self.cell_ary_inst[0].get_pin("wl[{0}]".format(k))
             
             # Routing output of row_dec_drv directly to bitcell_array
             if self.num_subanks==1:
-                if bitcell_wl.layer[0:6] == "metal1":
-                    layer = "metal1" 
+                if bitcell_wl.layer[0:2] == "m1":
+                    layer = "m1" 
                 else:
-                    layer = "metal3"      
+                    layer = "m3"      
                 self.add_path(layer, [row_dec_drv_out, bitcell_wl.lc()])
 
             # Routing output of row_dec_drv to each subank to gated with go[i]
@@ -908,10 +908,10 @@ class bank(design.design):
                 self.add_path(route_layer, [row_dec_drv_out, last_drv_in])
 
         # calculating the location of the subank decoder in case there is no col_mux_array
-        self.vertical_gap = max(self.well_space, 2*self.metal1_pitch) 
+        self.vertical_gap = max(self.well_space, 2*self.m1_pitch) 
         if self.mux_addr_size == 0:
-            self.subank_dec_x_off = self.row_dec_inst.lx() -(self.addr_size+2)*self.metal2_pitch-\
-                                    2*(self.pow_width+self.metal1_pitch)
+            self.subank_dec_x_off = self.row_dec_inst.lx() -(self.addr_size+2)*self.m2_pitch-\
+                                    2*(self.pow_width+self.m1_pitch)
                                  
             if self.two_level_bank:
                 self.subank_dec_y_off = max(self.row_dec.predecoder_height, 
@@ -931,7 +931,7 @@ class bank(design.design):
 
         # Place the col_mux decoder below the the row decoder (with some space for wells)
         x_off = self.mux_decoder.width  + self.comp_bus_width
-        self.vertical_gap = max(self.well_space, 2*self.metal1_pitch) 
+        self.vertical_gap = max(self.well_space, 2*self.m1_pitch) 
         y_off = self.row_dec.predecoder_height + self.mux_decoder.height + 2*self.vertical_gap
         if self.mux_addr_size == 1:
             y_off = y_off + self.mux_decoder.height
@@ -953,8 +953,8 @@ class bank(design.design):
         # Update the location of the subank decoder in case there is a col_mux_array
         if self.mux_addr_size > 0:
             self.subank_dec_x_off = min (self.row_dec_inst.lx(), self.mux_dec_inst.lx()) - \
-                                         2*(self.pow_width+self.metal1_pitch) - \
-                                         (self.addr_size+2)*self.metal2_pitch  
+                                         2*(self.pow_width+self.m1_pitch) - \
+                                         (self.addr_size+2)*self.m2_pitch  
 
             if self.two_level_bank:
                 self.subank_dec_y_off = max(self.row_dec.predecoder_height+ self.mux_decoder.height+\
@@ -992,7 +992,7 @@ class bank(design.design):
             self.connect_inst(temp)
 
         if self.subank_addr_size == 1:
-            col_dec_drv_x = self.subank_dec_inst.lx()-self.metal1_pitch
+            col_dec_drv_x = self.subank_dec_inst.lx()-self.m1_pitch
         else:
             col_dec_drv_x = self.subank_dec_inst.lx()
 
@@ -1031,9 +1031,9 @@ class bank(design.design):
             for i in range(self.num_subanks):
                 pos1=self.subank_dec_drv_inst2.get_pin("in[{0}]".format(i)).lc()
                 pos4=self.subank_dec_drv_inst.get_pin("out[{0}]".format(i)).lc()
-                pos2=vector(pos4.x-0.5*self.metal1_width, pos1.y)
+                pos2=vector(pos4.x-0.5*self.m1_width, pos1.y)
                 pos3=vector(pos2.x, pos4.y)
-                self.add_path("metal1", [pos1, pos2, pos3, pos4])
+                self.add_path("m1", [pos1, pos2, pos3, pos4])
 
         
         # connect the output of subank_dec to input of subank_dec_drv
@@ -1045,50 +1045,50 @@ class bank(design.design):
                 subank_drv_gnd = self.subank_dec_drv_inst.get_pins("gnd")[0].lc()
                 subank_dec_vdd = self.subank_dec_inst.get_pin("vdd").lc()
                 subank_dec_gnd = self.subank_dec_inst.get_pin("gnd").lc()
-                self.add_path("metal1", [subank_drv_vdd, subank_dec_vdd ])
-                self.add_path("metal1", [subank_drv_gnd, subank_dec_gnd ])
+                self.add_path("m1", [subank_drv_vdd, subank_dec_vdd ])
+                self.add_path("m1", [subank_drv_gnd, subank_dec_gnd ])
                 
                 if (i%2):
                     subank_dec_out = self.subank_dec_inst.get_pin("Z") 
-                    self.add_wire(self.metal1_stack, [(subank_dec_out.rx()+0.5*self.metal2_width, 
-                                                   subank_dec_out.by()), subank_drv_in.lc()])
+                    self.add_wire(self.m1_stack, [(subank_dec_out.rx()+0.5*self.m2_width, 
+                                                   subank_dec_out.by()), subank_drv_in.lc()], widen_short_wires=False)
 
                 else:
                     pin = self.subank_dec_inst.get_pin("A")
                     subank_dec_out = vector(pin.rx()+0.5*contact.m1m2.width, pin.uy())  
-                    self.add_via(self.metal1_stack, pin.lr()- vector(0, self.via_shift("v1")))
+                    self.add_via(self.m1_stack, pin.lr()- vector(0, self.v1_via_shift))
                     
-                    xoff=self.subank_dec_inst.lx()-self.metal1_pitch
-                    self.add_path("metal1", [(xoff+0.5*self.metal2_width, subank_drv_in.lc().y),
+                    xoff=self.subank_dec_inst.lx()-self.m1_pitch
+                    self.add_path("m1", [(xoff+0.5*self.m2_width, subank_drv_in.lc().y),
                                              (subank_drv_in.uc().x, subank_drv_in.lc().y)])
                     
-                    self.add_via(self.metal1_stack, (xoff- 0.5*self.metal2_width, subank_drv_in.lc().y))
+                    self.add_via(self.m1_stack, (xoff- 0.5*self.m2_width, subank_drv_in.lc().y))
                     pos1=vector(subank_dec_out.x, subank_dec_out.y)
-                    pos2=vector(pos1.x, subank_dec_out.y-self.metal1_pitch)
-                    pos3=vector(self.subank_dec_inst.lx()-self.metal1_pitch,pos2.y)
+                    pos2=vector(pos1.x, subank_dec_out.y-self.m1_pitch)
+                    pos3=vector(self.subank_dec_inst.lx()-self.m1_pitch,pos2.y)
                     pos4=vector(pos3.x,subank_drv_in.lc().y)
-                    self.add_path("metal2", [pos1, pos2, pos3, pos4], width=contact.m1m2.width)
+                    self.add_path("m2", [pos1, pos2, pos3, pos4], width=contact.m1m2.width)
                     
             # subank decoder is a 2:4 or 3:8 decoder
             if (self.subank_addr_size > 1):
                 subank_dec_out = self.subank_dec_inst.get_pin("out[{0}]".format(i)).uc()
                 mid_pos=(subank_dec_out.x, subank_drv_in.lc().y)
-                self.add_path("metal1",[subank_dec_out, mid_pos, subank_drv_in.lc()])
+                self.add_path("m1",[subank_dec_out, mid_pos, subank_drv_in.lc()])
         
         if (self.subank_addr_size > 1):
             for i in range(len(self.subank_dec_drv_inst.get_pins("vdd"))):
                 subank_drv_vdd = self.subank_dec_drv_inst.get_pins("vdd")[i].lc()
                 subank_dec_vdd = self.subank_dec_inst.get_pins("vdd")[i].lc()
-                self.add_path("metal1", [subank_drv_vdd, subank_dec_vdd])
+                self.add_path("m1", [subank_drv_vdd, subank_dec_vdd])
             for i in range(len(self.subank_dec_drv_inst.get_pins("gnd"))):
                 subank_drv_gnd = self.subank_dec_drv_inst.get_pins("gnd")[i].lc()
                 subank_dec_gnd = self.subank_dec_inst.get_pins("gnd")[i].lc()
-                self.add_path("metal1", [subank_drv_gnd, subank_dec_gnd])
+                self.add_path("m1", [subank_drv_gnd, subank_dec_gnd])
 
     def add_addr_split_ary(self):
         """ Add address splits on the left side of row-decoder, above col_dec (if num_bank > 1)""" 
    
-        y_offset=self.subank_dec_y_off-self.subank_dec_drv_height-(self.metal1_pitch+self.well_space)
+        y_offset=self.subank_dec_y_off-self.subank_dec_drv_height-(self.m1_pitch+self.well_space)
         x_offset=self.subank_dec_x_off-self.addr_split_array.width
         self.addrs_ary_inst=self.add_inst(name="addr_split_ary", 
                                           mod=self.addr_split_array,
@@ -1103,24 +1103,24 @@ class bank(design.design):
         """ Add ctrl merge array on the top of ctrl split array
             ack, rack and wack signals are mergeed if there are more than one bank """ 
 
-        y_offset=self.addrs_ary_inst.uy() + max(9*self.metal2_pitch, 
-                 (self.addr_size+1)*self.metal1_pitch)
+        y_offset=self.addrs_ary_inst.uy() + max(9*self.m2_pitch, 
+                 (self.addr_size+1)*self.m1_pitch)
         x_offset=self.subank_dec_x_off - 3*self.ctrl_merge_cell.width - \
-                 7*self.metal1_pitch-self.bitcell.width
+                 7*self.m1_pitch-self.bitcell.width
         self.ack_merge_cell_inst=self.add_inst(name="ack_merge_cell", 
                                                mod=self.ctrl_merge_cell,
                                                offset=vector(x_offset,y_offset))
         temp = ["ack_merge", "ack", "Mack", "pchg", "reset", "S", "vdd", "gnd"]
         self.connect_inst(temp)
         
-        x_offset=self.ack_merge_cell_inst.rx() + 3*self.metal1_pitch
+        x_offset=self.ack_merge_cell_inst.rx() + 3*self.m1_pitch
         self.rack_merge_cell_inst=self.add_inst(name="rack_merge_cell", 
                                                 mod=self.ctrl_merge_cell,
                                                 offset=vector(x_offset,y_offset))
         temp = ["rack_merge", "rack", "Mrack", "rreq_merge", "reset", "S", "vdd", "gnd"]
         self.connect_inst(temp)
 
-        x_offset=self.rack_merge_cell_inst.rx() + 3*self.metal1_pitch
+        x_offset=self.rack_merge_cell_inst.rx() + 3*self.m1_pitch
         self.wack_merge_cell_inst=self.add_inst(name="wack_merge_cell", 
                                                 mod=self.ctrl_merge_cell,
                                                 offset=vector(x_offset,y_offset))
@@ -1132,7 +1132,7 @@ class bank(design.design):
             w, r, rw, rreq and wreq signals are splitted if there are more than one bank""" 
 
         y_offset= self.ack_merge_cell_inst.by()
-        x_offset= self.ack_merge_cell_inst.lx()-3*self.metal1_pitch - self.ctrl_split_array.width
+        x_offset= self.ack_merge_cell_inst.lx()-3*self.m1_pitch - self.ctrl_split_array.width
         self.ctrls_ary_inst=self.add_inst(name="ctrl_split_ary", 
                                           mod=self.ctrl_split_array,
                                           offset=vector(x_offset,y_offset))
@@ -1142,23 +1142,23 @@ class bank(design.design):
     def add_ctrl_logic(self):
         """ Add ctrl_logic on the left side of row-decoder, above col_dec (if any)""" 
         
-        x_offset= self.row_dec_inst.lx()-2*self.pow_width-3*self.metal1_pitch- self.ctrl_logic.height
+        x_offset= self.row_dec_inst.lx()-2*self.pow_width-3*self.m1_pitch- self.ctrl_logic.height
 
         above_row_dec = self.row_dec_inst.get_pin("A[{0}]".format(self.row_addr_size-1)).by()+\
-                        self.metal2_pitch*(self.row_addr_size+1)
+                        self.m2_pitch*(self.row_addr_size+1)
 
         if not self.two_level_bank: 
             if self.num_subanks == 1:
                 y_offset = above_row_dec
             else:
                 above_subank_dec = self.subank_dec_drv_inst.uy()+\
-                                  self.metal1_pitch*(self.num_subanks+self.addr_size+2)
+                                  self.m1_pitch*(self.num_subanks+self.addr_size+2)
                 y_offset = max(above_row_dec, above_subank_dec)
 
         else:
             #(9+self.num_subanks): 3*(en1_M, en2_M) + vdd + gnd + space * go[i]
-            y_offset=max(self.ack_merge_cell_inst.uy() + (9+self.num_subanks)*self.metal1_pitch, 
-                         above_row_dec+ 2*self.metal2_pitch+ (self.num_subanks+1)*self.metal1_pitch)
+            y_offset=max(self.ack_merge_cell_inst.uy() + (9+self.num_subanks)*self.m1_pitch, 
+                         above_row_dec+ 2*self.m2_pitch+ (self.num_subanks+1)*self.m1_pitch)
         
         self.ctrl_logic_inst=self.add_inst(name="ctrl_logic", 
                                            mod=self.ctrl_logic, 
@@ -1199,49 +1199,49 @@ class bank(design.design):
         
         # The min Y-point is either the bottom of the decoders or the min data point
         if (self.mux_addr_size > 0):
-            min_y_dec_side = min (self.mux_dec_inst.by(), dout_min_point- 2*self.metal1_pitch) 
+            min_y_dec_side = min (self.mux_dec_inst.by(), dout_min_point- 2*self.m1_pitch) 
             self.min_x_row_dec = min (self.row_dec_inst.lx(), self.mux_dec_inst.lx())
         
         else:
-            min_y_dec_side = min(self.row_dec_inst.by()-self.row_dec.predecoder_height, dout_min_point- 2*self.metal1_pitch) 
-            self.min_x_row_dec = self.row_dec_inst.lx() - self.metal1_width
+            min_y_dec_side = min(self.row_dec_inst.by()-self.row_dec.predecoder_height, dout_min_point- 2*self.m1_pitch) 
+            self.min_x_row_dec = self.row_dec_inst.lx() - self.m1_width
             
         if self.num_subanks > 1:
-            min_y_dec_side = min_y_dec_side- self.num_ctrl_lines*self.metal2_pitch- self.w_per_row*self.metal1_pitch
+            min_y_dec_side = min_y_dec_side- self.num_ctrl_lines*self.m2_pitch- self.w_per_row*self.m1_pitch
         
         # This is for address bus position
-        self.addr_x_offset=self.min_x_row_dec - (2*self.pow_width+2*self.metal1_pitch)
+        self.addr_x_offset=self.min_x_row_dec - (2*self.pow_width+2*self.m1_pitch)
         
         # The minimum X-point is the left of the ctrl_logic or col_dec_drv.
-        self.min_point_x = self.addr_x_offset - self.ctrl_logic.height - 2*self.metal1_pitch
+        self.min_point_x = self.addr_x_offset - self.ctrl_logic.height - 2*self.m1_pitch
         
         # If num_subnak > 1 min_y offset is for (go[i] + vdd + gnd +pchg) routing to subank_decoder
         if self.num_subanks > 1:
-            self.min_point_y = min_y_dec_side-(self.num_subanks+3)*self.metal1_pitch
+            self.min_point_y = min_y_dec_side-(self.num_subanks+3)*self.m1_pitch
             self.min_point_x = min(self.min_point_x, self.subank_dec_drv_inst.lx() -\
-                                   self.metal1_pitch*(self.num_subanks+3))
+                                   self.m1_pitch*(self.num_subanks+3))
         else:
-            self.min_point_y = min_y_dec_side -2*self.metal1_pitch
+            self.min_point_y = min_y_dec_side -2*self.m1_pitch
 
         # If two_level banking min_x offset can be for split-merge ctrl cells
         if self.two_level_bank:
-            self.min_point_x = min(self.min_point_x,self.addrs_ary_inst.lx()-self.metal1_pitch, 
-                                   self.ctrls_ary_inst.lx()-self.metal1_pitch)
+            self.min_point_x = min(self.min_point_x,self.addrs_ary_inst.lx()-self.m1_pitch, 
+                                   self.ctrls_ary_inst.lx()-self.m1_pitch)
             if self.num_subanks > 1:
                 self.min_point_x = min(self.min_point_x, self.subank_dec_drv_inst2.lx() - \
-                                       self.metal1_pitch*(self.num_subanks+3))
+                                       self.m1_pitch*(self.num_subanks+3))
 
         # The max Y-point is the w_complete_inst top plus w_complete routing OR the ctrl logic top
         # OR row_dec_drv top + internal ctrl signal routing to ctrl_logic
-        w_complete_max_y = (self.w_comp_inst[0].uy() + (self.num_subanks+1)*self.metal1_pitch)
-        ctrl_logic_max_y = self.ctrl_logic_inst.uy()+(2*self.num_subanks+7)*self.metal2_pitch
-        row_dec_max_y = (self.row_dec_drv_inst.uy()+(2*self.num_subanks+7)*self.metal2_pitch)
+        w_complete_max_y = (self.w_comp_inst[0].uy() + (self.num_subanks+1)*self.m1_pitch)
+        ctrl_logic_max_y = self.ctrl_logic_inst.uy()+(2*self.num_subanks+7)*self.m2_pitch
+        row_dec_max_y = (self.row_dec_drv_inst.uy()+(2*self.num_subanks+7)*self.m2_pitch)
         
         self.max_point_y = max (w_complete_max_y, ctrl_logic_max_y, row_dec_max_y)
         
         # Calculating the height of vertical address bus
         last_addr_off1=self.row_dec_inst.get_pin("A[{0}]".format(self.row_addr_size-1)).by()+\
-                       self.metal2_pitch*self.row_addr_size
+                       self.m2_pitch*self.row_addr_size
         
         if self.two_level_bank:
             last_addr_off2= self.ctrls_ary_inst.by() 
@@ -1251,7 +1251,7 @@ class bank(design.design):
             self.addr_height= last_addr_off1- self.min_point_y
             if self.num_subanks >1:
                 self.addr_height = max (self.addr_height, self.subank_dec_drv_inst.uy() +\
-                                        self.metal1_pitch*self.addr_size - self.min_point_y)
+                                        self.m1_pitch*self.addr_size - self.min_point_y)
         
         # Defining the height of bank including all the modules and routings
         # Power_heght is the height of vertical vdd and gnd rails
@@ -1260,11 +1260,11 @@ class bank(design.design):
         
         # Add two m2_pitch for vdd and gnd connection of ctrl_logic if condition is true
         if self.max_point_y >= self.ctrl_logic_inst.uy():
-            self.height = self.power_height + 4*self.metal2_pitch
+            self.height = self.power_height + 4*self.m2_pitch
 
         # If two_level_bank, 6 metal rails are added to connect data split to addr/ctrl split ctrl
         if self.two_level_bank:
-            self.height= self.power_height + 9* self.metal2_pitch
+            self.height= self.power_height + 9* self.m2_pitch
         
         # Add vdd and gnd rails as power pins for each sub-bank
         self.vdd_x_offset={}
@@ -1272,57 +1272,57 @@ class bank(design.design):
         self.vdd2_x_offset={}
         self.gnd2_x_offset={}
 
-        vdd_rail_height = self.pchg_ary_inst[0].uy() - self.min_point_y+self.metal1_width
-        vdd2_rail_height = self.w_comp_inst[0].uy() - self.min_point_y+self.metal1_width
+        vdd_rail_height = self.pchg_ary_inst[0].uy() - self.min_point_y+self.m1_width
+        vdd2_rail_height = self.w_comp_inst[0].uy() - self.min_point_y+self.m1_width
         
         for i in range(self.num_subanks):
-            self.gnd_x_offset[i]=i*self.subank_width + 5*self.metal2_pitch
+            self.gnd_x_offset[i]=i*self.subank_width + 5*self.m2_pitch
             if self.w_per_row>1:
-                self.gnd_x_offset[i]=i*self.subank_width + (5+self.w_per_row)*self.metal2_pitch
+                self.gnd_x_offset[i]=i*self.subank_width + (5+self.w_per_row)*self.m2_pitch
             self.vdd_x_offset[i]=self.gnd_x_offset[i] + self.pow_pitch
             
-            self.gnd2_x_offset[i]=self.cell_ary_inst[i].rx() + self.metal2_pitch
+            self.gnd2_x_offset[i]=self.cell_ary_inst[i].rx() + self.m2_pitch
             self.vdd2_x_offset[i]=self.gnd2_x_offset[i] + self.pow_pitch
 
             a = [self.vdd_x_offset[i], self.vdd2_x_offset[i]]
             b = [ vdd_rail_height, vdd2_rail_height]
             for (off, height) in zip (a,b):
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=(off, self.min_point_y), 
                               width=self.pow_width, 
                               height=height)
                 self.add_layout_pin(text="vdd", 
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=(off, self.min_point_y), 
                                     width=self.pow_width, 
                                     height=self.pow_width)
             
             a = [self.gnd_x_offset[i], self.gnd2_x_offset[i]]
             for (off, height) in zip (a,b):
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=(off, self.min_point_y), 
                               width=self.pow_width, 
                               height=height)
                 self.add_layout_pin(text="gnd", 
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=(off, self.min_point_y), 
                                     width=self.pow_width, 
                                     height=self.pow_width)
 
         # calculating the width of bank including all the modules and routings
         self.width=self.cell_ary_inst[self.num_subanks-1].rx()+2*self.pow_pitch+\
-                   (self.num_subanks+1)*self.metal1_pitch- self.min_point_x
+                   (self.num_subanks+1)*self.m1_pitch- self.min_point_x
 
         # If two_level_bank, 8 metal rails added for data split/merge to addr/ctrl split/merge ctrl
         if self.two_level_bank:
-            self.width= self.width + 8*self.metal1_pitch
+            self.width= self.width + 8*self.m1_pitch
         
     def add_and_route_address_bus(self):
         """ Add address pins for row decoder, col decoder and col_mux decoder input address"""
 
         for i in range(self.addr_size):
-            off=vector(self.addr_x_offset-(i+1)*(self.metal2_pitch),self.min_point_y)
-            self.add_rect(layer="metal2", 
+            off=vector(self.addr_x_offset-(i+1)*(self.m2_pitch),self.min_point_y)
+            self.add_rect(layer="m2", 
                           offset=off, 
                           width=contact.m1m2.width, 
                           height=self.addr_height)
@@ -1330,34 +1330,34 @@ class bank(design.design):
         # Connecting input address lines of row decoder to address pins
         for i in range(self.row_addr_size):
             addr_off= self.row_dec_inst.get_pin("A[{0}]".format(i)).ll() 
-            addr_width=self.addr_x_offset-(i+1)*(self.metal2_pitch) - addr_off.x
-            y_off = addr_off.y+i*self.metal2_pitch
-            self.add_rect(layer="metal3", 
+            addr_width=self.addr_x_offset-(i+1)*(self.m2_pitch) - addr_off.x
+            y_off = addr_off.y+i*self.m2_pitch
+            self.add_rect(layer="m3", 
                           offset=vector(addr_off.x, y_off), 
                           width=addr_width, 
-                          height=self.metal3_width)
-            self.add_via(self.metal2_stack,(addr_off.x, y_off))
-            self.add_via(self.metal2_stack,(addr_off.x+addr_width+contact.m2m3.height-self.via_shift("v1"), y_off), 
+                          height=self.m3_width)
+            self.add_via(self.m2_stack,(addr_off.x, y_off))
+            self.add_via(self.m2_stack,(addr_off.x+addr_width+contact.m2m3.height-self.v1_via_shift, y_off), 
                          rotate=90)
         
         # Connecting input address lines of mux decoder (inverter or 2:4 decoder) to address pins
         for i in range(self.mux_addr_size):
             if self.mux_addr_size == 1:
                 addr_off = self.mux_dec_inst.get_pin("A").ll()
-                self.add_via(self.metal2_stack,(addr_off.x-drc["metal3_enclosure_via2"]-\
-                                            self.metal1_width,addr_off.y-self.via_shift("v1")))
+                self.add_via(self.m2_stack,(addr_off.x-drc["m3_enclose_via2"]-\
+                                            self.m1_width,addr_off.y-self.v1_via_shift))
 
             if self.mux_addr_size > 1:
                 addr_off = self.mux_dec_inst.get_pin("in[{0}]".format(i)).ll()
-                self.add_via(self.metal2_stack, (addr_off.x+contact.m1m2.width, addr_off.y+i*self.metal2_pitch), rotate=90)
+                self.add_via(self.m2_stack, (addr_off.x+contact.m1m2.width, addr_off.y+i*self.m2_pitch), rotate=90)
             
-            addr_width=self.addr_x_offset-addr_off.x-(i+1+self.row_addr_size)*(self.metal2_pitch) 
-            yoff = addr_off.y+i*self.metal2_pitch
-            self.add_rect(layer="metal3", 
+            addr_width=self.addr_x_offset-addr_off.x-(i+1+self.row_addr_size)*(self.m2_pitch) 
+            yoff = addr_off.y+i*self.m2_pitch
+            self.add_rect(layer="m3", 
                            offset=vector(addr_off.x, yoff), 
                            width=addr_width, 
-                           height=self.metal3_width)
-            self.add_via(self.metal2_stack, (addr_off.x+addr_width, yoff-self.via_shift("v1")))
+                           height=self.m3_width)
+            self.add_via(self.m2_stack, (addr_off.x+addr_width, yoff-self.v1_via_shift))
         
         # Connecting input address lines of subank decoder (inverter or 2:4 decoder) to address pins
         for i in range(self.subank_addr_size):
@@ -1366,55 +1366,55 @@ class bank(design.design):
             if self.subank_addr_size > 1:
                 addr_off = self.subank_dec_inst.get_pin("in[{0}]".format(i)).ll()
             
-            addr_width=self.addr_x_offset- addr_off.x - (i+1+self.row_addr_size+self.mux_addr_size)*(self.metal2_pitch) 
-            yoff = addr_off.y+i*self.metal2_pitch
-            self.add_rect(layer="metal3", 
+            addr_width=self.addr_x_offset- addr_off.x - (i+1+self.row_addr_size+self.mux_addr_size)*(self.m2_pitch) 
+            yoff = addr_off.y+i*self.m2_pitch
+            self.add_rect(layer="m3", 
                           offset=vector(addr_off.x, yoff), 
                           width=addr_width, 
-                          height=self.metal3_width)
-            self.add_via(self.metal2_stack, (addr_off.x , yoff-self.via_shift("v2")))
-            self.add_via(self.metal2_stack, (addr_off.x + addr_width+contact.m2m3.height-self.via_shift("v1"), yoff), rotate=90)
+                          height=self.m3_width)
+            self.add_via(self.m2_stack, (addr_off.x , yoff-self.v2_via_shift))
+            self.add_via(self.m2_stack, (addr_off.x + addr_width+contact.m2m3.height-self.v1_via_shift, yoff), rotate=90)
         
         # Connecting output of address split to address bus if two_level_bank
         if self.two_level_bank:
             for i in range(self.addr_size):
                 addr_out_off= self.addrs_ary_inst.get_pin("Q[{0}]".format(self.addr_size-1-i)).uc()
-                addr_end_x = self.addr_x_offset-(self.addr_size-i)*self.metal2_pitch 
-                addr_end_y = addr_out_off.y+(i+1)*self.metal1_pitch
-                self.add_wire(self.metal1_stack, [addr_out_off,(addr_out_off.x, addr_end_y),(addr_end_x,addr_end_y)])
-                self.add_via(self.metal1_stack, (addr_end_x, addr_end_y-0.5*self.metal1_width-self.via_shift("v1")))
+                addr_end_x = self.addr_x_offset-(self.addr_size-i)*self.m2_pitch 
+                addr_end_y = addr_out_off.y+(i+1)*self.m1_pitch
+                self.add_wire(self.m1_stack, [addr_out_off,(addr_out_off.x, addr_end_y),(addr_end_x,addr_end_y)], widen_short_wires=False)
+                self.add_via(self.m1_stack, (addr_end_x, addr_end_y-0.5*self.m1_width-self.v1_via_shift))
 
             # Creating input address pins for address split array if two_level_bank
             for i in range(self.addr_size):
                 addr_in_off= self.addrs_ary_inst.get_pin("D[{0}]".format(i))
-                addr_pin_x= self.min_point_x-(self.num_subanks+ 2*self.num_split_ctrl_lines)*self.metal1_pitch
-                addr_pin_y= addr_in_off.by()-(i+1)*self.metal2_pitch
-                self.add_path("metal3", [addr_in_off.uc(), (addr_in_off.uc().x,addr_pin_y), (addr_pin_x,addr_pin_y)])
+                addr_pin_x= self.min_point_x-(self.num_subanks+ 2*self.num_split_ctrl_lines)*self.m1_pitch
+                addr_pin_y= addr_in_off.by()-(i+1)*self.m2_pitch
+                self.add_path("m3", [addr_in_off.uc(), (addr_in_off.uc().x,addr_pin_y), (addr_pin_x,addr_pin_y)])
                 self.add_layout_pin(text="addr[{0}]".format(i),
-                                    layer="metal3",
-                                    offset=(addr_pin_x,addr_pin_y-0.5*self.metal3_width), 
-                                    width=self.metal3_width, 
-                                    height=self.metal3_width)
+                                    layer="m3",
+                                    offset=(addr_pin_x,addr_pin_y-0.5*self.m3_width), 
+                                    width=self.m3_width, 
+                                    height=self.m3_width)
         else:
             # Creating input address pins if not two_level_bank
             for i in range(self.addr_size):
                 y_off = self.row_dec_inst.get_pin("A[{0}]".format(self.row_addr_size-1)).by() +\
-                        (self.row_addr_size-1) * self.metal2_pitch
+                        (self.row_addr_size-1) * self.m2_pitch
                 if self.num_subanks >1:
-                    y_off =self.subank_dec_drv_inst.uy() + self.addr_size * self.metal1_pitch
+                    y_off =self.subank_dec_drv_inst.uy() + self.addr_size * self.m1_pitch
 
-                x_off=self.min_point_x-self.num_subanks*self.metal1_pitch
-                self.add_via(self.metal1_stack, (self.addr_x_offset-(i+1)*(self.metal2_pitch), 
-                             y_off-i*self.metal1_pitch-self.via_shift("v1")))
-                self.add_rect(layer="metal1",
-                              offset=(x_off,y_off-i*self.metal1_pitch), 
-                              width=self.addr_x_offset-(i+1)*(self.metal2_pitch) - x_off, 
-                              height=self.metal1_width)
+                x_off=self.min_point_x-self.num_subanks*self.m1_pitch
+                self.add_via(self.m1_stack, (self.addr_x_offset-(i+1)*(self.m2_pitch), 
+                             y_off-i*self.m1_pitch-self.v1_via_shift))
+                self.add_rect(layer="m1",
+                              offset=(x_off,y_off-i*self.m1_pitch), 
+                              width=self.addr_x_offset-(i+1)*(self.m2_pitch) - x_off, 
+                              height=self.m1_width)
                 self.add_layout_pin(text="addr[{0}]".format(i),
-                                    layer="metal1",
-                                    offset=(x_off,y_off-i*self.metal1_pitch), 
-                                    width=self.metal1_width, 
-                                    height=self.metal1_width)
+                                    layer="m1",
+                                    offset=(x_off,y_off-i*self.m1_pitch), 
+                                    width=self.m1_width, 
+                                    height=self.m1_width)
 
     def add_ctrl_bus(self):
         """ Create the ctrl central bus for sen, wen and pchg (spli/merge ctrl if two_level_bank)"""
@@ -1430,70 +1430,70 @@ class bank(design.design):
 
         for i in range(self.num_subanks):
             for j in range(3):
-                x_offset=i*self.subank_width+ j*self.metal2_pitch+self.metal2_width
-                y_offset = self.min_point_y+(j+2)*self.metal1_pitch
+                x_offset=i*self.subank_width+ j*self.m2_pitch+self.m2_width
+                y_offset = self.min_point_y+(j+2)*self.m1_pitch
                 if self.w_per_row>1:
-                    x_offset=i*self.subank_width+(j+self.w_per_row)*self.metal2_pitch
+                    x_offset=i*self.subank_width+(j+self.w_per_row)*self.m2_pitch
                 if i ==0:
-                    self.add_rect(layer="metal2", 
+                    self.add_rect(layer="m2", 
                                   offset=vector(x_offset, self.min_point_y), 
-                                  width=self.metal2_width, 
+                                  width=self.m2_width, 
                                   height= height)
                     self.ctrl_line_xoffset[j] = x_offset
                     if self.num_subanks != 1:
-                        self.add_via(self.metal1_stack,(x_offset,y_offset))
+                        self.add_via(self.m1_stack,(x_offset,y_offset))
                 else:
-                    self.add_rect(layer="metal2", 
+                    self.add_rect(layer="m2", 
                                   offset=vector(x_offset, self.min_point_y), 
-                                  width=self.metal2_width, 
+                                  width=self.m2_width, 
                                   height= height)
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                    offset=vector(x_offset - self.subank_width, y_offset), 
                                    width=self.subank_width, 
-                                   height= self.metal1_width)
-                    self.add_via(self.metal1_stack, (x_offset, y_offset-self.via_shift("v1")))
+                                   height= self.m1_width)
+                    self.add_via(self.m1_stack, (x_offset, y_offset-self.v1_via_shift))
             
                 if self.num_subanks==1:
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                   offset=(x_offset, drv[j][i].get_pin(pin_name).by()), 
                                   width=drv[j][i].get_pin(pin_name).lx()-x_offset+i*self.subank_width, 
-                                  height= self.metal1_width)
-                    self.add_via(self.metal1_stack, (x_offset, drv[j][i].get_pin(pin_name).by()-\
-                                                 contact.m1m2.height+self.via_shift("v1")))
+                                  height= self.m1_width)
+                    self.add_via(self.m1_stack, (x_offset, drv[j][i].get_pin(pin_name).by()-\
+                                                 contact.m1m2.height+self.v1_via_shift))
 
                 else:
-                    xoff=i*self.subank_width+self.metal2_width
+                    xoff=i*self.subank_width+self.m2_width
                     pin = self.pchg_drv_inst[i].get_pin("in[0]").ll()
                     if self.w_per_row>1:
-                        xoff=i*self.subank_width+self.w_per_row*self.metal2_pitch
-                    self.add_rect(layer="metal1", 
+                        xoff=i*self.subank_width+self.w_per_row*self.m2_pitch
+                    self.add_rect(layer="m1", 
                                   offset=(xoff, pin.y), 
                                   width=pin.x-xoff, 
-                                  height= self.metal1_width)
-                    self.add_via(self.metal1_stack, (xoff, pin.y- contact.m1m2.height+self.via_shift("v1")))
+                                  height= self.m1_width)
+                    self.add_via(self.m1_stack, (xoff, pin.y- contact.m1m2.height+self.v1_via_shift))
 
             #connect data_ready to sen and write driver to pchg
             pin_list = [self.data_ready_inst[i].get_pin("sen").ll(), 
                         self.w_drv_ary_inst[i].get_pin("pchg").ll()]
             for k in range(2):
                 pin = pin_list[k]
-                x_offset=i*self.subank_width+ (1-k)*self.metal2_pitch+self.metal2_width
+                x_offset=i*self.subank_width+ (1-k)*self.m2_pitch+self.m2_width
                 if self.w_per_row>1:
-                    x_offset = x_offset+self.w_per_row*self.metal2_pitch-self.metal2_width
+                    x_offset = x_offset+self.w_per_row*self.m2_pitch-self.m2_width
                 
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset=(x_offset, pin.y), 
                               width=pin.x-x_offset, 
-                              height= self.metal1_width)
-                self.add_via(self.metal1_stack, (x_offset, pin.y- contact.m1m2.height+self.via_shift("v1")))
+                              height= self.m1_width)
+                self.add_via(self.m1_stack, (x_offset, pin.y- contact.m1m2.height+self.v1_via_shift))
 
     def add_data_ready_bus(self):
         """ Create the data_ready ctrl bus lines next to middle gnd rail """
         
         self.data_ready_xoffset={}
         for j in range(self.data_ready_size):
-            self.data_ready_xoffset[j] = -(j+1)*self.metal2_pitch
-            self.add_rect(layer="metal2", 
+            self.data_ready_xoffset[j] = -(j+1)*self.m2_pitch
+            self.add_rect(layer="m2", 
                           offset=vector(self.data_ready_xoffset[j], self.min_point_y), 
                           width=contact.m2m3.first_layer_height, 
                           height= self.power_height)
@@ -1502,29 +1502,29 @@ class bank(design.design):
         for i in range(self.num_subanks):
             x_offset=self.data_ready_xoffset[i]
             pin = self.data_ready_inst[i].get_pin("dr").ll()
-            width=pin.x + (i+1)*self.metal2_pitch
+            width=pin.x + (i+1)*self.m2_pitch
             if (self.num_subanks == 1 and self.w_per_row == 1):
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset=vector(x_offset, pin.y), 
                               width=width, 
-                              height= self.metal1_width)
-                self.add_via(self.metal1_stack,(x_offset, pin.y-self.via_shift("v1")))
+                              height= self.m1_width)
+                self.add_via(self.m1_stack,(x_offset, pin.y-self.v1_via_shift))
             else:
-                yoff = self.data_ready_inst[i].by()-(i+1)*self.metal1_pitch
+                yoff = self.data_ready_inst[i].by()-(i+1)*self.m1_pitch
                 dr_pos1= (x_offset, yoff)
                 dr_pos3= pin -vector(0.5*contact.m1m2.width, 0)
                 dr_pos2= (dr_pos3.x, yoff)
-                self.add_wire(self.metal1_stack,[dr_pos1, dr_pos2, dr_pos3])
-                self.add_via(self.metal1_stack,(x_offset, yoff))
-                self.add_via(self.metal1_stack,(dr_pos3.x-0.5*self.metal2_width, dr_pos3.y-self.via_shift("v1")))
+                self.add_wire(self.m1_stack,[dr_pos1, dr_pos2, dr_pos3], widen_short_wires=False)
+                self.add_via(self.m1_stack,(x_offset, yoff))
+                self.add_via(self.m1_stack,(dr_pos3.x-0.5*self.m2_width, dr_pos3.y-self.v1_via_shift))
 
     def add_w_complete_bus(self):
         """ Create the w_complete ctrl bus lines next to data_ready ctrl bus """
 
         self.w_complete_xoffset={}
         for j in range(self.write_comp_size):
-            self.w_complete_xoffset[j]= -(self.data_ready_size + j + 1) *self.metal2_pitch
-            self.add_rect(layer="metal2", 
+            self.w_complete_xoffset[j]= -(self.data_ready_size + j + 1) *self.m2_pitch
+            self.add_rect(layer="m2", 
                           offset=vector(self.w_complete_xoffset[j], self.min_point_y), 
                           width=contact.m2m3.first_layer_height, 
                           height= self.power_height)
@@ -1532,12 +1532,12 @@ class bank(design.design):
         # Connect the output of w_complete to write complete bus
         for i in range(self.num_subanks):
             x_offset=self.w_complete_xoffset[i]
-            y_offset= self.w_comp_inst[i].uy() + (i+1)*self.metal1_pitch
+            y_offset= self.w_comp_inst[i].uy() + (i+1)*self.m1_pitch
             wc_pos1= (x_offset,y_offset)
             wc_pos3= self.w_comp_inst[i].get_pin("write_complete").uc()
             wc_pos2= (wc_pos3.x,y_offset) 
-            self.add_wire(self.metal1_stack,[wc_pos1, wc_pos2, wc_pos3])
-            self.add_via(self.metal1_stack,(self.w_complete_xoffset[i], y_offset-0.5*self.metal1_width))
+            self.add_wire(self.m1_stack,[wc_pos1, wc_pos2, wc_pos3], widen_short_wires=False)
+            self.add_via(self.m1_stack,(self.w_complete_xoffset[i], y_offset-0.5*self.m1_width))
             self.row_dec_drv_inst
 
     def add_col_mux_sel_routing(self):
@@ -1547,74 +1547,74 @@ class bank(design.design):
             #There is an inverter
             
             mux_out = self.mux_dec_inst.get_pin("Z")
-            self.add_rect(layer="metal1", 
+            self.add_rect(layer="m1", 
                           offset= mux_out.ll(), 
                           width = -mux_out.lx(), 
-                          height=self.metal1_width)
-            self.add_via(self.metal1_stack, (0, mux_out.by()-self.via_shift("v1")))
+                          height=self.m1_width)
+            self.add_via(self.m1_stack, (0, mux_out.by()-self.v1_via_shift))
             
             mux_in = self.mux_dec_inst.get_pin("A").ll()
-            width = self.metal1_pitch - mux_in.x
-            self.add_rect(layer="metal3", 
+            width = self.m1_pitch - mux_in.x
+            self.add_rect(layer="m3", 
                           offset=mux_in, 
                           width=width, 
-                          height=self.metal3_width)
-            self.add_via(self.metal2_stack, (mux_in.x+width-0.5*self.m1m2_m2m3_fix, mux_in.y))
-            self.add_via(self.metal1_stack, (mux_in.x-contact.m1m2.width, mux_in.y-self.via_shift("v1")))
-            self.add_rect(layer="metal2", 
-                          offset=(mux_in.x-2*self.metal2_width, mux_in.y-self.via_shift("v1")-self.metal2_width), 
-                          width=3*self.metal2_width, 
-                          height=util_ceil(self.minarea_metal2/self.metal2_width))
+                          height=self.m3_width)
+            self.add_via(self.m2_stack, (mux_in.x+width-0.5*self.m1m2_m2m3_fix, mux_in.y))
+            self.add_via(self.m1_stack, (mux_in.x-contact.m1m2.width, mux_in.y-self.v1_via_shift))
+            self.add_rect(layer="m2", 
+                          offset=(mux_in.x-2*self.m2_width, mux_in.y-self.v1_via_shift-self.m2_width), 
+                          width=3*self.m2_width, 
+                          height=util_ceil(self.minarea_m2/self.m2_width))
 
         if self.mux_addr_size>1:
             # There is a 2:4 decoder
             for j in range(self.w_per_row):
                 mux_dec_out = self.mux_dec_inst.get_pin("out[{0}]".format(j)).ll()
-                self.add_via(self.metal2_stack, ((j)*self.metal1_pitch-0.5*self.m1m2_m2m3_fix, mux_dec_out.y))
+                self.add_via(self.m2_stack, ((j)*self.m1_pitch-0.5*self.m1m2_m2m3_fix, mux_dec_out.y))
 
-                width_left = j*self.metal1_pitch - mux_dec_out.x
-                self.add_rect(layer="metal3", 
+                width_left = j*self.m1_pitch - mux_dec_out.x
+                self.add_rect(layer="m3", 
                               offset=mux_dec_out, 
                               width=width_left, 
-                              height=self.metal3_width)
-                self.add_via(self.metal2_stack, (mux_dec_out.x-contact.m1m2.width, mux_dec_out.y))
+                              height=self.m3_width)
+                self.add_via(self.m2_stack, (mux_dec_out.x-contact.m1m2.width, mux_dec_out.y))
 
         # sel connection for col_mux within each columns
         for i in range(self.num_subanks):
             if self.mux_addr_size > 0:
                 for j in range(self.w_per_row):
-                    x_offset2 = j*self.metal1_pitch + i*self.subank_width
-                    self.add_rect(layer="metal2",
+                    x_offset2 = j*self.m1_pitch + i*self.subank_width
+                    self.add_rect(layer="m2",
                                   offset=vector(x_offset2, self.min_point_y), 
-                                  width=self.metal2_width, 
+                                  width=self.m2_width, 
                                   height=-self.min_point_y)
                     if self.num_subanks==1:
                         pos = self.mux_ary_inst[i].get_pin("sel[{0}]".format(j)).ll()
-                        width_right = pos.x + j*self.metal1_pitch
+                        width_right = pos.x + j*self.m1_pitch
                     if self.num_subanks>1:
                         pos = self.go_drv_inst[i].get_pin("in[{0}]".format(j)).ll()
-                        width_right = self.go_drv_inst[0].get_pin("in[{0}]".format(j)).lx() - j*self.metal1_pitch
+                        width_right = self.go_drv_inst[0].get_pin("in[{0}]".format(j)).lx() - j*self.m1_pitch
                     
-                    self.add_via(self.metal1_stack,(x_offset2, pos.y))
-                    self.add_rect(layer="metal1", 
+                    self.add_via(self.m1_stack,(x_offset2, pos.y))
+                    self.add_rect(layer="m1", 
                                   offset=(x_offset2, pos.y), 
                                   width=width_right, 
-                                  height=self.metal1_width)
+                                  height=self.m1_width)
 
         # sel connection for sel bus between columns
         for j in range(self.w_per_row):
             if self.mux_addr_size > 0:
                 for i in range(self.num_subanks-1):
-                    x_off2 = j*self.metal1_pitch + i*self.subank_width
-                    y_off2 = self.min_point_y+(j+self.num_ctrl_lines+self.num_subanks+3)*self.metal1_pitch
-                    self.add_rect(layer="metal1", 
+                    x_off2 = j*self.m1_pitch + i*self.subank_width
+                    y_off2 = self.min_point_y+(j+self.num_ctrl_lines+self.num_subanks+3)*self.m1_pitch
+                    self.add_rect(layer="m1", 
                                   offset=(x_off2, y_off2), 
                                   width=self.subank_width, 
-                                  height=self.metal1_width)
-                    self.add_via(self.metal1_stack, (x_off2, y_off2-self.via_shift("v1")))
+                                  height=self.m1_width)
+                    self.add_via(self.m1_stack, (x_off2, y_off2-self.v1_via_shift))
                 if self.num_subanks > 1:
-                    x_off2 = (j) *self.metal1_pitch + (self.num_subanks-1)* self.subank_width
-                    self.add_via(self.metal1_stack, (x_off2, y_off2-self.via_shift("v1")))
+                    x_off2 = (j) *self.m1_pitch + (self.num_subanks-1)* self.subank_width
+                    self.add_via(self.m1_stack, (x_off2, y_off2-self.v1_via_shift))
                     
 
     def go_signal_routing(self):
@@ -1628,60 +1628,60 @@ class bank(design.design):
         self.x_offset_go={}
         for i in range(self.num_subanks):
             self.x_offset_go[i] = self.bitcell_ary_drv_inst[i].get_pin("en").lx()
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=(self.x_offset_go[i], self.min_point_y), 
-                          width=self.metal2_width, 
+                          width=self.m2_width, 
                           height=self.pchg_ary_inst[0].uy() - self.min_point_y)
                     
-            subank_drv_out_xoff = mod.lx()-(i+1)*self.metal1_pitch
+            subank_drv_out_xoff = mod.lx()-(i+1)*self.m1_pitch
             subank_drv_out_yoff = mod.get_pin("out[{0}]".format(i)).lc().y
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=(subank_drv_out_xoff, self.min_point_y), 
-                          width=self.metal2_width, 
-                          height=mod.uy()- self.min_point_y + self.metal2_width)
+                          width=self.m2_width, 
+                          height=mod.uy()- self.min_point_y + self.m2_width)
                     
-            width_go_left = (i+1)*self.metal1_pitch + self.subank_dec_drv.width - \
+            width_go_left = (i+1)*self.m1_pitch + self.subank_dec_drv.width - \
                             self.subank_dec_drv.get_pin("out[{0}]".format(i)).lx()
-            self.add_rect(layer="metal1", 
-                          offset=(subank_drv_out_xoff, subank_drv_out_yoff-0.5*self.metal1_width), 
+            self.add_rect(layer="m1", 
+                          offset=(subank_drv_out_xoff, subank_drv_out_yoff-0.5*self.m1_width), 
                           width=width_go_left, 
-                          height=self.metal1_width)
-            self.add_via(self.metal1_stack, (subank_drv_out_xoff, subank_drv_out_yoff-0.5*self.metal1_width))
+                          height=self.m1_width)
+            self.add_via(self.m1_stack, (subank_drv_out_xoff, subank_drv_out_yoff-0.5*self.m1_width))
 
             width_go_right = self.x_offset_go[i] - subank_drv_out_xoff
-            yoff = self.min_point_y+(i+self.num_ctrl_lines+2)*self.metal1_pitch
-            self.add_rect(layer="metal1", 
+            yoff = self.min_point_y+(i+self.num_ctrl_lines+2)*self.m1_pitch
+            self.add_rect(layer="m1", 
                           offset=(subank_drv_out_xoff,yoff), 
                           width=width_go_right, 
-                          height=self.metal1_width)
+                          height=self.m1_width)
             
-            self.add_via(self.metal1_stack,(subank_drv_out_xoff, yoff-self.metal1_width))
-            self.add_via(self.metal1_stack,(subank_drv_out_xoff + width_go_right, yoff-self.via_shift("v1")))
+            self.add_via(self.m1_stack,(subank_drv_out_xoff, yoff-self.m1_width))
+            self.add_via(self.m1_stack,(subank_drv_out_xoff + width_go_right, yoff-self.v1_via_shift))
 
             # Connect go signals to control logic
             go_off = self.ctrl_logic_inst.get_pin("go[{0}]".format(i))
-            x_off = self.min_point_x-i*self.metal1_pitch
-            y_off = self.ctrl_logic_inst.by()-(self.num_subanks-i)*self.metal1_pitch
-            self.add_wire(self.metal1_stack,[mod.get_pin("out[{0}]".format(i)).lc(),
+            x_off = self.min_point_x-i*self.m1_pitch
+            y_off = self.ctrl_logic_inst.by()-(self.num_subanks-i)*self.m1_pitch
+            self.add_wire(self.m1_stack,[mod.get_pin("out[{0}]".format(i)).lc(),
                                          (x_off, subank_drv_out_yoff), (x_off,y_off),
-                                         (go_off.uc().x, y_off), (go_off.uc().x, go_off.by())])
+                                         (go_off.uc().x, y_off), (go_off.uc().x, go_off.by())], widen_short_wires=False)
 
         # connect pchg signal to subabnk_dec_drv enable
         en_off = self.subank_dec_drv_inst.get_pin("en")
-        x_off=self.min_point_x-self.num_subanks*self.metal1_pitch
+        x_off=self.min_point_x-self.num_subanks*self.m1_pitch
         pos3=self.ctrl_logic_inst.get_pin("pchg").uc()
-        self.add_wire(self.metal1_stack,[en_off.uc(), (en_off.uc().x, en_off.by()-self.metal1_pitch),
-                                    (x_off, en_off.by()-self.metal1_pitch),
+        self.add_wire(self.m1_stack,[en_off.uc(), (en_off.uc().x, en_off.by()-self.m1_pitch),
+                                    (x_off, en_off.by()-self.m1_pitch),
                                     (x_off, self.ctrl_logic_inst.by()),
-                                    (pos3.x, self.ctrl_logic_inst.by()), pos3])
+                                    (pos3.x, self.ctrl_logic_inst.by()), pos3], widen_short_wires=False)
 
         if self.two_level_bank:
             # connect S signal to subank_dec_drv2 enable
             en_off = self.subank_dec_drv_inst2.get_pin("en")
-            x_off = self.min_point_x-(4+self.num_subanks)*self.metal1_pitch
+            x_off = self.min_point_x-(4+self.num_subanks)*self.m1_pitch
             y_off = self.addrs_ary_inst.get_pin("S").lc().y
-            self.add_wire(self.metal1_stack,[en_off.uc(), (en_off.uc().x, en_off.by()-2*self.metal1_pitch),
-                                        (x_off, en_off.by()-2*self.metal1_pitch), (x_off, y_off)])
+            self.add_wire(self.m1_stack,[en_off.uc(), (en_off.uc().x, en_off.by()-2*self.m1_pitch),
+                                        (x_off, en_off.by()-2*self.m1_pitch), (x_off, y_off)], widen_short_wires=False)
 
 
     def route_split_merge_data(self):
@@ -1699,37 +1699,37 @@ class bank(design.design):
                     input_pos = self.d_split_ary_inst[i].get_pin(pin_list[k]+"[{0}]".format(j)).uc() 
                     split_in= vector(input_pos.x, self.d_split_ary_inst[0].by())
                     inp=vector(input_pos.x, self.min_point_y)
-                    self.add_path("metal3",(input_pos, inp))
-                    self.add_via(self.metal2_stack,
+                    self.add_path("m3",(input_pos, inp))
+                    self.add_via(self.m2_stack,
                              (split_in.x-0.5*contact.m2m3.width,self.min_point_y))
-                    self.add_rect(layer="metal2",
-                              offset=(split_in.x-0.5*self.metal2_width,self.min_point_y),
-                              width=self.metal2_width,
-                              height=util_ceil(self.minarea_metal2/self.metal2_width))
+                    self.add_rect(layer="m2",
+                              offset=(split_in.x-0.5*self.m2_width,self.min_point_y),
+                              width=self.m2_width,
+                              height=util_ceil(self.minarea_m2/self.m2_width))
                     self.add_layout_pin(text=label_list[k]+"[{0}][{1}]".format(i,j),
-                                        layer="metal2", 
-                                        offset=vector(inp.x-0.5*self.metal2_width,self.min_point_y), 
-                                        width=self.metal2_width,
+                                        layer="m2", 
+                                        offset=vector(inp.x-0.5*self.m2_width,self.min_point_y), 
+                                        width=self.m2_width,
                                         height= contact.m2m3.height)
                 
                 # connecting Output Data to Q output of merge_array
                 outp_pos = self.d_merge_array.get_pin("Q[{0}]".format(j)).ll() 
                 data_out_position = vector(outp_pos.x + x_offset, self.min_point_y)
                 height_data_out = self.d_merge_ary_inst[0].by() - self.min_point_y
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=data_out_position, 
-                              width=self.metal2_width,
+                              width=self.m2_width,
                               height= height_data_out)                
                 self.add_layout_pin(text="dout[{0}][{1}]".format(i,j),
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=data_out_position, 
-                                    width=self.metal2_width,
-                                    height= self.metal2_width)                
+                                    width=self.m2_width,
+                                    height= self.m2_width)                
                 
                 # connecting dout from sens_amp to D input of merge_array
                 sa_dout = self.s_amp_ary_inst[i].get_pin("data[{0}]".format(j)).uc()
                 dout_merge_inputD = self.d_merge_ary_inst[i].get_pin("D[{0}]".format(j)).uc()
-                self.add_path("metal3", [dout_merge_inputD, sa_dout])
+                self.add_path("m3", [dout_merge_inputD, sa_dout])
         
     def route_data_in_and_data_out(self):
         """ Metal 2 routing of s_amp output data and write drv input data if not two_level_bank"""
@@ -1741,45 +1741,45 @@ class bank(design.design):
                 wd_din_pos = self.w_drv_ary_inst[i].get_pin("data[{0}]".format(j)).ll() 
                 data_in_pos = vector(wd_din_pos.x, self.min_point_y)
                 height_data_in = self.w_drv_ary_inst[0].by() - self.min_point_y
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                                 offset=data_in_pos, 
-                                width=self.metal2_width,
+                                width=self.m2_width,
                                 height= height_data_in)
                 self.add_layout_pin(text="din[{0}][{1}]".format(i,j),
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=data_in_pos, 
-                                    width=self.metal2_width,
-                                    height= self.metal2_width)
+                                    width=self.m2_width,
+                                    height= self.m2_width)
                 if self.mask:
                     bm_pos = vector(self.w_drv_ary_inst[i].get_pin("bm[{0}]".format(j)).lx(), self.min_point_y)
-                    self.add_rect(layer="metal2", 
+                    self.add_rect(layer="m2", 
                                   offset=bm_pos, 
-                                  width=self.metal2_width,
+                                  width=self.m2_width,
                                  height= height_data_in)
                     self.add_layout_pin(text="bm[{0}][{1}]".format(i,j),
-                                        layer="metal2", 
+                                        layer="m2", 
                                         offset=bm_pos, 
-                                        width=self.metal2_width,
-                                        height= self.metal2_width)
+                                        width=self.m2_width,
+                                        height= self.m2_width)
 
                 sa_dout_pos = self.s_amp_ary_inst[i].get_pin("data[{0}]".format(j)).ll() 
                 data_out_pos = vector(sa_dout_pos.x, self.min_point_y)
                 height_data_out = self.s_amp_ary_inst[0].by() - self.min_point_y
-                self.add_rect(layer="metal3", 
+                self.add_rect(layer="m3", 
                                 offset=data_out_pos, 
-                                width=self.metal3_width,
+                                width=self.m3_width,
                                 height= height_data_out)
-                self.add_via(self.metal2_stack, (data_out_pos.x-drc["metal3_enclosure_via2"], self.min_point_y))
-                self.add_rect(layer="metal2", 
+                self.add_via(self.m2_stack, (data_out_pos.x-drc["m3_enclose_via2"], self.min_point_y))
+                self.add_rect(layer="m2", 
                                 offset=data_out_pos, 
                                 width=contact.m1m2.width,
-                                height= util_ceil(self.minarea_metal2/contact.m1m2.width))
+                                height= util_ceil(self.minarea_m2/contact.m1m2.width))
 
                 self.add_layout_pin(text="dout[{0}][{1}]".format(i,j),
-                                    layer="metal2", 
+                                    layer="m2", 
                                     offset=data_out_pos, 
-                                    width=self.metal2_width,
-                                    height= self.metal2_width)
+                                    width=self.m2_width,
+                                    height= self.m2_width)
 
     def route_ctrl_logic(self):
         """ Add and connect ctrl signals (pchg, sen, wen, decoder_enable) to drivers"""
@@ -1791,32 +1791,32 @@ class bank(design.design):
             for i in range(9):
                 offset= self.ctrl_logic_inst.get_pin(ctrl_logic_pins[i]).ll()
                 self.add_layout_pin(text=ctrl_logic_pins[i],
-                                    layer="metal1", 
+                                    layer="m1", 
                                     offset=(offset.x, offset.y), 
-                                    width=self.metal1_width, 
-                                    height=self.metal1_width)
+                                    width=self.m1_width, 
+                                    height=self.m1_width)
 
         # Route wreq from ctrl logic to write_complete_array
         wreq_pos1= self.w_comp_inst[self.num_subanks-1].get_pin("en").lc()
-        wreq_pos2 = vector(self.ctrl_logic_inst.rx()-self.metal2_width, wreq_pos1.y)
-        self.ctrl_maxy = max(self.row_dec_drv_en.y+self.metal2_pitch, self.ctrl_logic_inst.uy())
-        y_off = max(wreq_pos1.y, self.ctrl_maxy+2*self.metal2_pitch)
-        x_off = self.ctrl_logic_inst.lx()-2*self.metal1_pitch
+        wreq_pos2 = vector(self.ctrl_logic_inst.rx()-self.m2_width, wreq_pos1.y)
+        self.ctrl_maxy = max(self.row_dec_drv_en.y+self.m2_pitch, self.ctrl_logic_inst.uy())
+        y_off = max(wreq_pos1.y, self.ctrl_maxy+2*self.m2_pitch)
+        x_off = self.ctrl_logic_inst.lx()-2*self.m1_pitch
         if self.two_level_bank:
-            x_off = x_off-util_ceil(self.minarea_metal2/contact.m1m2.height)
+            x_off = x_off-util_ceil(self.minarea_m2/contact.m1m2.height)
         
-        wreq_pos3 = vector(wreq_pos2.x, self.ctrl_maxy+2*self.metal2_pitch)
+        wreq_pos3 = vector(wreq_pos2.x, self.ctrl_maxy+2*self.m2_pitch)
         wreq_pos4 = vector(x_off, wreq_pos3.y)
         wreq_pos6 = self.ctrl_logic_inst.get_pin("wreq").lc()
         wreq_pos5= vector(x_off,wreq_pos6.y)
-        self.add_wire(self.metal1_stack, [wreq_pos1,wreq_pos2, wreq_pos3])
-        self.add_wire(self.metal2_rev_stack, [wreq_pos2, wreq_pos3, wreq_pos4, wreq_pos5])
-        self.add_wire(self.metal1_stack, [wreq_pos4, wreq_pos5, wreq_pos6])
+        self.add_wire(self.m1_stack, [wreq_pos1,wreq_pos2, wreq_pos3], widen_short_wires=False)
+        self.add_wire(self.m2_rev_stack, [wreq_pos2, wreq_pos3, wreq_pos4, wreq_pos5], widen_short_wires=False)
+        self.add_wire(self.m1_stack, [wreq_pos4, wreq_pos5, wreq_pos6], widen_short_wires=False)
         
-        if abs(wreq_pos2.y-wreq_pos3.y)< (self.minarea_metal2/self.metal2_width):
-            shift = abs(wreq_pos3.y- wreq_pos2.y) + (self.minarea_metal2/contact.m1m2.height)
+        if abs(wreq_pos2.y-wreq_pos3.y)< (self.minarea_m2/self.m2_width):
+            shift = abs(wreq_pos3.y- wreq_pos2.y) + (self.minarea_m2/contact.m1m2.height)
             off = vector(wreq_pos3.x-0.5*contact.m1m2.height, min(wreq_pos2.y, wreq_pos3.y)-0.5*contact.m1m2.width)
-            self.add_rect(layer="metal2",
+            self.add_rect(layer="m2",
                           offset=off,
                           width= contact.m1m2.height,
                           height= shift)
@@ -1825,19 +1825,19 @@ class bank(design.design):
         decoder_en_pos1= (self.row_dec_drv_en.x,self.row_dec_drv_en.y-contact.m1m2.width)
         decoder_en_pos3= self.ctrl_logic_inst.get_pin("decoder_enable").uc()
         decoder_en_pos2= (decoder_en_pos3.x,self.ctrl_maxy)
-        self.add_wire(self.metal2_rev_stack, [decoder_en_pos1, decoder_en_pos2, decoder_en_pos3])
+        self.add_wire(self.m2_rev_stack, [decoder_en_pos1, decoder_en_pos2, decoder_en_pos3], widen_short_wires=False)
 
         # Route pchg from ctrl logic to ctrl bus rails (ctrl_lines_orders: "pchg", "sen", "wen"])
         pin_list =["pchg", "sen", "wen"]
         for i in range(len(pin_list)):
-            pos1= (self.ctrl_line_xoffset[i]+0.5*self.metal2_width, self.row_dec_drv_en.y+(i+1)*self.metal2_pitch)
+            pos1= (self.ctrl_line_xoffset[i]+0.5*self.m2_width, self.row_dec_drv_en.y+(i+1)*self.m2_pitch)
             pos3= self.ctrl_logic_inst.get_pin(pin_list[i])
-            pos2= vector(pos3.lx(), self.ctrl_maxy+(3+i)*self.metal2_pitch)
+            pos2= vector(pos3.lx(), self.ctrl_maxy+(3+i)*self.m2_pitch)
             
-            off = pos2-vector(self.via_shift("v1"), -0.5*contact.m2m3.width)
-            self.add_via(self.metal2_stack, off, rotate=270)
-            self.add_wire(self.metal2_rev_stack, [pos1, pos2])
-            self.add_rect(layer="metal2",
+            off = pos2-vector(self.v1_via_shift, -0.5*contact.m2m3.width)
+            self.add_via(self.m2_stack, off, rotate=270)
+            self.add_wire(self.m2_rev_stack, [pos1, pos2], widen_short_wires=False)
+            self.add_rect(layer="m2",
                           offset=self.ctrl_logic_inst.get_pin(pin_list[i]).ul(),
                           width= contact.m1m2.width,
                           height= pos2[1] -pos3.uy())
@@ -1848,17 +1848,17 @@ class bank(design.design):
             module=[self.w_complete_xoffset[i], self.data_ready_xoffset[i]]
             for j in range(2):
                 off = self.ctrl_logic_inst.get_pin(pin_list[j])
-                yoff = self.row_dec_drv_en.y+(i+5+self.num_subanks*j)*self.metal2_pitch
+                yoff = self.row_dec_drv_en.y+(i+5+self.num_subanks*j)*self.m2_pitch
                 pos1= vector(module[j]+0.5*contact.m2m3.first_layer_height, yoff)
-                pos2= vector(off.lx(), self.ctrl_maxy+(i+6+self.num_subanks*j)*self.metal2_pitch)
+                pos2= vector(off.lx(), self.ctrl_maxy+(i+6+self.num_subanks*j)*self.m2_pitch)
                 
-                self.add_via(self.metal2_stack, pos2-vector(self.via_shift("v1"),-0.5*contact.m2m3.width), rotate=270)
-                self.add_wire(self.metal2_rev_stack,[pos1, pos2])
-                self.add_rect(layer="metal2",
+                self.add_via(self.m2_stack, pos2-vector(self.v1_via_shift,-0.5*contact.m2m3.width), rotate=270)
+                self.add_wire(self.m2_rev_stack,[pos1, pos2], widen_short_wires=False)
+                self.add_rect(layer="m2",
                               offset=off.ul(),
                               width= contact.m1m2.width,
                               height= pos2.y -off.uc().y)
-                self.add_rect(layer="metal2",
+                self.add_rect(layer="m2",
                               offset=(module[j], pos1.y),
                               width= contact.m2m3.first_layer_height,
                               height= pos2.y -pos1.y)
@@ -1867,72 +1867,72 @@ class bank(design.design):
         if self.two_level_bank:
             reset_split_input = self.ctrl_logic_inst.get_pin("reset").ll()
             self.add_layout_pin(text="reset",
-                                layer="metal1", 
+                                layer="m1", 
                                 offset=reset_split_input, 
-                                width=self.metal1_width, 
-                                height=self.metal1_width)
+                                width=self.m1_width, 
+                                height=self.m1_width)
 
             ctrl_split_pins=["wreq", "rreq", "w", "rw", "r"]
-            x_off = self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.metal1_pitch
+            x_off = self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.m1_pitch
             for i in range(len(ctrl_split_pins)):
                 spliti = self.ctrls_ary_inst.get_pin("D[{0}]".format(i))
-                y_off= spliti.by()-(i+1)*self.metal2_pitch
-                self.add_path("metal3", [spliti.uc(), (spliti.uc().x, y_off), (x_off,y_off)])
+                y_off= spliti.by()-(i+1)*self.m2_pitch
+                self.add_path("m3", [spliti.uc(), (spliti.uc().x, y_off), (x_off,y_off)])
                 self.add_layout_pin(text=ctrl_split_pins[i],
-                                    layer="metal3", 
-                                    offset=(x_off,y_off-0.5*self.metal3_width), 
-                                    width=self.metal3_width, 
-                                    height=self.metal3_width)
+                                    layer="m3", 
+                                    offset=(x_off,y_off-0.5*self.m3_width), 
+                                    width=self.m3_width, 
+                                    height=self.m3_width)
             
             ctrl_merge_pins=["ack","rack","wack"]
             merge_cells=[self.ack_merge_cell_inst,self.rack_merge_cell_inst,self.wack_merge_cell_inst]
             for i in range(len(ctrl_merge_pins)):
                 mergei = merge_cells[i].get_pin("Q[0]")
-                y_off= mergei.by()-(i+6)*self.metal2_pitch
-                self.add_path("metal3", [mergei.uc(), (mergei.uc().x, y_off), (x_off, y_off)])
-                self.add_via_center(self.metal2_stack,mergei.uc())
+                y_off= mergei.by()-(i+6)*self.m2_pitch
+                self.add_path("m3", [mergei.uc(), (mergei.uc().x, y_off), (x_off, y_off)])
+                self.add_via_center(self.m2_stack,mergei.uc())
                 self.add_layout_pin(text=ctrl_merge_pins[i],
-                                    layer="metal3",
-                                    offset=(x_off,y_off-0.5*self.metal3_width),
-                                    width=self.metal3_width,
-                                    height=self.metal3_width)
+                                    layer="m3",
+                                    offset=(x_off,y_off-0.5*self.m3_width),
+                                    width=self.m3_width,
+                                    height=self.m3_width)
 
             self.add_layout_pin(text="ack_merge",
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.ctrl_logic_inst.get_pin("ack").ll(),
-                                width=self.metal1_width,
-                                height=self.metal1_width)
+                                width=self.m1_width,
+                                height=self.m1_width)
 
         if self.power_gate:    
             self.add_layout_pin(text="sleep",
-                                layer="metal1",
+                                layer="m1",
                                 offset=self.ctrl_logic_inst.get_pin("sleep").ll(),
-                                width=self.metal1_width,
-                                height=self.metal1_width)
+                                width=self.m1_width,
+                                height=self.m1_width)
 
     def route_split_merge_to_ctrl_logic(self):
         """ route output of split/merge cells to ctrl logic """
         
         ctrl_split_pins=["wreq", "rreq", "w", "rw", "r"]
         min_x = self.ctrls_ary_inst.get_pin("Q[0]").uc().x
-        if min_x < self.ctrl_logic_inst.lx()-5*self.metal2_pitch:
+        if min_x < self.ctrl_logic_inst.lx()-5*self.m2_pitch:
             x_off = min_x
         else:
-            x_off = self.ctrl_logic_inst.lx()-5*self.metal2_pitch    
+            x_off = self.ctrl_logic_inst.lx()-5*self.m2_pitch    
         for i in range(len(ctrl_split_pins)):
             rwrw_split_out = self.ctrls_ary_inst.get_pin("Q[{0}]".format(i)).uc()
             rwrw_ctrl_logic_in = self.ctrl_logic_inst.get_pin(ctrl_split_pins[i]).lc()
-            mid_pos1=vector(x_off +i*self.metal2_pitch, rwrw_ctrl_logic_in.y)
-            mid_pos2=vector(mid_pos1.x, rwrw_split_out.y+(i+1)*self.metal2_pitch)
+            mid_pos1=vector(x_off +i*self.m2_pitch, rwrw_ctrl_logic_in.y)
+            mid_pos2=vector(mid_pos1.x, rwrw_split_out.y+(i+1)*self.m2_pitch)
             mid_pos3=vector(rwrw_split_out.x, mid_pos2.y)
             
-            self.add_path("metal3", [rwrw_ctrl_logic_in, mid_pos1, mid_pos2, mid_pos3, rwrw_split_out])
-            self.add_via(self.metal2_stack, rwrw_split_out-vector(0.5*self.metal3_width, contact.m1m2.height))
-            self.add_via_center(self.metal2_stack, rwrw_ctrl_logic_in, rotate=90)
-            self.add_via_center(self.metal1_stack, rwrw_ctrl_logic_in,rotate=90)
-            self.add_rect_center(layer="metal2",
-                                 offset=(rwrw_ctrl_logic_in.x-self.metal2_width, rwrw_ctrl_logic_in.y),
-                                 width= util_ceil(self.minarea_metal2/contact.m1m2.width),
+            self.add_path("m3", [rwrw_ctrl_logic_in, mid_pos1, mid_pos2, mid_pos3, rwrw_split_out])
+            self.add_via(self.m2_stack, rwrw_split_out-vector(0.5*self.m3_width, contact.m1m2.height))
+            self.add_via_center(self.m2_stack, rwrw_ctrl_logic_in, rotate=90)
+            self.add_via_center(self.m1_stack, rwrw_ctrl_logic_in,rotate=90)
+            self.add_rect_center(layer="m2",
+                                 offset=(rwrw_ctrl_logic_in.x-self.m2_width, rwrw_ctrl_logic_in.y),
+                                 width= util_ceil(self.minarea_m2/contact.m1m2.width),
                                  height=contact.m1m2.width)
 
         modules = [self.ack_merge_cell_inst,self.wack_merge_cell_inst,self.rack_merge_cell_inst]
@@ -1940,12 +1940,12 @@ class bank(design.design):
         for mod in modules:
             merge_output = mod.get_pin("D[0]").uc()
             ctrl_logic_input = self.ctrl_logic_inst.get_pin(pin_list[modules.index(mod)]).lc()
-            self.add_path("metal3",[merge_output, ctrl_logic_input])
-            self.add_via_center(self.metal2_stack, ctrl_logic_input)
-            self.add_via_center(self.metal1_stack, ctrl_logic_input)
-            self.add_rect_center(layer="metal2",
+            self.add_path("m3",[merge_output, ctrl_logic_input])
+            self.add_via_center(self.m2_stack, ctrl_logic_input)
+            self.add_via_center(self.m1_stack, ctrl_logic_input)
+            self.add_rect_center(layer="m2",
                                  offset=ctrl_logic_input,
-                                 width= util_ceil(self.minarea_metal2/contact.m1m2.height),
+                                 width= util_ceil(self.minarea_m2/contact.m1m2.height),
                                  height=2*contact.m1m2.height)
         
         
@@ -1959,197 +1959,197 @@ class bank(design.design):
             addr_split= self.addrs_ary_inst.get_pin(split_pins[i]).lc()
             
             split_en1_S = min(ctrl_split.x, addr_split.x)
-            x_off = self.min_point_x-(i+1+self.num_subanks)*self.metal1_pitch
+            x_off = self.min_point_x-(i+1+self.num_subanks)*self.m1_pitch
             pos1= vector(x_off, ctrl_split.y)
             pos2= vector(x_off, addr_split.y)
-            pos3= vector(x_off, self.min_point_y-self.metal1_pitch)
-            self.add_wire(self.metal1_stack,[ctrl_split, pos1, pos2, addr_split])
+            pos3= vector(x_off, self.min_point_y-self.m1_pitch)
+            self.add_wire(self.m1_stack,[ctrl_split, pos1, pos2, addr_split], widen_short_wires=False)
             
             for j in range(self.num_subanks):
                 din_split = vector(self.split_xoffset[i]+self.subank_width * j,self.min_point_y)
-                pos4= vector(din_split.x, self.min_point_y-(i+1)*self.metal1_pitch)
-                self.add_wire(self.metal1_stack,[pos1, pos2, pos3, pos4])
+                pos4= vector(din_split.x, self.min_point_y-(i+1)*self.m1_pitch)
+                self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4], widen_short_wires=False)
                 
                 if self.num_subanks>1:
-                    self.add_path("metal3",[pos4, din_split])
-                    self.add_via_center(self.metal1_stack,pos4)
-                    self.add_via_center(self.metal2_stack,pos4)
-                    self.add_rect_center(layer="metal2", 
-                                         offset=pos4-vector(0,0.5*self.metal1_pitch+self.via_shift("v1")), 
+                    self.add_path("m3",[pos4, din_split])
+                    self.add_via_center(self.m1_stack,pos4)
+                    self.add_via_center(self.m2_stack,pos4)
+                    self.add_rect_center(layer="m2", 
+                                         offset=pos4-vector(0,0.5*self.m1_pitch+self.v1_via_shift), 
                                          width = contact.m2m3.width, 
-                                         height= util_ceil(self.minarea_metal2/contact.m2m3.width))
+                                         height= util_ceil(self.minarea_m2/contact.m2m3.width))
                     
                 else:
                     en = self.d_split_ary_inst[j].get_pin(split_pins[i]).lc()
                     pos5= vector(pos4.x, en.y)
-                    self.add_wire(self.metal1_stack,[pos4, pos5, en])
-                    self.add_via_center(self.metal1_stack,pos4)
+                    self.add_wire(self.m1_stack,[pos4, pos5, en], widen_short_wires=False)
+                    self.add_via_center(self.m1_stack,pos4)
 
 
         # Connect reset signal of addr_split array to ctrl_split, din_split and dout_merge array
         ctrl_split= self.ctrls_ary_inst.get_pin("reset").lc()
         addr_split= self.addrs_ary_inst.get_pin("reset").lc()
-        din_split = vector(self.split_xoffset[2]+0.5*self.metal2_width,
+        din_split = vector(self.split_xoffset[2]+0.5*self.m2_width,
                            self.d_split_ary_inst[0].get_pin("reset").lc().y)
         split_en1_S = min(ctrl_split.x, addr_split.x)
-        x_off = self.min_point_x-(3+self.num_subanks)*self.metal1_pitch
+        x_off = self.min_point_x-(3+self.num_subanks)*self.m1_pitch
         pos1= vector(x_off, ctrl_split.y)
         pos2= vector(x_off, addr_split.y)
-        pos3= vector(x_off, self.min_point_y-self.metal1_pitch)
-        self.add_wire(self.metal1_stack,[ctrl_split, pos1, pos2, addr_split])
+        pos3= vector(x_off, self.min_point_y-self.m1_pitch)
+        self.add_wire(self.m1_stack,[ctrl_split, pos1, pos2, addr_split], widen_short_wires=False)
         
         for j in range(self.num_subanks):
             pos5=self.d_split_ary_inst[j].get_pin("reset").lc()
             din_split = vector(self.split_xoffset[2]+self.subank_width*j,pos5.y)
-            pos4= vector(din_split.x, self.min_point_y-3*self.metal1_pitch)
+            pos4= vector(din_split.x, self.min_point_y-3*self.m1_pitch)
             pos6=self.d_merge_ary_inst[j].get_pin("reset").lc()
-            self.add_wire(self.metal1_stack,[pos1, pos2, pos3, pos4, din_split, pos5])
-            self.add_wire(self.metal1_stack,[pos4, din_split, pos6])
+            self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4, din_split, pos5], widen_short_wires=False)
+            self.add_wire(self.m1_stack,[pos4, din_split, pos6], widen_short_wires=False)
 
         # Connect S signal of addr_split array to ctrl_split array
         ctrl_split= self.ctrls_ary_inst.get_pin("S").lc()
         addr_split= self.addrs_ary_inst.get_pin("S").lc()
-        x_off = self.min_point_x-(4+self.num_subanks)*self.metal1_pitch
+        x_off = self.min_point_x-(4+self.num_subanks)*self.m1_pitch
         pos1= vector(x_off, ctrl_split.y)
         pos2= vector(x_off, addr_split.y)
-        self.add_wire(self.metal1_stack,[ctrl_split, pos1, pos2, addr_split])
+        self.add_wire(self.m1_stack,[ctrl_split, pos1, pos2, addr_split], widen_short_wires=False)
 
         # Connect S signal of addr_split array to d_split array
         if self.num_subanks==1:
             d_split= self.d_split_ary_inst[0].get_pin("S").lc()
             d_merge= self.d_merge_ary_inst[0].get_pin("M").lc()
-            pos3= vector(x_off, self.min_point_y-4*self.metal1_pitch)
+            pos3= vector(x_off, self.min_point_y-4*self.m1_pitch)
             pos4= vector(self.split_xoffset[3], pos3.y)
             pos5= vector(pos4.x, d_split.y)
-            self.add_wire(self.metal1_stack,[pos2, pos3, pos4, pos5, d_split])
-            self.add_wire(self.metal1_stack,[pos2, pos3, pos4, pos5, d_merge])
+            self.add_wire(self.m1_stack,[pos2, pos3, pos4, pos5, d_split], widen_short_wires=False)
+            self.add_wire(self.m1_stack,[pos2, pos3, pos4, pos5, d_merge], widen_short_wires=False)
         
         split_ctrl_pins=["S", "rw_en1_S", "rw_en2_S"]
         ctrl_pins=["S","en1_S","en2_S"]
         for i in range(len(split_ctrl_pins)):
-             x_off=self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.metal1_pitch
+             x_off=self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.m1_pitch
              width = abs(x_off-self.ctrls_ary_inst.get_pin(ctrl_pins[i]).lc().x)
              off = (x_off,self.ctrls_ary_inst.get_pin(ctrl_pins[i]).by())
-             self.add_rect(layer="metal1",
+             self.add_rect(layer="m1",
                            offset=off,
                            width=width,
-                           height=self.metal1_width)
+                           height=self.m1_width)
              self.add_layout_pin(text=split_ctrl_pins[i],
-                                 layer="metal1",
+                                 layer="m1",
                                  offset=off,
-                                 width=self.metal1_width,
-                                 height=self.metal1_width)
+                                 width=self.m1_width,
+                                 height=self.m1_width)
         
         # Route wack, rack and ack merge ctrls EN1_M 
         merge_cells=[self.rack_merge_cell_inst, self.wack_merge_cell_inst, self.ack_merge_cell_inst]
         for i in range(len(merge_cells)):
             mrg_en1_M = merge_cells[i].get_pin("en1_M").lc()
             mrg_en2_M = merge_cells[i].get_pin("en2_M").lc()
-            yoff1= merge_cells[i].uy()+(2*i+1)*self.metal1_pitch
-            yoff2= merge_cells[i].uy()+(2*i+2)*self.metal1_pitch
-            pos1_en1_M= vector(mrg_en1_M.x-self.metal1_pitch, mrg_en1_M.y)
-            pos1_en2_M= vector(mrg_en2_M.x-2*self.metal1_pitch, mrg_en2_M.y)
+            yoff1= merge_cells[i].uy()+(2*i+1)*self.m1_pitch
+            yoff2= merge_cells[i].uy()+(2*i+2)*self.m1_pitch
+            pos1_en1_M= vector(mrg_en1_M.x-self.m1_pitch, mrg_en1_M.y)
+            pos1_en2_M= vector(mrg_en2_M.x-2*self.m1_pitch, mrg_en2_M.y)
             pos2_en1_M= vector(pos1_en1_M.x, yoff1)
             pos2_en2_M= vector(pos1_en2_M.x, yoff2)
-            x_off = self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.metal1_pitch
+            x_off = self.min_point_x-(self.num_subanks+2*self.num_split_ctrl_lines)*self.m1_pitch
             pos3_en1_M= (x_off, yoff1)
             pos3_en2_M= (x_off, yoff2)
-            self.add_wire(self.metal1_stack, [mrg_en1_M, pos1_en1_M, pos2_en1_M, pos3_en1_M])
-            self.add_wire(self.metal1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M])
+            self.add_wire(self.m1_stack, [mrg_en1_M, pos1_en1_M, pos2_en1_M, pos3_en1_M], widen_short_wires=False)
+            self.add_wire(self.m1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M], widen_short_wires=False)
 
         merge_ctrl_pins=["Mrack", "Mwack", "Mack"]
         for i in range(len(merge_ctrl_pins)):
-            off = (x_off,self.rack_merge_cell_inst.uy()+(2*i+1)*self.metal1_pitch-0.5*self.metal1_width)
+            off = (x_off,self.rack_merge_cell_inst.uy()+(2*i+1)*self.m1_pitch-0.5*self.m1_width)
             self.add_layout_pin(text=merge_ctrl_pins[i],
-                                layer="metal1",
+                                layer="m1",
                                 offset=off,
-                                width=self.metal1_width,
-                                height=self.metal1_width)
+                                width=self.m1_width,
+                                height=self.m1_width)
         
         # Connect en2_M signals from ctrl_merge_cell to ctrl_logic
         merge_cells=[self.rack_merge_cell_inst, self.wack_merge_cell_inst]
         ctrl_pin = ["rreq_merge", "wreq"]
         for i in range(len(merge_cells)):
-            mrg_en2_M = vector(self.min_point_x-self.num_subanks*self.metal1_pitch, 
-                               self.rack_merge_cell_inst.uy()+ (2*i+2)*self.metal1_pitch) 
-            pos1_en2_M = vector(mrg_en2_M.x-(i+4)*self.metal1_pitch,mrg_en2_M.y)
+            mrg_en2_M = vector(self.min_point_x-self.num_subanks*self.m1_pitch, 
+                               self.rack_merge_cell_inst.uy()+ (2*i+2)*self.m1_pitch) 
+            pos1_en2_M = vector(mrg_en2_M.x-(i+4)*self.m1_pitch,mrg_en2_M.y)
             pos3_en2_M = self.ctrl_logic_inst.get_pin(ctrl_pin[i]).lc()
             pos2_en2_M = vector(pos1_en2_M.x,pos3_en2_M.y)
-            self.add_wire(self.metal1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M])
+            self.add_wire(self.m1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M], widen_short_wires=False)
         
-        mrg_en2_M = vector(self.min_point_x-self.num_subanks*self.metal1_pitch, 
-                           self.rack_merge_cell_inst.uy()+ 6*self.metal1_pitch) 
-        pos1_en2_M = vector(mrg_en2_M.x-6*self.metal1_pitch,mrg_en2_M.y)
+        mrg_en2_M = vector(self.min_point_x-self.num_subanks*self.m1_pitch, 
+                           self.rack_merge_cell_inst.uy()+ 6*self.m1_pitch) 
+        pos1_en2_M = vector(mrg_en2_M.x-6*self.m1_pitch,mrg_en2_M.y)
         pos2_en2_M = vector(pos1_en2_M.x, self.ctrl_logic_inst.by())
         pos4_en2_M = self.ctrl_logic_inst.get_pin("pchg").uc()
         pos3_en2_M = vector(pos4_en2_M.x, pos2_en2_M.y)
-        self.add_wire(self.metal1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M, pos4_en2_M])
+        self.add_wire(self.m1_stack, [mrg_en2_M, pos1_en2_M, pos2_en2_M, pos3_en2_M, pos4_en2_M], widen_short_wires=False)
 
         # Connection all M and reset pins together
-        xoff = self.min_point_x-(self.num_subanks+4)*self.metal1_pitch
+        xoff = self.min_point_x-(self.num_subanks+4)*self.m1_pitch
         pos1 = vector(xoff, self.ctrls_ary_inst.get_pin("S").lc().y)
         pos2 = self.wack_merge_cell_inst.get_pin("M").lc()
-        self.add_path("metal1", [pos1, pos2])
+        self.add_path("m1", [pos1, pos2])
 
-        pos1 = vector(pos1.x+self.metal1_pitch, self.ctrls_ary_inst.get_pin("reset").lc().y)
+        pos1 = vector(pos1.x+self.m1_pitch, self.ctrls_ary_inst.get_pin("reset").lc().y)
         pos2 = self.wack_merge_cell_inst.get_pin("reset").lc()
-        self.add_path("metal1", [pos1, pos2])
+        self.add_path("m1", [pos1, pos2])
         
         # Connection of reset and select between split and merge controls and contrl_logic
         pos1 = vector(pos1.x, self.wack_merge_cell_inst.get_pin("reset").lc().y)
         pos3 = self.ctrl_logic_inst.get_pin("reset").lc()
         pos2 = vector(pos1.x, pos3.y)
-        self.add_wire(self.metal1_stack, [pos1, pos2, pos3])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3], widen_short_wires=False)
                     
         for j in range(self.num_subanks):
             dout_mrg_en1_M = vector(self.merge_xoffset[0]+self.subank_width*j, self.min_point_y)
             dout_mrg_en2_M = vector(self.merge_xoffset[1]+self.subank_width*j, self.min_point_y)
 
             # Connect input of signal from rack_merge_cell to en1_M of data_out_merge_array
-            x_off = self.min_point_x-self.num_subanks*self.metal1_pitch
+            x_off = self.min_point_x-self.num_subanks*self.m1_pitch
             pos1= self.rack_merge_cell_inst.get_pin("D[0]").uc()
-            pos2= vector(x_off-5*self.metal1_pitch, pos1.y)
-            pos3= vector(pos2.x, self.min_point_y-5*self.metal1_pitch)
+            pos2= vector(x_off-5*self.m1_pitch, pos1.y)
+            pos3= vector(pos2.x, self.min_point_y-5*self.m1_pitch)
             pos4= vector(dout_mrg_en1_M.x, pos3.y)
-            self.add_wire(self.metal1_stack, [pos1, pos2, pos3, pos4])
-            self.add_via_center(self.metal1_stack, pos1)
+            self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4], widen_short_wires=False)
+            self.add_via_center(self.m1_stack, pos1)
             
             if self.num_subanks>1:
-                self.add_path("metal3",[pos4, dout_mrg_en1_M])
-                self.add_via_center(self.metal1_stack,pos4)
-                self.add_via_center(self.metal2_stack,pos4)
-                self.add_rect_center(layer="metal2", 
+                self.add_path("m3",[pos4, dout_mrg_en1_M])
+                self.add_via_center(self.m1_stack,pos4)
+                self.add_via_center(self.m2_stack,pos4)
+                self.add_rect_center(layer="m2", 
                                      offset=pos4, 
                                      width=contact.m2m3.width, 
-                                     height=util_ceil(self.minarea_metal2/contact.m2m3.width))
+                                     height=util_ceil(self.minarea_m2/contact.m2m3.width))
             else:
                 en = self.d_merge_ary_inst[j].get_pin("en1_M").lc()
                 pos5= vector(pos4.x, en.y)
-                self.add_wire(self.metal1_stack,[pos4, pos5, en])
-                self.add_via_center(self.metal1_stack,pos4)
+                self.add_wire(self.m1_stack,[pos4, pos5, en], widen_short_wires=False)
+                self.add_via_center(self.m1_stack,pos4)
         
-            pos3= vector(x_off-6*self.metal1_pitch, self.min_point_y-6*self.metal1_pitch)
+            pos3= vector(x_off-6*self.m1_pitch, self.min_point_y-6*self.m1_pitch)
             pos4= vector(dout_mrg_en2_M.x, pos3.y)
-            self.add_wire(self.metal1_stack, [pos3, pos4])
+            self.add_wire(self.m1_stack, [pos3, pos4], widen_short_wires=False)
             if self.num_subanks>1:
-                self.add_path("metal3",[pos4, dout_mrg_en2_M])
-                self.add_via_center(self.metal1_stack,pos4)
-                self.add_via_center(self.metal2_stack,pos4)
-                self.add_rect_center(layer="metal2", 
+                self.add_path("m3",[pos4, dout_mrg_en2_M])
+                self.add_via_center(self.m1_stack,pos4)
+                self.add_via_center(self.m2_stack,pos4)
+                self.add_rect_center(layer="m2", 
                                      offset=pos4, 
                                      width=contact.m2m3.width, 
-                                     height=util_ceil(self.minarea_metal2/contact.m2m3.width))
+                                     height=util_ceil(self.minarea_m2/contact.m2m3.width))
             else:
                 en = self.d_merge_ary_inst[j].get_pin("en2_M").lc()
                 pos5= vector(pos4.x, en.y)
-                self.add_wire(self.metal1_stack,[pos4, pos5, en])
-                self.add_via_center(self.metal1_stack,pos4)
+                self.add_wire(self.m1_stack,[pos4, pos5, en], widen_short_wires=False)
+                self.add_via_center(self.m1_stack,pos4)
 
         self.add_layout_pin(text="Mdout",
-                            layer="metal1",
-                            offset=pos3-vector(0, 0.5*self.metal1_width),
-                            width=self.metal1_width,
-                            height=self.metal1_width)
+                            layer="m1",
+                            offset=pos3-vector(0, 0.5*self.m1_width),
+                            width=self.m1_width,
+                            height=self.m1_width)
     
     def route_power(self):
         """ Route vdd/gnd of all modules to fat vertical Vdd/GND in metal2"""
@@ -2177,35 +2177,35 @@ class bank(design.design):
             
                 for inst in inst_list :
                     for pin in inst.get_pins(pow_pins[k]):
-                        if pin.layer[0:6] == "metal3":
-                            layer = "metal3"
-                            stack = self.metal2_stack
+                        if pin.layer[0:2] == "m3":
+                            layer = "m3"
+                            stack = self.m2_stack
                             height = contact.m2m3.width
                         else:
-                            layer = "metal1"
-                            stack = self.metal1_stack
+                            layer = "m1"
+                            stack = self.m1_stack
                             height = contact.m1m2.width
                         
                         self.add_rect(layer=layer, 
                                       offset=pin.ll(), 
-                                      width=offsets2[k][i]- pin.lx()+self.metal1_width, 
+                                      width=offsets2[k][i]- pin.lx()+self.m1_width, 
                                       height=height)
                         off = (offsets2[k][i]+0.5*self.pow_width, pin.lc().y)
                         self.add_via_center(stack,off,rotate=270, size=[1, self.num_via])
             
                 for inst in inst2_list :
                     for pin in inst.get_pins(pow_pins[k]):
-                        if pin.layer[0:6] == "metal3":
-                            layer = "metal3"
-                            stack = self.metal2_stack
+                        if pin.layer[0:2] == "m3":
+                            layer = "m3"
+                            stack = self.m2_stack
                             height = contact.m2m3.width
                         else:
-                            layer = "metal1"
-                            stack = self.metal1_stack
+                            layer = "m1"
+                            stack = self.m1_stack
                             height = contact.m1m2.width
                         self.add_rect(layer=layer, 
                                       offset=pin.ll(), 
-                                      width=offsets1[k][i]- pin.lx()+self.metal1_width, 
+                                      width=offsets1[k][i]- pin.lx()+self.m1_width, 
                                       height=height)
                         off = (offsets1[k][i], pin.by()+shift)
                         self.add_via(stack, off, rotate=270, size=[1, self.num_via])
@@ -2219,36 +2219,36 @@ class bank(design.design):
                     index=0
                 for k in range(2):
                     vdd_pin = self.go_drv_inst[i].get_pin("in[{0}]".format(index+4+3*k))
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                   offset=vdd_pin.ll(), 
-                                  width=self.vdd_x_offset[i]- vdd_pin.lx()+self.metal1_width, 
+                                  width=self.vdd_x_offset[i]- vdd_pin.lx()+self.m1_width, 
                                   height=height)
                     off = (self.vdd_x_offset[i], vdd_pin.by()+shift)
-                    self.add_via(self.metal1_stack, off, rotate=270, size=[1, self.num_via])
+                    self.add_via(self.m1_stack, off, rotate=270, size=[1, self.num_via])
 
             # If there is no write_masking, connect bm pins of write complete and write driver to Vdd
             if not self.mask:
                 pin_list = [self.w_drv_ary_inst[i].get_pin("bm[0]"), self.w_comp_inst[i].get_pin("bm")]
                 for pin in pin_list:
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                   offset=pin.ll(), 
-                                  width=self.vdd2_x_offset[i]- pin.lx()+self.metal1_width, 
+                                  width=self.vdd2_x_offset[i]- pin.lx()+self.m1_width, 
                                   height=contact.m1m2.width)
                     off = (self.vdd2_x_offset[i], pin.by()+shift)
-                    self.add_via(self.metal1_stack, off, rotate=270, size=[1, self.num_via])
+                    self.add_via(self.m1_stack, off, rotate=270, size=[1, self.num_via])
         
         # Route vdd,gnd for the row decoder
-        row_dec_vdd_xoff=self.min_x_row_dec-(self.pow_width+self.metal1_pitch)
-        row_dec_gnd_xoff=self.min_x_row_dec-2*(self.pow_width+self.metal1_pitch)
+        row_dec_vdd_xoff=self.min_x_row_dec-(self.pow_width+self.m1_pitch)
+        row_dec_gnd_xoff=self.min_x_row_dec-2*(self.pow_width+self.m1_pitch)
         offsets = [row_dec_vdd_xoff, row_dec_gnd_xoff]
         
         for i in range(2):
-            self.add_rect(layer="metal2", 
+            self.add_rect(layer="m2", 
                           offset=(offsets[i], self.min_point_y), 
                           width=self.pow_width, 
                           height=self.power_height)
             self.add_layout_pin(text=pow_pins[i],
-                                layer="metal2", 
+                                layer="m2", 
                                 offset=(offsets[i], self.min_point_y), 
                                 width=self.pow_width, 
                                 height=self.pow_width)
@@ -2257,13 +2257,13 @@ class bank(design.design):
         for inst in inst_list:
             for i in range(2):
                 for pin in inst.get_pins(pow_pins[i]):
-                    if pin.layer[0:6] == "metal3":
-                        layer = "metal3"
-                        stack = self.metal2_stack
+                    if pin.layer[0:2] == "m3":
+                        layer = "m3"
+                        stack = self.m2_stack
                         height = contact.m2m3.width
                     else:
-                        layer = "metal1"
-                        stack = self.metal1_stack
+                        layer = "m1"
+                        stack = self.m1_stack
                         height = contact.m1m2.width
                     self.add_rect(layer=layer, 
                                   offset=pin.ll(), 
@@ -2276,13 +2276,13 @@ class bank(design.design):
         if self.mux_addr_size > 0:
             for i in range(2):
                 for pin in self.mux_dec_inst.get_pins(pow_pins[i]):
-                    if pin.layer[0:6] == "metal3":
-                        layer = "metal3"
-                        stack = self.metal2_stack
+                    if pin.layer[0:2] == "m3":
+                        layer = "m3"
+                        stack = self.m2_stack
                         height = contact.m2m3.width
                     else:
-                        layer = "metal1"
-                        stack = self.metal1_stack
+                        layer = "m1"
+                        stack = self.m1_stack
                         height = contact.m1m2.width
                     
                     self.add_rect(layer=layer, 
@@ -2294,62 +2294,62 @@ class bank(design.design):
 
         # Route vdd, gnd for the subank decoder and column_decoder_drv
         if self.subank_addr_size > 0:
-            heighty = self.subank_dec_drv_inst.uy()- self.min_point_y + self.metal2_width
+            heighty = self.subank_dec_drv_inst.uy()- self.min_point_y + self.m2_width
             for i in range(2):
-                xshift = (self.num_subanks+1+i)*self.metal1_pitch
+                xshift = (self.num_subanks+1+i)*self.m1_pitch
                 subank_dec_xoff=self.subank_dec_drv_inst.lx() - xshift
                 if self.two_level_bank:
                     subank_dec_xoff=self.subank_dec_drv_inst2.lx() - xshift
                 
-                self.add_rect(layer="metal2", 
+                self.add_rect(layer="m2", 
                               offset=(subank_dec_xoff, self.min_point_y), 
-                              width=self.metal2_width, 
+                              width=self.m2_width, 
                               height=heighty)
                 
                 for pin in self.subank_dec_drv_inst.get_pins(pow_pins[i]):
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                   offset=pin.ll(), 
                                   width=subank_dec_xoff- pin.lx(), 
-                                  height=self.metal1_width)
-                    self.add_via(layers=self.metal1_stack, offset=(subank_dec_xoff, pin.by()))
+                                  height=self.m1_width)
+                    self.add_via(layers=self.m1_stack, offset=(subank_dec_xoff, pin.by()))
                 
-                off = (subank_dec_xoff, self.min_point_y+(1-i)*self.metal1_pitch)
-                self.add_rect(layer="metal1", 
+                off = (subank_dec_xoff, self.min_point_y+(1-i)*self.m1_pitch)
+                self.add_rect(layer="m1", 
                               offset=off, 
                               width=offsets[i]-subank_dec_xoff, 
-                              height=self.metal2_width)
+                              height=self.m2_width)
                 
-                yoff=self.min_point_y+(1-i)*self.metal1_pitch-self.via_shift("v1")
-                self.add_via(self.metal1_stack,(subank_dec_xoff,yoff))
-                self.add_via(self.metal1_stack,(offsets[i],yoff), size=[self.num_via,1])
+                yoff=self.min_point_y+(1-i)*self.m1_pitch-self.v1_via_shift
+                self.add_via(self.m1_stack,(subank_dec_xoff,yoff))
+                self.add_via(self.m1_stack,(offsets[i],yoff), size=[self.num_via,1])
 
         # Route vdd,gnd for the address/ctrl splits & merge  if two_level_bank to ctrl_logic vdd,gnd
         if self.two_level_bank:
             for i in range(2):
                 ctrl_mrg_off=self.wack_merge_cell_inst.get_pin(pow_pins[i]).lc()
                 addr_spl_off=self.addrs_ary_inst.get_pin(pow_pins[i]).lc()
-                x_off = self.min_point_x-(self.num_subanks+8-i)*self.metal1_pitch
+                x_off = self.min_point_x-(self.num_subanks+8-i)*self.m1_pitch
                 pos1= vector(x_off, ctrl_mrg_off.y)
                 pos2= vector(x_off, addr_spl_off.y)
-                self.add_wire(self.metal1_stack, [ctrl_mrg_off, pos1])
-                self.add_wire(self.metal1_stack, [ctrl_mrg_off, pos1, pos2, addr_spl_off])
+                self.add_wire(self.m1_stack, [ctrl_mrg_off, pos1], widen_short_wires=False)
+                self.add_wire(self.m1_stack, [ctrl_mrg_off, pos1, pos2, addr_spl_off], widen_short_wires=False)
 
-                y_off = self.ctrl_logic_inst.by()-(self.num_subanks+2-i)*self.metal1_pitch
+                y_off = self.ctrl_logic_inst.by()-(self.num_subanks+2-i)*self.m1_pitch
                 pos3= vector(x_off,y_off)
                 pos5= self.ctrl_logic_inst.get_pin(pow_pins[i]).uc()
                 pos4= vector(pos5.x,y_off)
-                self.add_wire(self.metal1_stack, [ctrl_mrg_off, pos1, pos3, pos4, pos5])
+                self.add_wire(self.m1_stack, [ctrl_mrg_off, pos1, pos3, pos4, pos5], widen_short_wires=False)
 
         # Route vdd,gnd from ctrl logic to vdd,gnd rail
         for i in range(2):
-            yoff1 = self.row_dec_drv_inst.uy()+(6+i+2*self.num_subanks)*self.metal2_pitch
-            ctrl_yoff = max (yoff1, self.ctrl_maxy + (7+i+self.num_subanks*2)*self.metal2_pitch)
+            yoff1 = self.row_dec_drv_inst.uy()+(6+i+2*self.num_subanks)*self.m2_pitch
+            ctrl_yoff = max (yoff1, self.ctrl_maxy + (7+i+self.num_subanks*2)*self.m2_pitch)
             pos1= vector(offsets[i]+0.5*self.pow_width, ctrl_yoff)
             pos2= vector(pos1.x, yoff1)
             pos3= vector(self.ctrl_logic_inst.get_pin(pow_pins[i]).uc().x, ctrl_yoff)
             pos4= self.ctrl_logic_inst.get_pin(pow_pins[i]).uc()
-            self.add_path("metal2",[(pos1[0],pos1[1]+contact.m2m3.width) , pos2], width=self.pow_width)
-            self.add_path("metal2",[pos3, pos4])
-            self.add_path("metal3",[(pos2.x, max(pos2.y, pos1.y)), pos3])
-            self.add_via_center(self.metal2_stack, pos3)
-            self.add_via_center(self.metal2_stack, (pos2.x, max(pos2.y, pos1.y)), size=[self.num_via,1])
+            self.add_path("m2",[(pos1[0],pos1[1]+contact.m2m3.width) , pos2], width=self.pow_width)
+            self.add_path("m2",[pos3, pos4])
+            self.add_path("m3",[(pos2.x, max(pos2.y, pos1.y)), pos3])
+            self.add_via_center(self.m2_stack, pos3)
+            self.add_via_center(self.m2_stack, (pos2.x, max(pos2.y, pos1.y)), size=[self.num_via,1])

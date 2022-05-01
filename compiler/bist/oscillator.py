@@ -47,8 +47,8 @@ class oscillator(design.design):
         
         self.create_layout()
         
-        self.width= max(self.freq_div_inst.rx(), self.dc2_inst.rx())+9*self.m_pitch("m1")
-        self.height=max(self.dc2_inst.uy(), self.freq_div_inst.uy())- self.dc1_inst.by()+2*self.m_pitch("m1")
+        self.width= max(self.freq_div_inst.rx(), self.dc2_inst.rx())+9*self.m1_pitch
+        self.height=max(self.dc2_inst.uy(), self.freq_div_inst.uy())- self.dc1_inst.by()+2*self.m1_pitch
         self.offset_all_coordinates()
 
     def create_layout(self):
@@ -77,7 +77,7 @@ class oscillator(design.design):
         self.stage= int(ceil(self.num_inv / 10))
         
         #This is a offset in x-direction for input pins
-        self.gap = max(self.well_space, self.implant_space, self.m_pitch("m1"))
+        self.gap = max(self.well_space, self.implant_space, self.m1_pitch)
         
     def create_modules(self):
         """ construct all the required modules """
@@ -143,7 +143,7 @@ class oscillator(design.design):
         pos1=self.inv2_inst.get_pin("A").lc()
         pos3=self.inv1_inst.get_pin("Z").lc()
         pos2=vector(pos1.x-self.m1_width, pos1.y)
-        self.add_path("metal1", [pos1, pos2, pos3])
+        self.add_path("m1", [pos1, pos2, pos3])
 
         
         # NAND gate to make a pulse from REST signal and delayed-reset
@@ -157,7 +157,7 @@ class oscillator(design.design):
         self.connect_inst(["z", "out", "vdd", "gnd"])
         
         #DELAY-CHAIN1 to make the delayed-reset signal
-        x_off=self.inv2_inst.rx()+4*self.m_pitch("m1")
+        x_off=self.inv2_inst.rx()+4*self.m1_pitch
 
         self.dc1_inst=self.add_inst(name="dc1",
                                     mod=self.dc,
@@ -171,13 +171,13 @@ class oscillator(design.design):
         
         self.start_stop_inst=self.add_inst(name="start_stop",
                                            mod=self.start_stop,
-                                           offset=(0,self.inv1.height+self.gap+self.m_pitch("m1")))
+                                           offset=(0,self.inv1.height+self.gap+self.m1_pitch))
         self.connect_inst(["out", "z0", "test", "reset", "finish", "vdd", "gnd"])
 
     def add_ring(self):
         """ create ring oscillator with delay chain  """
 
-        x_off=max(self.start_stop_inst.rx(), self.inv3_inst.rx())+4*self.m_pitch("m1")
+        x_off=max(self.start_stop_inst.rx(), self.inv3_inst.rx())+4*self.m1_pitch
         self.dc2_inst=self.add_inst(name="dc2",
                                     mod=self.dc,
                                     offset=(x_off, self.inv1.height),
@@ -187,8 +187,8 @@ class oscillator(design.design):
     def add_frequency_divider(self):
         """ Add two frequency dividers to get Fclk2 = Fclk/2 (clk2_b = clk1) and Fclk3=Fclk/2  """
         
-        y_off = max(self.dc2_inst.uy(), self.start_stop_inst.uy())+3*self.m_pitch("m1")
-        self.min_xoff = -7*self.m_pitch("m1")
+        y_off = max(self.dc2_inst.uy(), self.start_stop_inst.uy())+3*self.m1_pitch
+        self.min_xoff = -7*self.m1_pitch
         self.freq_div_inst=self.add_inst(name="freq_div",
                                          mod=self.freq_div,
                                          offset=(self.min_xoff, self.inv1.height+y_off))
@@ -200,22 +200,22 @@ class oscillator(design.design):
 
         #connect output of inv1 to input B of nand2
         pin = self.nand_inst.get_pin("B").lc()
-        self.add_path("metal1",[(pin.x-self.m1_space, pin.y), pin])
+        self.add_path("m1",[(pin.x-self.m1_space, pin.y), pin])
 
         #connect output of inv1 to input of delay-chain1
         pos1=self.dc1_inst.get_pin("in").lc()
         pos4=self.inv2_inst.get_pin("Z").lc()
-        pos2=vector(pos4.x-2*self.m_pitch("m1"), pos1.y)
+        pos2=vector(pos4.x-2*self.m1_pitch, pos1.y)
         pos3=vector(pos2.x, pos4.y)
-        self.add_wire(self.m1_stack,[pos1,pos2,pos3])
+        self.add_wire(self.m1_stack,[pos1,pos2,pos3], widen_short_wires=False)
 
         #connect output of delay-chain1 to input A of nand2
         pos1=self.dc1_inst.get_pin("out").lc()
-        pos2=vector(self.dc1_inst.get_pin("out").rx()+ self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, self.dc1_inst.by()-2*self.m_pitch("m1"))
+        pos2=vector(self.dc1_inst.get_pin("out").rx()+ self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x, self.dc1_inst.by()-2*self.m1_pitch)
         pos4=vector(self.nand_inst.lx()+0.5*self.m2_width, pos3.y)
         pos5=vector(pos4.x, self.nand_inst.get_pin("A").uc().y)
-        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4, pos5])
+        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4, pos5], widen_short_wires=False)
         
         off = self.nand_inst.get_pin("A").ll()+vector(contact.m1m2.height,0)
         self.add_via(self.m1_stack, off , rotate=90)
@@ -224,11 +224,11 @@ class oscillator(design.design):
         """ Connect output of pulse generator to input of starter_stopper module  """
 
         pos1=self.inv3_inst.get_pin("Z").lc()
-        pos2=vector(pos1.x+self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x,self.inv3_inst.uy()+ self.m_pitch("m1"))
+        pos2=vector(pos1.x+self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x,self.inv3_inst.uy()+ self.m1_pitch)
         pos5=self.start_stop_inst.get_pin("in").lc()
-        pos4=vector(pos5.x-self.m_pitch("m1"), pos3.y)
-        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4, pos5] )
+        pos4=vector(pos5.x-self.m1_pitch, pos3.y)
+        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4, pos5], widen_short_wires=False )
 
     def connect_starter_stopper_to_ring(self):
         """ Connect output of starter_stopper module to input of delay_chain2 (dc2, first stage)  """
@@ -236,22 +236,22 @@ class oscillator(design.design):
         pos1=self.start_stop_inst.get_pin("out").lc()
         pos3=self.dc2_inst.get_pin("in").lc()
         pos2=vector(pos1.x, pos3.y)
-        self.add_path("metal1",[pos1, pos2, pos3] )
+        self.add_path("m1",[pos1, pos2, pos3] )
     
     def connect_reset_inputs(self):
         """ Connect reset input of starter_stopper module to reset input of pulse_generator  """
 
         pos1=self.start_stop_inst.get_pin("reset").lc()
-        pos2=vector(pos1.x-2*self.m_pitch("m1"), pos1.y)
+        pos2=vector(pos1.x-2*self.m1_pitch, pos1.y)
         pos4=self.nor_inst.get_pin("A").lc()
         pos3=vector(pos2.x, pos4.y)
-        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4])
+        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4], widen_short_wires=False)
         
         pos1=self.freq_div_inst.get_pin("reset").lc()
-        pos2=vector(-4*self.m_pitch("m1"), pos1.y)
+        pos2=vector(-4*self.m1_pitch, pos1.y)
         pos4=self.start_stop_inst.get_pin("reset").lc()
         pos4=(pos2.x, pos4.y)
-        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4])
+        self.add_wire(self.m1_stack,[pos1, pos2, pos3, pos4], widen_short_wires=False)
     
     def connect_ring_to_or_gate(self):
         """ Connect output of buffer to nor gate input B This creates the feedback """
@@ -259,17 +259,17 @@ class oscillator(design.design):
         #connect output of self.dc2_inst to input of nor gate
         
         pos1=self.nor_inst.get_pin("B").lc()
-        pos2=vector(-3*self.m_pitch("m1"), pos1.y)
-        pos3=vector(pos2.x, max(self.dc2_inst.uy(), self.start_stop_inst.uy())+2*self.m_pitch("m1"))
-        pos6=vector(self.dc2_inst.get_pin("out").rx()+self.m_pitch("m1"), self.dc2_inst.get_pin("out").lc().y)
+        pos2=vector(-3*self.m1_pitch, pos1.y)
+        pos3=vector(pos2.x, max(self.dc2_inst.uy(), self.start_stop_inst.uy())+2*self.m1_pitch)
+        pos6=vector(self.dc2_inst.get_pin("out").rx()+self.m1_pitch, self.dc2_inst.get_pin("out").lc().y)
         pos4=vector(pos6.x, pos3.y)
         pos5=vector(pos4.x, pos6.y)
-        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, self.dc2_inst.get_pin("out").lc()])
+        self.add_wire(self.m1_stack, [pos1, pos2, pos3, pos4, pos5, self.dc2_inst.get_pin("out").lc()], widen_short_wires=False)
 
 
         #connect output of self.dc2_inst to input of freq_div
         pos3=self.freq_div_inst.get_pin("in").uc()
-        self.add_wire(self.m1_stack, [pos3, pos4, pos5, pos6])
+        self.add_wire(self.m1_stack, [pos3, pos4, pos5, pos6], widen_short_wires=False)
         
     def connect_vdd_gnd(self):
         """ Connect vdd and gnd of all modules together and to power pins"""
@@ -277,31 +277,31 @@ class oscillator(design.design):
         pins=["vdd", "gnd"]
         #connect vdd and gnd of dc2[0] stage to dc1[0] vdd and gnd
         for i in range(2):
-            pos1=vector(self.dc2_inst.rx()+(i+1)*self.m_pitch("m1"), 
+            pos1=vector(self.dc2_inst.rx()+(i+1)*self.m1_pitch, 
                         self.dc2_inst.get_pin(pins[i]).lc().y)
             pos3=self.dc1_inst.get_pin(pins[i]).lc()
             pos2=(pos1.x, pos3.y)
-            self.add_wire(self.m1_stack, [self.dc2_inst.get_pin(pins[i]).lc(), pos1, pos2, pos3])
+            self.add_wire(self.m1_stack, [self.dc2_inst.get_pin(pins[i]).lc(), pos1, pos2, pos3], widen_short_wires=False)
             #self.add_via_center(self.m1_stack, pos1, rotate=90)
         
         #connect vdd and gnd of other modules to vdd and gnd pins
         modules=[self.nand_inst, self.start_stop_inst, self.dc1_inst]
         for i in range(2):
-            off =vector(-(i+6)*self.m_pitch("m1"), self.dc1_inst.by())
-            self.add_rect(layer="metal2",
+            off =vector(-(i+6)*self.m1_pitch, self.dc1_inst.by())
+            self.add_rect(layer="m2",
                           offset= off,
                           width=self.m2_width,
                           height=self.freq_div_inst.uy() -self.dc1_inst.by())
             self.add_layout_pin(text=pins[i],
-                                layer="metal2",
+                                layer="m2",
                                 offset=(off.x, self.dc1_inst.by()),
                                 width=self.m2_width,
                                 height=self.m2_width)
 
             for mod in modules:
-                off=vector(-(i+6)*self.m_pitch("m1"), mod.get_pin(pins[i]).lc().y-0.5*self.m1_width)
+                off=vector(-(i+6)*self.m1_pitch, mod.get_pin(pins[i]).lc().y-0.5*self.m1_width)
                 width=mod.get_pin(pins[i]).lc().x-off.x
-                self.add_rect(layer="metal1",
+                self.add_rect(layer="m1",
                               offset=off,
                               width=width,
                               height=self.m1_width)
@@ -314,9 +314,9 @@ class oscillator(design.design):
         pins=["finish", "test", "reset"]
         for pin in pins:
             off=self.start_stop_inst.get_pin(pin)
-            self.add_path("metal1", [(off.lx()+self.min_xoff, off.lc().y), off.lc()])
+            self.add_path("m1", [(off.lx()+self.min_xoff, off.lc().y), off.lc()])
             self.add_layout_pin(text=pin,
-                                layer="metal1",
+                                layer="m1",
                                 offset=(off.lx()+self.min_xoff, off.by()),
                                 width=self.m1_width,
                                 height=self.m1_width)
@@ -325,9 +325,9 @@ class oscillator(design.design):
         pins=["clk", "clk1", "clk2", "clk3"]
         for pin in pins:
             off=self.freq_div_inst.get_pin(pin)
-            self.add_path("metal1", [(off.lx(), off.lc().y), off.lc()])
+            self.add_path("m1", [(off.lx(), off.lc().y), off.lc()])
             self.add_layout_pin(text=pin,
-                                layer="metal1",
+                                layer="m1",
                                 offset=(off.lx(), off.by()),
                                 width=self.m1_width,
                                 height=self.m1_width)

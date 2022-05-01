@@ -56,17 +56,17 @@ class write_complete_array(design.design):
             self.inv = pinv()
             self.add_mod(self.inv)
 
-            #6*self.metal1_pitch : vdd, gnd, en, bm, wc0, wc1, space
-            self.width= self.cols*self.wc.width+self.inv.width+self.nor2.width+6*self.metal1_pitch
-            self.height= self.wc.height + 7*self.metal1_pitch
+            #6*self.m1_pitch : vdd, gnd, en, bm, wc0, wc1, space
+            self.width= self.cols*self.wc.width+self.inv.width+self.nor2.width+6*self.m1_pitch
+            self.height= self.wc.height + 7*self.m1_pitch
         
         if self.w_per_row == 4:
             self.nand2 = nand2()
             self.add_mod(self.nand2)
 
-            #8*self.metal1_pitch : vdd, gnd, en, bm, wc0, wc1, wc2, wc3, space
-            self.width= self.cols*self.wc.width+self.nand2.width+self.nor2.width+8*self.metal1_pitch
-            self.height= 2*self.nor2.height + 10*self.metal1_pitch
+            #8*self.m1_pitch : vdd, gnd, en, bm, wc0, wc1, wc2, wc3, space
+            self.width= self.cols*self.wc.width+self.nand2.width+self.nor2.width+8*self.m1_pitch
+            self.height= 2*self.nor2.height + 10*self.m1_pitch
         
         if self.w_per_row > 4:
             debug.error("more than 4 way column mux is not supported!",-1)
@@ -142,20 +142,20 @@ class write_complete_array(design.design):
         
         # Adding central metal2 bus for wc[i], vdd and gnd connections
         for i in range(self.w_per_row+2):
-            self.add_rect(layer= "metal2", 
-                          offset= (-(i+3)*self.metal1_pitch,self.metal1_pitch), 
+            self.add_rect(layer= "m2", 
+                          offset= (-(i+3)*self.m1_pitch,self.m1_pitch), 
                           width= contact.m1m2.width, 
-                          height= self.height-self.metal1_pitch)
+                          height= self.height-self.m1_pitch)
         
         if self.w_per_row == 2:
-            nor2_offset = vector(-(self.w_per_row+5)*self.metal1_pitch, self.metal1_pitch)
+            nor2_offset = vector(-(self.w_per_row+5)*self.m1_pitch, self.m1_pitch)
             self.wc_nor2_inst=self.add_inst(name="wc_nor2", 
                                             mod=self.nor2, 
                                             offset=nor2_offset, 
                                             mirror="MY")
             self.connect_inst(["wc[0]","wc[1]", "Z", "vdd", "gnd"])
 
-            inv_offset = vector(-self.nor2.width-(self.w_per_row+5)*self.metal1_pitch, self.metal1_pitch) 
+            inv_offset = vector(-self.nor2.width-(self.w_per_row+5)*self.m1_pitch, self.m1_pitch) 
             self.wc_inv_inst=self.add_inst(name="wc_inv",  
                                            mod=self.inv, 
                                            offset=inv_offset, 
@@ -166,50 +166,50 @@ class write_complete_array(design.design):
             pin_list=["A", "B", "gnd", "vdd"]
             for i in pin_list:
                 nor_pin = self.wc_nor2_inst.get_pin(i)
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset= nor_pin.ll(), 
-                              width= -nor_pin.lx()-(pin_list.index(i)+3)*self.metal1_pitch, 
-                              height= self.metal1_width)
-                self.add_via_center(self.metal1_stack,[-(pin_list.index(i)+3)*self.metal1_pitch+\
+                              width= -nor_pin.lx()-(pin_list.index(i)+3)*self.m1_pitch, 
+                              height= self.m1_width)
+                self.add_via_center(self.m1_stack,[-(pin_list.index(i)+3)*self.m1_pitch+\
                                                   0.5*contact.m1m2.width, nor_pin.lc().y], rotate=90)
 
             # Connect nor2 output to inv input
             nor2_Z = self.wc_nor2_inst.get_pin("Z")
             inv_input = self.wc_inv_inst.get_pin("A")
             self.inv_output = self.wc_inv_inst.get_pin("Z")
-            self.add_path("metal1",[inv_input.lc(), nor2_Z.lc()])
+            self.add_path("m1",[inv_input.lc(), nor2_Z.lc()])
 
             # Connect write_complete output to central metal2 bus
             for i in range(0,self.cols,self.w_size):
                 wc_pos = self.wc_inst[i].get_pin("write_complete").uc()
-                y_pos = wc_pos.y+(i//self.w_size+2)*self.metal1_pitch
-                self.add_wire(self.metal1_stack,[wc_pos, (wc_pos.x, y_pos), 
-                                            (-(i//self.w_size+3)*self.metal1_pitch, y_pos)])
-                self.add_via_center(self.metal1_stack, (-(i//self.w_size+3)*self.metal1_pitch+\
+                y_pos = wc_pos.y+(i//self.w_size+2)*self.m1_pitch
+                self.add_wire(self.m1_stack,[wc_pos, (wc_pos.x, y_pos), 
+                                            (-(i//self.w_size+3)*self.m1_pitch, y_pos)], widen_short_wires=False)
+                self.add_via_center(self.m1_stack, (-(i//self.w_size+3)*self.m1_pitch+\
                                                     0.5*contact.m1m2.width,y_pos), rotate=90)
 
             # Connect write_complete vdd and gnd to nor2 vdd and gnd
             vdd_pos = self.wc_inst[0].get_pin("vdd")
             nor2_vdd=self.wc_nor2_inst.get_pin("vdd")
-            self.add_path("metal1",[nor2_vdd.lc(), 
-                                   (-2*self.metal1_pitch, nor2_vdd.lc().y),
-                                   (-2*self.metal1_pitch, vdd_pos.lc().y),
+            self.add_path("m1",[nor2_vdd.lc(), 
+                                   (-2*self.m1_pitch, nor2_vdd.lc().y),
+                                   (-2*self.m1_pitch, vdd_pos.lc().y),
                                    (self.cols*self.wc.width, vdd_pos.lc().y)])
-            gnd_pos = vector(-5*self.metal1_pitch, self.wc_inst[0].get_pin("gnd").lc().y)
-            self.add_path("metal1",[gnd_pos,(self.cols*self.wc.width, gnd_pos.y)])
-            self.add_via_center(self.metal1_stack,
-                               [-5*self.metal1_pitch+0.5*contact.m1m2.width, gnd_pos.y], rotate=90)
+            gnd_pos = vector(-5*self.m1_pitch, self.wc_inst[0].get_pin("gnd").lc().y)
+            self.add_path("m1",[gnd_pos,(self.cols*self.wc.width, gnd_pos.y)])
+            self.add_via_center(self.m1_stack,
+                               [-5*self.m1_pitch+0.5*contact.m1m2.width, gnd_pos.y], rotate=90)
             
-            self.wc_x_shift=self.inv.width+self.nor2.width+(self.w_per_row+5)*self.metal1_pitch
+            self.wc_x_shift=self.inv.width+self.nor2.width+(self.w_per_row+5)*self.m1_pitch
 
         if self.w_per_row == 4:
             nor2_Z={}
             self.nor2_vdd={}
             self.nor2_gnd={}
             for i in range(2):
-                nor2_offset = vector(-(self.w_per_row+5)*self.metal1_pitch, i*(self.nor2.height+\
+                nor2_offset = vector(-(self.w_per_row+5)*self.m1_pitch, i*(self.nor2.height+\
                                      2*max(self.well_space, self.implant_space, 
-                                     (contact.m1m2.width+contact.m1m2.height)))+self.metal1_pitch)
+                                     (contact.m1m2.width+contact.m1m2.height)))+self.m1_pitch)
                 self.wc_nor2_inst=self.add_inst(name="wc_nor2_{0}".format(i), 
                                                 mod=self.nor2, 
                                                 offset=nor2_offset, 
@@ -221,33 +221,33 @@ class write_complete_array(design.design):
                 pin_list=["A", "B"]
                 for j in pin_list:
                     nor_pin = self.wc_nor2_inst.get_pin(j)
-                    self.add_rect(layer="metal1", 
+                    self.add_rect(layer="m1", 
                                   offset= nor_pin.ll(), 
-                                  width= -nor_pin.lx()-(2*i+3+pin_list.index(j))*self.metal1_pitch, 
-                                  height= self.metal1_width)
-                    self.add_via_center(self.metal1_stack,[-(2*i+3+pin_list.index(j))*self.metal1_pitch+\
+                                  width= -nor_pin.lx()-(2*i+3+pin_list.index(j))*self.m1_pitch, 
+                                  height= self.m1_width)
+                    self.add_via_center(self.m1_stack,[-(2*i+3+pin_list.index(j))*self.m1_pitch+\
                                                       0.5*contact.m1m2.width, nor_pin.lc().y],rotate=90)
                 self.nor2_gnd[i] = self.wc_nor2_inst.get_pin("gnd")
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset= self.nor2_gnd[i].ll(), 
-                              width= -self.nor2_gnd[i].lx()-7*self.metal1_pitch, 
-                              height= self.metal1_width)
-                self.add_via_center(self.metal1_stack, [-7*self.metal1_pitch+0.5*contact.m1m2.width, 
+                              width= -self.nor2_gnd[i].lx()-7*self.m1_pitch, 
+                              height= self.m1_width)
+                self.add_via_center(self.m1_stack, [-7*self.m1_pitch+0.5*contact.m1m2.width, 
                                                     self.nor2_gnd[i].lc().y], rotate=90)
 
                 self.nor2_vdd[i] = self.wc_nor2_inst.get_pin("vdd")
-                self.add_rect(layer="metal1", 
+                self.add_rect(layer="m1", 
                               offset= self.nor2_vdd[i].ll(), 
-                              width= -self.nor2_vdd[i].lx()-8*self.metal1_pitch, 
-                              height= self.metal1_width)
-                self.add_via_center(self.metal1_stack, [-8*self.metal1_pitch+0.5*contact.m1m2.width,
+                              width= -self.nor2_vdd[i].lx()-8*self.m1_pitch, 
+                              height= self.m1_width)
+                self.add_via_center(self.m1_stack, [-8*self.m1_pitch+0.5*contact.m1m2.width,
                                                     self.nor2_vdd[i].lc().y], rotate=90)
                 
                 nor2_Z[i] = self.wc_nor2_inst.get_pin("Z")
             
             # Add nand2 gate
-            nand2_offset = vector(-self.nor2.width- (self.w_per_row + 5)*self.metal1_pitch-\
-                           max(self.metal1_pitch+self.metal1_width,self.well_space,self.implant_space),self.metal1_pitch) 
+            nand2_offset = vector(-self.nor2.width- (self.w_per_row + 5)*self.m1_pitch-\
+                           max(self.m1_pitch+self.m1_width,self.well_space,self.implant_space),self.m1_pitch) 
             self.wc_nand2_inst2=self.add_inst(name="wc_nand2", 
                                               mod=self.nand2, 
                                               offset=nand2_offset, 
@@ -260,37 +260,37 @@ class write_complete_array(design.design):
             nand2_vdd = self.wc_nand2_inst2.get_pin("vdd").lc()
             nand2_gnd = self.wc_nand2_inst2.get_pin("gnd").lc()
             
-            self.add_path("metal1",[self.nor2_vdd[0].lc(), nand2_vdd])
-            self.add_path("metal1",[self.nor2_gnd[0].lc(), nand2_gnd])
-            self.add_path("metal1",[nor2_Z[0].ll(),nand2_B_input])
-            self.add_wire(self.metal1_stack,[nor2_Z[1].lc(),
-                                        (nand2_offset.x+0.5*self.metal1_width, nor2_Z[1].lc().y), 
-                                        (nand2_offset.x+0.5*self.metal1_width, nand2_A_input.y), 
-                                         nand2_A_input])
+            self.add_path("m1",[self.nor2_vdd[0].lc(), nand2_vdd])
+            self.add_path("m1",[self.nor2_gnd[0].lc(), nand2_gnd])
+            self.add_path("m1",[nor2_Z[0].ll(),nand2_B_input])
+            self.add_wire(self.m1_stack,[nor2_Z[1].lc(),
+                                        (nand2_offset.x+0.5*self.m1_width, nor2_Z[1].lc().y), 
+                                        (nand2_offset.x+0.5*self.m1_width, nand2_A_input.y), 
+                                         nand2_A_input], widen_short_wires=False)
 
             # Connect write_complete output to central metal2 bus
             for i in range(0,self.cols,self.w_size):
                 wc_pos = self.wc_inst[i].get_pin("write_complete").uc()
-                y_pos = max(nor2_Z[1].lc().y,wc_pos.y)+i//self.w_size*self.metal1_pitch+self.metal1_space
-                self.add_wire(self.metal1_stack,[wc_pos, (wc_pos.x, y_pos), 
-                                            (-(i//self.w_size+3)*self.metal1_pitch, y_pos)])
-                self.add_via_center(self.metal1_stack,(-(i//self.w_size+3)*self.metal1_pitch+\
+                y_pos = max(nor2_Z[1].lc().y,wc_pos.y)+i//self.w_size*self.m1_pitch+self.m1_space
+                self.add_wire(self.m1_stack,[wc_pos, (wc_pos.x, y_pos), 
+                                            (-(i//self.w_size+3)*self.m1_pitch, y_pos)], widen_short_wires=False)
+                self.add_via_center(self.m1_stack,(-(i//self.w_size+3)*self.m1_pitch+\
                                                    0.5*contact.m1m2.width,y_pos), rotate=90)
 
             # Connect write_complete vdd and gnd to nor2 vdd and gnd
             vdd_pos = self.wc_inst[0].get_pin("vdd")
-            self.add_path("metal1",[self.nor2_vdd[0].lc(), 
-                                   (-2*self.metal1_pitch, self.nor2_vdd[0].lc().y),
-                                   (-2*self.metal1_pitch, vdd_pos.lc().y),
+            self.add_path("m1",[self.nor2_vdd[0].lc(), 
+                                   (-2*self.m1_pitch, self.nor2_vdd[0].lc().y),
+                                   (-2*self.m1_pitch, vdd_pos.lc().y),
                                    (self.cols*self.wc.width, vdd_pos.lc().y)])
             gnd_pos = self.wc_inst[0].get_pin("gnd")
-            self.add_path("metal1",[self.nor2_gnd[1].lc(), 
-                                   (-2*self.metal1_pitch, self.nor2_gnd[1].lc().y),
-                                   (-2*self.metal1_pitch, gnd_pos.lc().y),
+            self.add_path("m1",[self.nor2_gnd[1].lc(), 
+                                   (-2*self.m1_pitch, self.nor2_gnd[1].lc().y),
+                                   (-2*self.m1_pitch, gnd_pos.lc().y),
                                    (self.cols*self.wc.width, gnd_pos.lc().y)])
 
-            self.wc_x_shift=self.nand2.width+self.nor2.width+(self.w_per_row+6)*self.metal1_pitch+\
-                            max(self.metal1_pitch+self.metal1_width,self.well_space,self.implant_space)
+            self.wc_x_shift=self.nand2.width+self.nor2.width+(self.w_per_row+6)*self.m1_pitch+\
+                            max(self.m1_pitch+self.m1_width,self.well_space,self.implant_space)
 
     def add_layout_pins(self):
         """ Adding vdd, gnd, en and write_complete pins """
@@ -299,85 +299,85 @@ class write_complete_array(design.design):
             for pin in ["en", "bm", "vdd", "gnd"]:
                 offset = self.wc_inst[0].get_pin(pin)
                 self.add_layout_pin(text=pin, 
-                                    layer="metal1", 
+                                    layer="m1", 
                                     offset=offset.ll(), 
                                     width=contact.m1m2.width, 
                                     height=contact.m1m2.width)
-                self.add_path("metal1",[offset.lc(), (self.cols*self.wc.width, offset.lc().y)], width = contact.m1m2.width)
+                self.add_path("m1",[offset.lc(), (self.cols*self.wc.width, offset.lc().y)], width = contact.m1m2.width)
 
             wc_pin = self.wc_inst[0].get_pin("write_complete")
             self.add_layout_pin(text="write_complete", 
-                                layer="metal2", 
+                                layer="m2", 
                                 offset= wc_pin.ll(), 
-                                width=self.metal2_width, 
-                                height=self.metal2_width)
+                                width=self.m2_width, 
+                                height=self.m2_width)
 
         if self.w_per_row == 2:
             pin_list = ["vdd", "gnd"]
             for pin in pin_list:
-                offset = vector(self.wc_inv_inst.lx(), self.height-pin_list.index(pin)*self.metal1_pitch)
+                offset = vector(self.wc_inv_inst.lx(), self.height-pin_list.index(pin)*self.m1_pitch)
                 self.add_layout_pin(text=pin, 
-                                   layer="metal1", 
+                                   layer="m1", 
                                    offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
                                    width=contact.m1m2.width, 
                                    height=contact.m1m2.width)
-                self.add_path("metal1",[offset, (self.cols*self.wc.width, offset.y)], width = contact.m1m2.width)
-                self.add_via_center(self.metal1_stack, ((-6+pin_list.index(pin))*self.metal1_pitch+0.5*contact.m1m2.width, offset.y), rotate=90)
+                self.add_path("m1",[offset, (self.cols*self.wc.width, offset.y)], width = contact.m1m2.width)
+                self.add_via_center(self.m1_stack, ((-6+pin_list.index(pin))*self.m1_pitch+0.5*contact.m1m2.width, offset.y), rotate=90)
 
             pin_list = ["en", "bm"]
             for pin in pin_list:
-                offset = vector(self.wc_inv_inst.lx(), self.height-(2+pin_list.index(pin))*self.metal1_pitch)
+                offset = vector(self.wc_inv_inst.lx(), self.height-(2+pin_list.index(pin))*self.m1_pitch)
                 pos=self.wc_inst[0].get_pin(pin)
-                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.metal1_pitch
+                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.m1_pitch
                 self.add_layout_pin(text=pin,  
-                                    layer="metal1", 
+                                    layer="m1", 
                                     offset=(self.wc_inv_inst.lx(), offset.y-0.5*contact.m1m2.width),   
                                     width=contact.m1m2.width, 
                                     height=contact.m1m2.width)
-                self.add_wire(self.metal1_stack,[offset, (xoff, offset.y), (-self.metal1_pitch, pos.lc().y),
-                                             (self.cols*self.wc.width, pos.lc().y)])
+                self.add_wire(self.m1_stack,[offset, (xoff, offset.y), (-self.m1_pitch, pos.lc().y),
+                                             (self.cols*self.wc.width, pos.lc().y)], widen_short_wires=False)
 
             self.add_layout_pin(text="write_complete", 
-                                layer="metal2", 
-                                offset=(self.inv_output.lx()+2*self.metal1_space,self.inv_output.by()), 
-                                width=self.metal2_width, 
-                                height=self.metal2_width)
-            self.add_rect(layer="metal2", 
-                          offset= (self.inv_output.lx()+2*self.metal1_space, self.inv_output.by()), 
-                          width=self.metal2_width, 
+                                layer="m2", 
+                                offset=(self.inv_output.lx()+2*self.m1_space,self.inv_output.by()), 
+                                width=self.m2_width, 
+                                height=self.m2_width)
+            self.add_rect(layer="m2", 
+                          offset= (self.inv_output.lx()+2*self.m1_space, self.inv_output.by()), 
+                          width=self.m2_width, 
                           height=self.height - self.inv_output.by())
                        
         if self.w_per_row == 4:
             pin_list = ["vdd", "gnd"]
             for pin in pin_list:
-                offset = vector(self.wc_nand2_inst2.lx(), self.height-pin_list.index(pin)*self.metal1_pitch)
+                offset = vector(self.wc_nand2_inst2.lx(), self.height-pin_list.index(pin)*self.m1_pitch)
                 self.add_layout_pin(text=pin, 
-                                    layer="metal1", 
+                                    layer="m1", 
                                     offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
                                     width=contact.m1m2.width, 
                                     height=contact.m1m2.width)
-                self.add_path("metal1",[offset, (self.cols*self.wc.width,offset.y)])
-                self.add_via_center(self.metal1_stack, ((-8+pin_list.index(pin))*self.metal1_pitch+0.5*contact.m1m2.width, offset.y), rotate=90)
+                self.add_path("m1",[offset, (self.cols*self.wc.width,offset.y)])
+                self.add_via_center(self.m1_stack, ((-8+pin_list.index(pin))*self.m1_pitch+0.5*contact.m1m2.width, offset.y), rotate=90)
 
             pin_list = ["en", "bm"]
             for pin in pin_list:
-                offset = vector(self.wc_nand2_inst2.lx(), self.height-(2+pin_list.index(pin))*self.metal1_pitch)
+                offset = vector(self.wc_nand2_inst2.lx(), self.height-(2+pin_list.index(pin))*self.m1_pitch)
                 pos = self.wc_inst[0].get_pin(pin)
-                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.metal1_pitch
+                xoff= self.wc_inst[0].rx()+(1+pin_list.index(pin))*self.m1_pitch
                 self.add_layout_pin(text=pin, 
-                                    layer="metal1", 
+                                    layer="m1", 
                                     offset=(offset.x, offset.y-0.5*contact.m1m2.width), 
                                     width=contact.m1m2.width, 
                                     height=contact.m1m2.width)
                 
-                self.add_wire(self.metal1_stack,[offset, (xoff, offset.y), (-self.metal1_pitch, pos.lc().y),
-                                            (self.cols*self.wc.width, pos.lc().y)])
+                self.add_wire(self.m1_stack,[offset, (xoff, offset.y), (-self.m1_pitch, pos.lc().y),
+                                            (self.cols*self.wc.width, pos.lc().y)], widen_short_wires=False)
 
             wc_offset = self.wc_nand2_inst2.get_pin("Z")
             self.add_layout_pin(text="write_complete", 
-                                layer="metal2", 
-                                offset= (wc_offset.lx()-0.5*self.metal2_width,wc_offset.by()), 
-                                width=self.metal2_width, 
-                                height=self.metal2_width)
-            self.add_wire(self.metal1_stack,[(wc_offset.lc().x, self.height),wc_offset.lc(),
-                                         (wc_offset.lc().x+ self.metal1_pitch,wc_offset.lc().y )])
+                                layer="m2", 
+                                offset= (wc_offset.lx()-0.5*self.m2_width,wc_offset.by()), 
+                                width=self.m2_width, 
+                                height=self.m2_width)
+            self.add_wire(self.m1_stack,[(wc_offset.lc().x, self.height),wc_offset.lc(),
+                                         (wc_offset.lc().x+ self.m1_pitch,wc_offset.lc().y )], widen_short_wires=False)
