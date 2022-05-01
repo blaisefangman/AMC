@@ -237,8 +237,11 @@ class layout():
         # Contacts are not really instances, so skip them
         if "contact" not in mod.name:
             # Check that the instance name is unique
-            pass
-            #debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.cell_name, name))
+            # AMC has duplicate names. Can be removed once async modules are updated to use sram_factory
+            if OPTS.mode == "async":
+                pass
+            else:
+                debug.check(name not in self.inst_names, "Duplicate named instance in {0}: {1}".format(self.cell_name, name))
 
         self.mods.add(mod)
         self.inst_names.add(name)

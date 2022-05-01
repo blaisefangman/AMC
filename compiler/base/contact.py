@@ -32,7 +32,8 @@ class contact(hierarchy_design.hierarchy_design):
     def __init__(self, layer_stack, dimensions=(1, 1), directions=None,
                  implant_type=None, well_type=None, add_extra_layer=None, name=""):
         # This will ignore the name parameter if set since
-        # we can guarantee a unique name here
+        # we can guarantee a unique name here from sram_factory
+        # Can remove once async modules are updated to use sram_factory
         if name == "" and (implant_type or well_type):
             name = "{0}_{1}_{2}_{3}x{4}_{5}{6}".format(layer_stack[0],
                                                        layer_stack[1],
