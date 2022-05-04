@@ -27,10 +27,10 @@ class column_mux_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import column_mux
+        import async_column_mux
         
         debug.info(1, "Testing sample of asingle column_mux cell")
-        a = column_mux.column_mux()
+        a = async_column_mux.column_mux()
         self.local_check(a)
 
 

@@ -30,11 +30,11 @@ class driver_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import wordline_driver_array
+        import async_wordline_driver_array
         import tech
 
         debug.info(2, "Checking driver")
-        a = wordline_driver_array.wordline_driver_array(rows=64)
+        a = async_wordline_driver_array.wordline_driver_array(rows=64)
         self.local_drc_check(a)
 
         # return it back to it's normal state

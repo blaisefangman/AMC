@@ -28,10 +28,10 @@ class precharge_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import precharge_array
+        import async_precharge_array
 
         debug.info(2, "Checking 4 column precharge")
-        pc = precharge_array.precharge_array(columns=4)
+        pc = async_precharge_array.precharge_array(columns=4)
         self.local_check(pc)
 
         # return it back to it's normal state

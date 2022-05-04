@@ -67,8 +67,8 @@ print_time("Start",start_time)
 total_size=(OPTS.words_per_row * OPTS.num_rows * OPTS.num_subanks * OPTS.branch_factors[0] * OPTS.branch_factors[1])
 
 if OPTS.power_gate:
-    import power_gate_sram
-    s = power_gate_sram.power_gate_sram(word_size=OPTS.word_size,
+    import async_power_gate_sram
+    s = async_power_gate_sram.power_gate_sram(word_size=OPTS.word_size,
                                         words_per_row=OPTS.words_per_row, 
                                         num_rows=OPTS.num_rows, 
                                         num_subanks=OPTS.num_subanks, 
@@ -80,8 +80,8 @@ if OPTS.power_gate:
     s.save_output()
 
 else:
-    import sram
-    s = sram.sram(word_size=OPTS.word_size,
+    import async_sram
+    s = async_sram.sram(word_size=OPTS.word_size,
                   words_per_row=OPTS.words_per_row, 
                   num_rows=OPTS.num_rows, 
                   num_subanks=OPTS.num_subanks, 

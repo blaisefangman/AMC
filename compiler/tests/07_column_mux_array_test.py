@@ -27,18 +27,18 @@ class column_mux_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import column_mux_array
+        import async_column_mux_array
         
         debug.info(1, "Testing sample for 1-way column_mux_array")
-        a = column_mux_array.column_mux_array(columns=8, word_size=1, name="columnmux_array_1")
+        a = async_column_mux_array.column_mux_array(columns=8, word_size=1, name="columnmux_array_1")
         self.local_check(a)
 
         debug.info(1, "Testing sample for 2-way column_mux_array")
-        a = column_mux_array.column_mux_array(columns=8, word_size=4, name="columnmux_array_2")
+        a = async_column_mux_array.column_mux_array(columns=8, word_size=4, name="columnmux_array_2")
         self.local_check(a)
 
         debug.info(1, "Testing sample for 4-way column_mux_array")
-        a = column_mux_array.column_mux_array(columns=16, word_size=4, name="columnmux_array_4")
+        a = async_column_mux_array.column_mux_array(columns=16, word_size=4, name="columnmux_array_4")
         self.local_check(a)
 
         # return it back to it's normal state

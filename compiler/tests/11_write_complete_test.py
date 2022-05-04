@@ -39,18 +39,18 @@ class write_complete_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import write_complete_array
+        import async_write_complete_array
 
         debug.info(2, "Testing write_complete for columns=8, word_size=8 => 1way")
-        a = write_complete_array.write_complete_array(columns=8, word_size=8, name="write_complete1")
+        a = async_write_complete_array.write_complete_array(columns=8, word_size=8, name="write_complete1")
         self.local_check(a)
 
         debug.info(2, "Testing write_complete for columns=8, word_size=4 => 2way")
-        a = write_complete_array.write_complete_array(columns=8, word_size=4, name="write_complete2")
+        a = async_write_complete_array.write_complete_array(columns=8, word_size=4, name="write_complete2")
         self.local_check(a)
         
         debug.info(2, "Testing write_complete for columns=8, word_size=2 => 4way")
-        a = write_complete_array.write_complete_array(columns=8, word_size=2, name="write_complete4")
+        a = async_write_complete_array.write_complete_array(columns=8, word_size=2, name="write_complete4")
         self.local_check(a)
 
         # return it back to it's normal state

@@ -28,10 +28,10 @@ class driver_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import driver
+        import async_driver
 
         debug.info(2, "Checking driver")
-        tx = driver.driver(rows=8, inv_size =5)
+        tx = async_driver.driver(rows=8, inv_size =5)
         self.local_check(tx)
         
         # return it back to it's normal state

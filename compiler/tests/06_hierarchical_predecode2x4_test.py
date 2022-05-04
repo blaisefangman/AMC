@@ -28,7 +28,7 @@ class hierarchical_predecode2x4_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import hierarchical_predecode2x4 as pre
+        import async_hierarchical_predecode2x4 as pre
 
         debug.info(1, "Testing sample for hierarchy_predecode2x4")
         a = pre.hierarchical_predecode2x4()

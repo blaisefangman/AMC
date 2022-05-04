@@ -28,18 +28,18 @@ class write_driver_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import write_driver_array
+        import async_write_driver_array
 
         debug.info(2, "Testing write_driver_array for word_size=8, words_per_row=1")
-        a = write_driver_array.write_driver_array(word_size=8, words_per_row=1, mask=True, name="wd_array1")
+        a = async_write_driver_array.write_driver_array(word_size=8, words_per_row=1, mask=True, name="wd_array1")
         self.local_check(a)
 
         debug.info(2, "Testing write_driver_array for cword_size=8, words_per_row=2")
-        a = write_driver_array.write_driver_array(word_size=8, words_per_row=2, mask=True, name="wd_array2")
+        a = async_write_driver_array.write_driver_array(word_size=8, words_per_row=2, mask=True, name="wd_array2")
         self.local_check(a)
         
         debug.info(2, "Testing write_driver_array for cword_size=8, words_per_row=4")
-        a = write_driver_array.write_driver_array(word_size=8, words_per_row=4, mask=True, name="wd_array4")
+        a = async_write_driver_array.write_driver_array(word_size=8, words_per_row=4, mask=True, name="wd_array4")
         self.local_check(a)
 
         

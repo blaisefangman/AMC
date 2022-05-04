@@ -39,35 +39,39 @@ class bank_control_logic_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import bank_control_logic
+        import async_bank_control_logic
         import tech
 
         debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=128, num_subanks=1, two_level_bank=True, power_gate= False, name="bank_ctrl1")
-        self.local_check(a)
-        debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=64, num_subanks=1, two_level_bank=False, power_gate= False, name="bank_ctrl2")
+        a = async_bank_control_logic.bank_control_logic(num_rows=128, num_subanks=1, two_level_bank=True, power_gate= False, name="bank_ctrl1")
         self.local_check(a)
 
         debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=64, num_subanks=2, two_level_bank=True, power_gate= False, name="bank_ctrl3")
-        self.local_check(a)
-        debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=32, num_subanks=2, two_level_bank=False, power_gate= True, name="bank_ctrl4")
+        a = async_bank_control_logic.bank_control_logic(num_rows=64, num_subanks=1, two_level_bank=False, power_gate= False, name="bank_ctrl2")
         self.local_check(a)
 
         debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=32, num_subanks=4, two_level_bank=True, power_gate= True, name="bank_ctrl5")
-        self.local_check(a)
-        debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=32, num_subanks=4, two_level_bank=False, power_gate= False, name="bank_ctrl6")
+        a = async_bank_control_logic.bank_control_logic(num_rows=64, num_subanks=2, two_level_bank=True, power_gate= False, name="bank_ctrl3")
         self.local_check(a)
 
         debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=64, num_subanks=8, two_level_bank=True, power_gate= False, name="bank_ctrl7")
+        a = async_bank_control_logic.bank_control_logic(num_rows=32, num_subanks=2, two_level_bank=False, power_gate= True, name="bank_ctrl4")
         self.local_check(a)
+
         debug.info(1, "Testing sample for bank_control_logic")
-        a = bank_control_logic.bank_control_logic(num_rows=32, num_subanks=8, two_level_bank=False, power_gate= True, name="bank_ctrl8")
+        a = async_bank_control_logic.bank_control_logic(num_rows=32, num_subanks=4, two_level_bank=True, power_gate= True, name="bank_ctrl5")
+        self.local_check(a)
+
+        debug.info(1, "Testing sample for bank_control_logic")
+        a = async_bank_control_logic.bank_control_logic(num_rows=32, num_subanks=4, two_level_bank=False, power_gate= False, name="bank_ctrl6")
+        self.local_check(a)
+
+        debug.info(1, "Testing sample for bank_control_logic")
+        a = async_bank_control_logic.bank_control_logic(num_rows=64, num_subanks=8, two_level_bank=True, power_gate= False, name="bank_ctrl7")
+        self.local_check(a)
+
+        debug.info(1, "Testing sample for bank_control_logic")
+        a = async_bank_control_logic.bank_control_logic(num_rows=32, num_subanks=8, two_level_bank=False, power_gate= True, name="bank_ctrl8")
         self.local_check(a)
 
 

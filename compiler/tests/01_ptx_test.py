@@ -32,32 +32,32 @@ class ptx_test(AMC_test):
         import tech
 
         debug.info(2, "Checking single finger NMOS")
-        fet1 = ptx.ptx(width= tech.drc["minwidth_tx"],
+        fet1 = async_ptx.ptx(width= tech.drc["minwidth_tx"],
                        mults=1, tx_type="nmos", connect_active=False, connect_poly=False)
         #self.local_drc_check(fet1)
 
         debug.info(2, "Checking single finger PMOS")
-        fet2 = ptx.ptx(width= 2*tech.drc["minwidth_tx"],
+        fet2 = async_ptx.ptx(width= 2*tech.drc["minwidth_tx"],
                        mults=1, tx_type="pmos", connect_active=False, connect_poly=False)
         #self.local_drc_check(fet2)
 
         debug.info(2, "Checking three fingers NMOS")
-        fet3 = ptx.ptx(width=3*tech.drc["minwidth_tx"],
+        fet3 = async_ptx.ptx(width=3*tech.drc["minwidth_tx"],
                        mults=3, tx_type="nmos", connect_active=False, connect_poly=False)
         #self.local_drc_check(fet3)
 
         debug.info(2, "Checking foure fingers PMOS")
-        fet4 = ptx.ptx(width=2*tech.drc["minwidth_tx"],
+        fet4 = async_ptx.ptx(width=2*tech.drc["minwidth_tx"],
                        mults=4, tx_type="pmos", connect_active=True, connect_poly=True)
         #self.local_drc_check(fet4)
 
         debug.info(2, "Checking three fingers NMOS")
-        fet5 = ptx.ptx(width=3*tech.drc["minwidth_tx"],
+        fet5 = async_ptx.ptx(width=3*tech.drc["minwidth_tx"],
                        mults=4, tx_type="nmos", connect_active=True, connect_poly=False)
         #self.local_drc_check(fet5)
 
         debug.info(2, "Checking foure fingers PMOS")
-        fet6 = ptx.ptx(width=2*tech.drc["minwidth_tx"],
+        fet6 = async_ptx.ptx(width=2*tech.drc["minwidth_tx"],
                        mults=3, tx_type="pmos", connect_active=False, connect_poly=True)
         #self.local_drc_check(fet6)
 

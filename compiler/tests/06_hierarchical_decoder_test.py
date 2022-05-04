@@ -28,21 +28,21 @@ class hierarchical_decoder_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import hierarchical_decoder
+        import async_hierarchical_decoder
 
         # rows=4 and rows=8 Doesn't require hierarchical decoder, 
         # they should be made with only predecoders
 
         debug.info(1, "Testing 16 row sample for hierarchical_decoder")
-        a = hierarchical_decoder.hierarchical_decoder(rows=16, name="hierarchical_decoder_16")
+        a = async_hierarchical_decoder.hierarchical_decoder(rows=16, name="hierarchical_decoder_16")
         self.local_check(a)
 
         debug.info(1, "Testing 32 row sample for hierarchical_decoder")
-        a = hierarchical_decoder.hierarchical_decoder(rows=32, name="hierarchical_decoder_32")
+        a = async_hierarchical_decoder.hierarchical_decoder(rows=32, name="hierarchical_decoder_32")
         self.local_check(a)
 
         debug.info(1, "Testing 128 row sample for hierarchical_decoder")
-        a = hierarchical_decoder.hierarchical_decoder(rows=128, name="hierarchical_decoder_128")
+        a = async_hierarchical_decoder.hierarchical_decoder(rows=128, name="hierarchical_decoder_128")
         self.local_check(a)
 
         # return it back to it's normal state

@@ -39,18 +39,18 @@ class split_array_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import split_array
+        import async_split_array
 
         debug.info(2, "Testing split_array for word_size=8, words_per_row=1")
-        a = split_array.split_array(word_size=8, words_per_row=1, mask= True, name="split_array1")
+        a = async_split_array.split_array(word_size=8, words_per_row=1, mask= True, name="split_array1")
         self.local_check(a)
 
         debug.info(2, "Testing split_array for word_size=8, words_per_row=2")
-        a = split_array.split_array(word_size=8, words_per_row=2, mask= True, name="split_array2")
+        a = async_split_array.split_array(word_size=8, words_per_row=2, mask= True, name="split_array2")
         self.local_check(a)
 
         debug.info(2, "Testing split_array for word_size=8, words_per_row=4")
-        a = split_array.split_array(word_size=8, words_per_row=4, mask= False, name="split_array4")
+        a = async_split_array.split_array(word_size=8, words_per_row=4, mask= False, name="split_array4")
         self.local_check(a)
 
         

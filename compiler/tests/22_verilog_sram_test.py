@@ -36,10 +36,10 @@ class verilog_test(AMC_test):
         globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
 
-        import sram
+        import async_sram
 
         debug.info(1, "Testing Verilog for a sample sram")
-        s = sram.sram(word_size=16,
+        s = async_sram.sram(word_size=16,
                       words_per_row=1,
                       num_rows=64,
                       num_subanks=4, 

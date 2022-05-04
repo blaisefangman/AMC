@@ -39,14 +39,14 @@ class split_merge_control_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import split_merge_control
+        import async_split_merge_control
 
         debug.info(1, "Testing sample for split_merge_control for 2 banks")
-        a = split_merge_control.split_merge_control(num_banks=2, name="split_merge_ctrl2")
+        a = async_split_merge_control.split_merge_control(num_banks=2, name="split_merge_ctrl2")
         self.local_check(a)
 
         debug.info(1, "Testing sample for split_merge_control for 4 banks")
-        a = split_merge_control.split_merge_control(num_banks=4, name="split_merge_ctrl4")
+        a = async_split_merge_control.split_merge_control(num_banks=4, name="split_merge_ctrl4")
         self.local_check(a)
 
         # return it back to it's normal state

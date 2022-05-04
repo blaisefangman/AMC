@@ -39,7 +39,7 @@ class power_gated_sram_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import power_gate_sram
+        import async_power_gate_sram
  
         debug.info(1, "SRAM Test")
         
@@ -61,7 +61,7 @@ class power_gated_sram_test(AMC_test):
               bank_orientations in [("H", "H"), ("V", "H"), ("H", "V"), ("V", "V")] """ 
 
 
-        a = power_gate_sram.power_gate_sram(word_size=8, words_per_row=1, num_rows=64, 
+        a = async_power_gate_sram.power_gate_sram(word_size=8, words_per_row=1, num_rows=64, 
                                             num_subanks=2, branch_factors=(1,2), bank_orientations=("H", "H"),  
                                             mask=False, name="power_gate_sram")
 

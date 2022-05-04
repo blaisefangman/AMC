@@ -28,18 +28,18 @@ class delay_chain_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import delay_chain
+        import async_delay_chain
 
         debug.info(2, "Testing delay_chain, 10 stages")
-        a = delay_chain.delay_chain(num_inv=17, num_stage=10, name="delay_chain1")
+        a = async_delay_chain.delay_chain(num_inv=17, num_stage=10, name="delay_chain1")
         self.local_check(a)
         
         debug.info(2, "Testing delay_chain, 3 stage")
-        a = delay_chain.delay_chain(num_inv=11, num_stage=3, name="delay_chain2")
+        a = async_delay_chain.delay_chain(num_inv=11, num_stage=3, name="delay_chain2")
         self.local_check(a)
 
         debug.info(2, "Testing delay_chain, 1 stage")
-        a = delay_chain.delay_chain(num_inv=6, num_stage=1, name="delay_chain3")
+        a = async_delay_chain.delay_chain(num_inv=6, num_stage=1, name="delay_chain3")
         self.local_check(a)
 
         # return it back to it's normal state

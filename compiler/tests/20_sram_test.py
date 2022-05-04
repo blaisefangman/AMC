@@ -39,7 +39,7 @@ class sram_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import sram
+        import async_sram
  
         debug.info(1, "SRAM Test")
         
@@ -59,7 +59,7 @@ class sram_test(AMC_test):
               means outter_banks are placed vertically and inner_banks are place horizontally
               bank_orientations in [("H", "H"), ("V", "H"), ("H", "V"), ("V", "V")]"""
         
-        a = sram.sram(word_size=16, words_per_row=1, num_rows=64,   
+        a = async_sram.sram(word_size=16, words_per_row=1, num_rows=64,   
                       num_subanks=2, branch_factors=(2,4),  
                       bank_orientations=("H", "H"), mask= False, 
                       power_gate=True, name="sram")

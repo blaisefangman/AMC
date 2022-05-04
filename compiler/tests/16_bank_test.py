@@ -39,7 +39,7 @@ class bank_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import bank
+        import async_bank
 
         debug.info(1, "Single Bank Test")
         """ range of acceptable value: 
@@ -51,7 +51,7 @@ class bank_test(AMC_test):
         two_level_bank [False, True] : if True split and merge cells will be added
         
         """
-        a = bank.bank(word_size=16, words_per_row=1, num_rows=32, 
+        a = async_bank.bank(word_size=16, words_per_row=1, num_rows=32, 
                       num_subanks=2, two_level_bank=True, mask=False, 
                       power_gate=True, name="bank")
 

@@ -38,14 +38,14 @@ class sram_func_test(AMC_test):
         OPTS.check_lvsdrc = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
-        import characterizer
-        imp.reload(characterizer)
-        from characterizer import functional_test
-        import sram
+        import async_characterizer
+        imp.reload(async_characterizer)
+        from async_characterizer import async_functional_test
+        import async_sram
         import tech
 
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=8, words_per_row=1, num_rows=64, num_subanks=2, 
+        s = async_sram.sram(word_size=8, words_per_row=1, num_rows=64, num_subanks=2, 
                       branch_factors=(1,2), bank_orientations=("H", "H"), mask=False, 
                       power_gate=False, name="sram")
                       
@@ -57,7 +57,7 @@ class sram_func_test(AMC_test):
         
         
         #at least 4 simulation is needed to calculate delays for each operation
-        T = functional_test.functional_test(size, corner, name=s.name, 
+        T = async_functional_test.functional_test(size, corner, name=s.name, 
                                             w_per_row = s.w_per_row, num_rows = s.num_rows, 
                                             mask=s.mask, power_gate=s.power_gate, 
                                             load=tech.spice["input_cap"], 

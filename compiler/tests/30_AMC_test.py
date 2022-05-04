@@ -40,14 +40,14 @@ class AMC_test(AMC_test):
 
         # Start importing design modules after we have the config file
         import tech
-        import sram
+        import async_sram
 
         # Keep track of running stats
         start_time = datetime.datetime.now()
         print_time("Start",start_time)
 
         # import SRAM test generation
-        s = sram.sram(word_size=OPTS.word_size,
+        s = async_sram.sram(word_size=OPTS.word_size,
                       words_per_row=OPTS.words_per_row, 
                       num_rows=OPTS.num_rows, 
                       num_subanks=OPTS.num_subanks, 

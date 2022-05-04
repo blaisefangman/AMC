@@ -39,12 +39,12 @@ class lib_test(AMC_test):
         import characterizer
         reload(characterizer)
         from characterizer import lib
-        import sram
+        import async_sram
         import tech
 
         #**** Setup synopsys' Finesim and VCS before running this test ***#
         debug.info(1, "Testing timing for sample 1bit, 16words SRAM with 1 bank")
-        s = sram.sram(word_size=4, words_per_row=1, num_rows=32, num_subanks=1, 
+        s = async_sram.sram(word_size=4, words_per_row=1, num_rows=32, num_subanks=1, 
                       branch_factors=(1,1), bank_orientations=("H", "H"), name="sram")
                       
         tempspice = OPTS.AMC_temp + "sram.sp"

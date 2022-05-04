@@ -28,18 +28,18 @@ class sense_amp_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import sense_amp_array
+        import async_sense_amp_array
 
         debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=1")
-        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=1, name="sa_array1")
+        a = async_sense_amp_array.sense_amp_array(word_size=8, words_per_row=1, name="sa_array1")
         self.local_check(a)
 
         debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=2")
-        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=2, name="sa_array2")
+        a = async_sense_amp_array.sense_amp_array(word_size=8, words_per_row=2, name="sa_array2")
         self.local_check(a)
 
         debug.info(2, "Testing sense_amp_array for word_size=8, words_per_row=4")
-        a = sense_amp_array.sense_amp_array(word_size=8, words_per_row=4, name="sa_array4")
+        a = async_sense_amp_array.sense_amp_array(word_size=8, words_per_row=4, name="sa_array4")
         self.local_check(a)
         
         # return it back to it's normal state

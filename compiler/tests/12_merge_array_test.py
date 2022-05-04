@@ -39,18 +39,18 @@ class merge_array_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import merge_array
+        import async_merge_array
 
         debug.info(2, "Testing merge_array for word_size=8, words_per_row=1")
-        a = merge_array.merge_array(word_size=8, words_per_row=1, name="merge_array1")
+        a = async_merge_array.merge_array(word_size=8, words_per_row=1, name="merge_array1")
         self.local_check(a)
 
         debug.info(2, "Testing merge_array for word_size=8, words_per_row=2")
-        a = merge_array.merge_array(word_size=8, words_per_row=2, name="merge_array2")
+        a = async_merge_array.merge_array(word_size=8, words_per_row=2, name="merge_array2")
         self.local_check(a)
 
         debug.info(2, "Testing merge_array for word_size=8, words_per_row=4")
-        a = merge_array.merge_array(word_size=8, words_per_row=4, name="merge_array4")
+        a = async_merge_array.merge_array(word_size=8, words_per_row=4, name="merge_array4")
         self.local_check(a)
         
         # return it back to it's normal state

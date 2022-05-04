@@ -28,10 +28,10 @@ class precharge_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import precharge
+        import async_precharge
 
         debug.info(2, "Checking precharge")
-        tx = precharge.precharge()
+        tx = async_precharge.precharge()
         self.local_check(tx)
 
         # return it back to it's normal state

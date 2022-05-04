@@ -274,7 +274,6 @@ drc["poly_enclose_poly_contact"] = 0.3
 drc["poly_extend_poly_contact"] = 0.3
 # Reserved for other technologies
 drc["poly_contact_to_gate"] = 0.6
-drc["active_contact_to_gate"] = 0.6
 # 5.4 Minimum spacing to gate of transistor
 drc["poly_contact_to_poly"] = 0.6
 

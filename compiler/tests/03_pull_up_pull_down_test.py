@@ -40,10 +40,10 @@ class pull_up_pull_down_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import pull_up_pull_down
+        import async_pull_up_pull_down
         
         debug.info(2, "Checking pull_up_pull_down gate")
-        tx = pull_up_pull_down.pull_up_pull_down(num_nmos=2, num_pmos=1, 
+        tx = async_pull_up_pull_down.pull_up_pull_down(num_nmos=2, num_pmos=1, 
                                                  nmos_size=2, pmos_size=1, 
                                                  vdd_pins=[], gnd_pins=[])
         self.local_check(tx)

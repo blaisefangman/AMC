@@ -27,18 +27,18 @@ class pinv_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import pinv
+        import async_pinv
 
         debug.info(2, "Checking 1x size inverter")
-        tx = pinv.pinv(size=1)
+        tx = async_pinv.pinv(size=1)
         self.local_check(tx)
 
         debug.info(2, "Checking 2x size inverter")
-        tx = pinv.pinv(size=2)
+        tx = async_pinv.pinv(size=2)
         self.local_check(tx)
 
         debug.info(2, "Checking 7x size inverter")
-        tx = pinv.pinv(size=7)
+        tx = async_pinv.pinv(size=7)
         self.local_check(tx)
         
         # return it back to it's normal state

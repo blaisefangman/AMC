@@ -39,7 +39,7 @@ class multi_bank_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import multi_bank
+        import async_multi_bank
  
         debug.info(1, "Multi Bank SRAM Test")
         
@@ -53,7 +53,7 @@ class multi_bank_test(AMC_test):
         two_level_bank in [False, True]: if true split and merge cell will be added
         """ 
 
-        a = multi_bank.multi_bank(word_size=16, words_per_row=2, num_rows=32, num_subanks=1, 
+        a = async_multi_bank.multi_bank(word_size=16, words_per_row=2, num_rows=32, num_subanks=1, 
                                   num_banks=2, orientation="H", two_level_bank=False, 
                                   mask = True, power_gate = True, name="multi_bank")
         self.local_check(a)

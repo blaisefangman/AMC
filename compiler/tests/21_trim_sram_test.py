@@ -25,11 +25,11 @@ class sram_test(AMC_test):
     def runTest(self):
         globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
         
-        import sram
-        from characterizer import trim_spice
+        import async_sram
+        from async_characterizer import async_trim_spice
  
         debug.info(1, "SRAM Test")
-        a = sram.sram(word_size=16, words_per_row=1, num_rows=64, 
+        a = async_sram.sram(word_size=16, words_per_row=1, num_rows=64, 
                       num_subanks=4, branch_factors=(1,4), 
                       bank_orientations=("H", "H"), mask = True, 
                       power_gate = False, name="sram")
@@ -47,7 +47,7 @@ class sram_test(AMC_test):
         address2="0"*a.addr_size
         
         reduced_file="{0}{1}".format(OPTS.AMC_temp, "reduced.sp")
-        trim_spice.trim_spice(filename, reduced_file, a.w_size, a.w_per_row, a.num_rows, 
+        async_trim_spice.trim_spice(filename, reduced_file, a.w_size, a.w_per_row, a.num_rows, 
                               address1, address2)
         globals.end_AMC()
         

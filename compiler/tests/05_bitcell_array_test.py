@@ -28,10 +28,10 @@ class array_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import bitcell_array
+        import async_bitcell_array
 
         debug.info(2, "Testing 64x4 array for 6t_cell")
-        a = bitcell_array.bitcell_array(name="bitcell_array", cols=8, rows=8)
+        a = async_bitcell_array.bitcell_array(name="bitcell_array", cols=8, rows=8)
         self.local_check(a)
 
         # return it back to it's normal state

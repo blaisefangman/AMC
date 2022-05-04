@@ -13,10 +13,10 @@ class lef_test(AMC_test):
     def runTest(self):
         globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
 
-        import sram
+        import async_sram
 
         debug.info(1, "Testing LEF for a sample sram")
-        s = sram.sram(word_size=4,
+        s = async_sram.sram(word_size=4,
                       words_per_row=1,
                       num_rows=64,
                       num_subanks=4, 
