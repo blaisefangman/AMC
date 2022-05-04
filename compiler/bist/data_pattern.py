@@ -26,7 +26,7 @@ import contact
 from tech import info, layer, drc
 import math
 from vector import vector
-from ptx import ptx
+from async_ptx import ptx
 from utils import ceil
 
 class data_pattern(design.design):

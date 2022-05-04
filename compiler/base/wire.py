@@ -45,10 +45,10 @@ class wire(wire_path):
         self.via_layer_name = via_layer
 
         self.vert_layer_name = vert_layer
-        self.vert_layer_width = drc["minwidth_{0}".format(vert_layer)]
+        self.vert_layer_width = drc("minwidth_{0}".format(vert_layer))
 
         self.horiz_layer_name = horiz_layer
-        self.horiz_layer_width = drc["minwidth_{0}".format(horiz_layer)]
+        self.horiz_layer_width = drc("minwidth_{0}".format(horiz_layer))
         via_connect = factory.create(module_type="contact",
                                      layer_stack=self.layer_stack,
                                      dimensions=(1, 1))
@@ -59,8 +59,8 @@ class wire(wire_path):
         self.horiz_layer_contact_width = max(via_connect.second_layer_height,
                                              via_connect.first_layer_height)
 
-        self.node_to_node = [drc["minwidth_" + str(self.horiz_layer_name)] + via_connect.width,
-                             drc["minwidth_" + str(self.horiz_layer_name)] + via_connect.height]
+        self.node_to_node = [drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.width,
+                             drc("minwidth_" + str(self.horiz_layer_name)) + via_connect.height]
         self.pitch = self.compute_pitch(self.layer_stack)
 
     def compute_pitch(self, layer_stack):
@@ -80,8 +80,8 @@ class wire(wire_path):
                 contact1 = getattr(contact, layer2 + "_via")
         max_contact = max(contact1.width, contact1.height)
 
-        layer1_space = drc["{0}_to_{0}".format(layer1)]
-        layer2_space = drc["{0}_to_{0}".format(layer2)]
+        layer1_space = drc("{0}_to_{0}".format(layer1))
+        layer2_space = drc("{0}_to_{0}".format(layer2))
         pitch = max_contact + max(layer1_space, layer2_space)
 
         return pitch

@@ -939,7 +939,10 @@ class layout():
 
     def add_ptx(self, offset, mirror="R0", rotate=0, width=1, mults=1, tx_type="nmos"):
         """Adds a ptx module to the design."""
-        import ptx
+        if OPTS.mode == "async":
+            import async_ptx
+        else:
+            import ptx
         mos = ptx.ptx(width=width,
                       mults=mults,
                       tx_type=tx_type)

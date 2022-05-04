@@ -27,7 +27,7 @@ from utils import ceil
 from vector import vector
 from globals import OPTS
 from utils import round_to_grid
-from ptx import ptx
+from async_ptx import ptx
 from tech import info, layer, drc
 
 class pull_up_pull_down(design.design):

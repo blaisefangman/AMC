@@ -28,7 +28,7 @@ from tech import layer, info, drc
 from vector import vector
 from nand2 import nand2
 from pinv import pinv
-from ptx import ptx
+from async_ptx import ptx
 from pull_up_pull_down import pull_up_pull_down
 from utils import ceil
 

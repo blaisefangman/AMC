@@ -32,7 +32,7 @@ from pinv import pinv
 from nor_tree import nor_tree
 from flipflop import flipflop
 from pull_up_pull_down import pull_up_pull_down
-from ptx import ptx
+from async_ptx import ptx
 from utils import ceil
 
 class comparator(design.design):

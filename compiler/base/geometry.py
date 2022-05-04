@@ -179,8 +179,9 @@ class instance(geometry):
         if OPTS.netlist_only:
             self.width = 0
             self.height = 0
-        self.width = round_to_grid(mod.width)
-        self.height = round_to_grid(mod.height)
+        else:
+            self.width = round_to_grid(mod.width)
+            self.height = round_to_grid(mod.height)
         self.compute_boundary(offset, mirror, rotate)
 
         debug.info(4, "creating instance: " + self.name)

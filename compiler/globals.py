@@ -227,7 +227,7 @@ def setup_paths():
     # to be added: characterizer, verify
     subdirlist = [item for item in os.listdir(AMC_HOME) if os.path.isdir(os.path.join(AMC_HOME, item))]
     if OPTS.mode == "async":
-        subdirlist = subdirlist + ["base/async", "modules/async"]
+        subdirlist = subdirlist + ["base/async", "modules/async", "pgates/async"]
     for subdir in subdirlist:
         full_path = "{0}/{1}".format(AMC_HOME, subdir)
         debug.check(os.path.isdir(full_path),

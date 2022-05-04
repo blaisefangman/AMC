@@ -15,7 +15,7 @@ import contact
 import math
 from vector import vector
 from utils import round_to_grid
-from ptx import ptx
+from async_ptx import ptx
 from tech import info, drc, layer
 from bitcell import bitcell
 from utils import ceil as util_ceil

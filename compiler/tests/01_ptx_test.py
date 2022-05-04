@@ -28,7 +28,7 @@ class ptx_test(AMC_test):
         import calibre
         OPTS.check_lvsdrc = False
 
-        import ptx
+        import async_ptx
         import tech
 
         debug.info(2, "Checking single finger NMOS")

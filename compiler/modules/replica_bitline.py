@@ -16,7 +16,7 @@ import utils
 from utils import round_to_grid
 from vector import vector
 from pinv import pinv
-from ptx import ptx
+from async_ptx import ptx
 from tech import info, GDS, layer, drc
 from replica_bitcell import replica_bitcell
 from bitcell import bitcell

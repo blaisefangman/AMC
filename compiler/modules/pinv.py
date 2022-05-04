@@ -13,7 +13,7 @@ import contact
 import design
 import debug
 from tech import parameter, info, drc, layer
-from ptx import ptx
+from async_ptx import ptx
 from vector import vector
 from math import ceil
 from utils import round_to_grid

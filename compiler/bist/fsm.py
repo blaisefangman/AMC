@@ -31,7 +31,7 @@ from nand2 import nand2
 from nand3 import nand3
 from nor2 import nor2
 from nor3 import nor3
-from ptx import ptx
+from async_ptx import ptx
 from flipflop import flipflop
 from delay_chain import delay_chain
 from utils import ceil

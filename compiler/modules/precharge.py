@@ -12,7 +12,7 @@
 import design
 import debug
 import contact
-from ptx import ptx
+from async_ptx import ptx
 from vector import vector
 from utils import ceil
 from bitcell import bitcell
