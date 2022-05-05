@@ -114,7 +114,7 @@ class lib():
         self.lib.write("    memory(){ \n")
         self.lib.write("    type : ram;\n")
         self.lib.write("    address_width : {};\n".format(self.sram.addr_size))
-        self.lib.write("    word_width : {};\n".format(self.sram.word_size))
+        self.lib.write("    word_width : {};\n".format(self.sram.w_size))
         self.lib.write("    }\n")
         self.lib.write("    interface_timing : true;\n")
         self.lib.write("    dont_use  : true;\n")
@@ -182,7 +182,7 @@ class lib():
         
         # check that the length is a multiple or give an error!
         debug.check(len(values)%length == 0,"Values are not a multiple of the length. Cannot make a full array.")
-        rounded_values = list(map(charutils.round_time,values))
+        rounded_values = list(map(async_charutils.round_time,values))
         split_values = [rounded_values[i:i+length] for i in range(0, len(rounded_values), length)]
         formatted_rows = list(map(self.create_list,split_values))
         formatted_array = ",\\\n".join(formatted_rows)
@@ -231,17 +231,17 @@ class lib():
         self.lib.write("    type (data_in){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
-        self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
+        self.lib.write("    bit_width : {0};\n".format(self.sram.w_size))
         self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
+        self.lib.write("    bit_to : {0};\n".format(self.sram.w_size - 1))
         self.lib.write("    }\n\n")
         
         self.lib.write("    type (data_out){\n")
         self.lib.write("    base_type : array;\n")
         self.lib.write("    data_type : bit;\n")
-        self.lib.write("    bit_width : {0};\n".format(self.sram.word_size))
+        self.lib.write("    bit_width : {0};\n".format(self.sram.w_size))
         self.lib.write("    bit_from : 0;\n")
-        self.lib.write("    bit_to : {0};\n".format(self.sram.word_size - 1))
+        self.lib.write("    bit_to : {0};\n".format(self.sram.w_size - 1))
         self.lib.write("    }\n\n")
 
 
@@ -287,7 +287,7 @@ class lib():
         self.lib.write("        memory_write(){ \n")
         self.lib.write("            address : addr; \n")
         self.lib.write("        }\n")
-        self.lib.write("        pin(data_in[{0}:0]){{\n".format(self.sram.word_size - 1))
+        self.lib.write("        pin(data_in[{0}:0]){{\n".format(self.sram.w_size - 1))
         self.write_delay("w", self.results["write_delay_lh"], 
                               self.results["write_delay_hl"], 
                               self.results["slew_lh"], 
@@ -316,7 +316,7 @@ class lib():
         self.lib.write("        memory_read(){ \n")
         self.lib.write("            address : addr; \n")
         self.lib.write("        }\n")
-        self.lib.write("        pin(data_out[{0}:0]){{\n".format(self.sram.word_size - 1))
+        self.lib.write("        pin(data_out[{0}:0]){{\n".format(self.sram.w_size - 1))
         self.write_delay("r", self.results["read_delay_lh"], 
                                self.results["read_delay_hl"], 
                                self.results["slew_lh"], 
@@ -410,7 +410,7 @@ class lib():
     def compute_delay(self):
         """ Do the analysis if we haven't characterized the SRAM yet """
 
-        size = (self.sram.addr_size, self.sram.word_size)
+        size = (self.sram.addr_size, self.sram.w_size)
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
         self.results  = self.delay_power(size, corner, self.name, self.loads , self.slews)
 
@@ -425,7 +425,7 @@ class lib():
 
         for slew in slews:
             for load in loads:
-                d = functional_test.functional_test(size, corner, name, self.sram.w_per_row, 
+                d = async_functional_test.functional_test(size, corner, name, self.sram.w_per_row, 
                                                     self.sram.num_rows, load ,slew)
                 q = d.result
                 for k,v in list(q.items()):

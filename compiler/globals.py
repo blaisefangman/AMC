@@ -26,6 +26,13 @@ def parse_args():
     global OPTS
 
     option_list = {
+        optparse.make_option("-a",
+                             "--async",
+                             action="store_const",
+                             const="async",
+                             dest="mode",
+                             default="sync",
+                             help="Generate asynchronous memory"),
         optparse.make_option("-b", "--backannotated", 
                              action="store_true", dest="run_pex",
                              help="Back annotate simulation"),
@@ -51,7 +58,7 @@ def parse_args():
                              action="store_false", dest="trim_netlist",
                              help="Disable removal of noncritical memory cells during characterization"),
         optparse.make_option("-c", "--characterize", 
-                             action="store_false", dest="characterize",
+                             action="store_false", dest="analytical_delay",
                              help="Perform characterization to calculate delays"),
         optparse.make_option("-d", "--dontpurge", 
                              action="store_false", dest="purge_temp",
@@ -65,7 +72,7 @@ def parse_args():
                                    version="AMC version 1.0")
 
     (options, args) = parser.parse_args(values=OPTS)
-    
+
     # If we don't specify a tech, assume scn3me_subm.
     # This may be overridden when we read a config file though...
     if OPTS.tech_name == "":
@@ -185,6 +192,10 @@ def read_config(config_file, is_unit_test=True):
     # If config didn't set output name, make a reasonable default.
     if (OPTS.output_name == ""):
         OPTS.output_name = "AMC_SRAM"
+
+    # If not using analytical delay, then we are running characterization
+    if OPTS.analytical_delay == False:
+        OPTS.characterize = True
         
     # Don't delete the output dir, it may have other files!
     # make the directory if it doesn't exist

@@ -1420,11 +1420,11 @@ class sram(design.design, lef.lef, async_verilog.verilog):
         # Characterize the design
         if OPTS.characterize:
             start_time = datetime.datetime.now()        
-            from characterizer import lib
+            from async_characterizer import async_lib
             print("\n LIB: Characterizing... ")
             if OPTS.spice_name!="":
                 print("Performing simulation-based characterization with {}".format(OPTS.spice_name))
             if OPTS.trim_netlist:
                 print("Trimming netlist to speed up characterization.")
-            lib.lib(out_dir=OPTS.output_path, sram=self)
+            async_lib.lib(out_dir=OPTS.output_path, sram=self)
             print_time("Characterization", datetime.datetime.now(), start_time)

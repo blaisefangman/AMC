@@ -57,8 +57,8 @@ class options(optparse.Values):
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
     purge_temp = True
     
-    #run the charactrizer
-    characterize = False
+    #run the characterizer
+    analytical_delay = True
     
     # Detailed or abstract LEF view
     detailed_lef = True
@@ -70,4 +70,4 @@ class options(optparse.Values):
     netlist_only = False
 
     # Generate Synchronous ("sync") or Asynchronous ("async") memory
-    mode = "async"
+    mode = "sync"
