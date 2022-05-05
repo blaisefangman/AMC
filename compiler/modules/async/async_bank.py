@@ -2318,7 +2318,7 @@ class bank(design.design):
                               width=self.m2_width, 
                               height=heighty)
                 
-                for pin in self.subank_dec_drv_inst.get_pins(pow_pins[i]):
+                for pin in sorted(self.subank_dec_drv_inst.get_pins(pow_pins[i])):
                     self.add_rect(layer="m1", 
                                   offset=pin.ll(), 
                                   width=subank_dec_xoff- pin.lx(), 

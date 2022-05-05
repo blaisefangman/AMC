@@ -236,7 +236,7 @@ def init_openram(config_file, is_unit_test=True):
         return
 
     # Setup correct bitcell names
-        setup_bitcell()
+    setup_bitcell()
 
     # Import these to find the executables for checkpointing
     import characterizer
@@ -432,9 +432,14 @@ def purge_temp():
     contents = [os.path.join(OPTS.openram_temp, i) for i in os.listdir(OPTS.openram_temp)]
     for i in contents:
         if os.path.isfile(i) or os.path.islink(i):
-            os.remove(i)
+            try:
+                os.remove(i)
+            except FileNotFoundError:
+                # Seems to erroneously try to remove some files twice?
+                # Added by Blaise when merging with AMC
+                pass
         else:
-            shutil.rmtree(i)
+            shutil.rmtree(i, ignore_errors=True)
     
 
 def cleanup_paths():
@@ -592,6 +597,8 @@ def import_tech():
 
     # Add all of the paths
     for tech_path in OPENRAM_TECH.split(":"):
+        if OPTS.mode == "async":
+            tech_path += "/async"
         debug.check(os.path.isdir(tech_path),
                     "$OPENRAM_TECH does not exist: {0}".format(tech_path))
         sys.path.append(tech_path)
@@ -638,6 +645,8 @@ def report_status():
     info about the SRAM being generated
     """
     global OPTS
+
+    debug.print_raw("Circuit Control Logic: {}".format(OPTS.mode))
 
     # Async currently uses different config parameters
     if OPTS.mode == "async":

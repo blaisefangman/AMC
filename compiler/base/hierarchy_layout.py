@@ -135,11 +135,11 @@ class layout():
             lowesty = min(min(inst.by() for inst in self.insts), lowesty)
 
         if len(self.pin_map) > 0:
-            for pin_list in self.pin_map.values():
-                if len(pin_list) == 0:
+            for pin_set in self.pin_map.values():
+                if len(pin_set) == 0:
                     continue
-                lowestx = min(min(pin.lx() for pin in pin_list), lowestx)
-                lowesty = min(min(pin.by() for pin in pin_list), lowesty)
+                lowestx = min(min(pin.lx() for pin in pin_set), lowestx)
+                lowesty = min(min(pin.by() for pin in pin_set), lowesty)
 
         return vector(lowestx, lowesty)
 
@@ -159,11 +159,11 @@ class layout():
             highesty = max(max(inst.uy() for inst in self.insts), highesty)
 
         if len(self.pin_map) > 0:
-            for pin_list in self.pin_map.values():
-                if len(pin_list) == 0:
+            for pin_set in self.pin_map.values():
+                if len(pin_set) == 0:
                     continue
-                highestx = max(max(pin.rx() for pin in pin_list), highestx)
-                highesty = max(max(pin.uy() for pin in pin_list), highesty)
+                highestx = max(max(pin.rx() for pin in pin_set), highestx)
+                highesty = max(max(pin.uy() for pin in pin_set), highesty)
 
         return vector(highestx, highesty)
 
@@ -228,8 +228,8 @@ class layout():
                 inst.compute_boundary(inst.offset, inst.mirror, inst.rotate)
         for pin_name in self.pin_map.keys():
             # All the pins are absolute coordinates that need to be updated.
-            pin_list = self.pin_map[pin_name]
-            for pin in pin_list:
+            pin_set = self.pin_map[pin_name]
+            for pin in pin_set:
                 pin.rect = [pin.ll() - offset, pin.ur() - offset]
 
     def add_inst(self, name, mod, offset=[0, 0], mirror="R0", rotate=0):
@@ -375,7 +375,7 @@ class layout():
         try:
             return self.pin_map[name]
         except KeyError:
-            return []
+            return set()
 
     def add_pin_names(self, pin_dict):
         """
@@ -616,7 +616,7 @@ class layout():
         """
         Delete a labeled pin (or all pins of the same name)
         """
-        self.pin_map[text] = []
+        self.pin_map[text] = set()
 
     def remove_layout_pins(self):
         """
@@ -668,9 +668,9 @@ class layout():
             # Rounding errors may result in some duplicates.
             # Use a dict so iteration occurs in order the elements were added
             if new_pin not in self.pin_map[text]:
-                self.pin_map[text].append(new_pin)
+                self.pin_map[text].add(new_pin)
         except KeyError:
-            self.pin_map[text] = [new_pin]
+            self.pin_map[text] = set([new_pin])
 
         return new_pin
 
@@ -1092,8 +1092,8 @@ class layout():
 
         blockages = []
         for pin_name in pin_names:
-            pin_list = self.get_pins(pin_name)
-            for pin in pin_list:
+            pin_set = self.get_pins(pin_name)
+            for pin in pin_set:
                 if pin.same_lpp(pin.lpp, lpp):
                     blockages += [pin.rect]
 

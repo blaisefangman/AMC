@@ -65,9 +65,6 @@ class options(optparse.Values):
     # Detailed or abstract LEF view
     detailed_lef = True
 
-    #Add the synchronous interface
-    add_sync_interface = False
-
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
 
