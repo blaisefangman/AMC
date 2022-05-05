@@ -27,7 +27,7 @@ else:
 
 # set the input dir for spice files if using ngspice 
 if OPTS.spice_name == "ngspice":
-    os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.AMC_temp)
+    os.environ["NGSPICE_INPUT_DIR"] = "{0}".format(OPTS.openram_temp)
     
 if OPTS.spice_exe == "":
     debug.error("No recognizable spice version found. Unable to perform characterization.",1)

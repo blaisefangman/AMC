@@ -23,7 +23,7 @@ def relative_compare(value1,value2,error_tolerance=0.001):
 def parse_output(filename, key):
     """Parses a spice output file for a key value"""
     
-    full_filename="{0}{1}.mt0".format(OPTS.AMC_temp, filename)
+    full_filename="{0}{1}.mt0".format(OPTS.openram_temp, filename)
 
     try:
         f = open(full_filename, "r")

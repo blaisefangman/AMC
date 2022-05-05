@@ -26,7 +26,7 @@ import debug
 class AMC_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         
         global calibre
         import calibre
@@ -63,7 +63,7 @@ class AMC_test(AMC_test):
         OPTS.check_lvsdrc = True
         print_time("End",datetime.datetime.now(), start_time)
 
-        globals.end_AMC()      
+        globals.end_openram()      
 
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

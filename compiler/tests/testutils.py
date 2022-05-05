@@ -23,7 +23,7 @@ class AMC_test(unittest.TestCase):
     def local_drc_check(self, w):
         """ check only DRC rules for the layout"""
 
-        tempgds = OPTS.AMC_temp + "temp.gds"
+        tempgds = OPTS.openram_temp + "temp.gds"
         w.gds_write(tempgds)
         
         import calibre
@@ -32,17 +32,17 @@ class AMC_test(unittest.TestCase):
         except:
             self.reset()
             # removing density and ESD drc errors for unit tests only
-            test=os.listdir(OPTS.AMC_temp)
+            test=os.listdir(OPTS.openram_temp)
             self.fail("DRC failed: {}".format(w.name))
     
-        if OPTS.purge_temp:
+        if not OPTS.keep_temp:
             self.cleanup()
     
     def local_check(self, a, final_verification=False):
         """ check both LVS and DRC rules for the layout"""
 
-        tempspice = OPTS.AMC_temp + a.name+ ".sp"
-        tempgds = OPTS.AMC_temp + a.name +".gds"
+        tempspice = OPTS.openram_temp + a.name+ ".sp"
+        tempgds = OPTS.openram_temp + a.name +".gds"
         a.sp_write(tempspice)
         a.gds_write(tempgds)
         
@@ -58,16 +58,16 @@ class AMC_test(unittest.TestCase):
             self.assertTrue(calibre.run_drc(a.name, tempgds)==0)
         except:
             self.reset()
-            test=os.listdir(OPTS.AMC_temp)
+            test=os.listdir(OPTS.openram_temp)
             self.fail("DRC failed: {}".format(a.name))
         
-        if OPTS.purge_temp:
+        if OPTS.keep_temp:
             self.cleanup()
 
     def cleanup(self):
         """ Reset the duplicate checker and cleanup files. """
         
-        files = glob.glob(OPTS.AMC_temp + '*')
+        files = glob.glob(OPTS.openram_temp + '*')
         for f in files:
             if os.path.isfile(f):
                 os.remove(f)        

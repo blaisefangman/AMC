@@ -32,17 +32,17 @@ class spice():
         # This gets set in both spice and layout so either can be called first.
         self.name = name
         self.cell_name = cell_name
-        self.sp_file = OPTS.AMC_tech + "sp_lib/" + cell_name + ".sp"
+        self.sp_file = OPTS.openram_tech + "sp_lib/" + cell_name + ".sp"
 
         # If we have a separate lvs directory, then all the lvs files
         # should be in there (all or nothing!)
         try:
             from tech import lvs_name
-            lvs_dir = OPTS.AMC_tech + lvs_name + "_lvs_lib/"
+            lvs_dir = OPTS.openram_tech + lvs_name + "_lvs_lib/"
         except ImportError:
-            lvs_dir = OPTS.AMC_tech + "lvs_lib/"
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
         if not os.path.exists(lvs_dir):
-            lvs_dir = OPTS.AMC_tech + "lvs_lib/"
+            lvs_dir = OPTS.openram_tech + "lvs_lib/"
 
         self.lvs_file = lvs_dir + cell_name + ".sp"
         if not os.path.exists(self.lvs_file):

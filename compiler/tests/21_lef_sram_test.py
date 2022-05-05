@@ -11,7 +11,7 @@ import debug
 class lef_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
 
         import async_sram
 
@@ -28,12 +28,12 @@ class lef_test(AMC_test):
                       
         gdsfile = s.name + ".gds"
         leffile = s.name + ".lef"
-        gdsname = OPTS.AMC_temp + gdsfile
-        lefname = OPTS.AMC_temp + leffile
+        gdsname = OPTS.openram_temp + gdsfile
+        lefname = OPTS.openram_temp + leffile
         s.gds_write(gdsname)
         s.lef_write(lefname)
 
-        globals.end_AMC()
+        globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

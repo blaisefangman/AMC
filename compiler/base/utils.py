@@ -68,7 +68,7 @@ def auto_measure_libcell(pin_list, name, units, lpp):
     Open a GDS file and find the pins in pin_list as text on a given layer.
     Return these as a set of properties including the cell width/height too.
     """
-    cell_gds = OPTS.AMC_tech + "gds_lib/" + str(name) + ".gds"
+    cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
 
     cell_vlsi = _get_gds_reader(units, cell_gds)
 
@@ -135,7 +135,7 @@ def get_libcell_size(name, units, lpp):
     bounding box or a border layer.
     """
 
-    cell_gds = OPTS.AMC_tech + "gds_lib/" + str(name) + ".gds"
+    cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
     return(get_gds_size(name, cell_gds, units, lpp))
 
 
@@ -184,5 +184,5 @@ def get_libcell_pins(pin_list, name, units):
     Return these as a rectangle layer pair for each pin.
     """
 
-    cell_gds = OPTS.AMC_tech + "gds_lib/" + str(name) + ".gds"
+    cell_gds = OPTS.openram_tech + "gds_lib/" + str(name) + ".gds"
     return(get_gds_pins(pin_list, name, cell_gds, units))

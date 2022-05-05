@@ -47,7 +47,7 @@ if len(args) != 1:
 import debug
 
 
-init_AMC(config_file=args[0], is_unit_test=False)
+init_openram(config_file=args[0], is_unit_test=False)
 
 # Only print banner here so it's not in unit tests
 print_banner()
@@ -104,7 +104,7 @@ if OPTS.create_bist:
 OPTS.check_lvsdrc = True
 
 
-end_AMC()
+end_openram()
 print_time("End",datetime.datetime.now(), start_time)
 
 

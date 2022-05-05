@@ -34,7 +34,7 @@ import importlib as imp
 class sram_func_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
 
         # This is a hack to reload the characterizer __init__ with the spice version
@@ -49,7 +49,7 @@ class sram_func_test(AMC_test):
                       branch_factors=(1,2), bank_orientations=("H", "H"), mask=False, 
                       power_gate=False, name="sram")
                       
-        tempspice = OPTS.AMC_temp + "sram.sp"
+        tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
         
         corner = (OPTS.process_corners[0], OPTS.supply_voltages[0], OPTS.temperatures[0])
@@ -63,7 +63,7 @@ class sram_func_test(AMC_test):
                                             load=tech.spice["input_cap"], 
                                             slew=tech.spice["rise_time"])
 
-        globals.end_AMC()
+        globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ import debug
 class sram_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        OPTS.mode == "async"
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         
         global calibre
         import calibre
@@ -67,7 +68,7 @@ class sram_test(AMC_test):
 
         # return it back to it's normal state
         OPTS.check_lvsdrc = True
-        globals.end_AMC()
+        globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

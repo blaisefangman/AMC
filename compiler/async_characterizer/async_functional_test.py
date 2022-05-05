@@ -52,12 +52,12 @@ class functional_test():
         self.power_gate = power_gate
 
         self.deck_file = "test.sp"
-        self.test = open(OPTS.AMC_temp+"test.v", "w")
-        self.dut = open(OPTS.AMC_temp+"dut.sp", "w")
-        self.deck = open(OPTS.AMC_temp+"test.sp", "w")
-        self.source = open(OPTS.AMC_temp+"source.v", "w")
-        self.cosim = open(OPTS.AMC_temp+"setup.init", "w")
-        self.make = open(OPTS.AMC_temp+"Makefile", "w")
+        self.test = open(OPTS.openram_temp+"test.v", "w")
+        self.dut = open(OPTS.openram_temp+"dut.sp", "w")
+        self.deck = open(OPTS.openram_temp+"test.sp", "w")
+        self.source = open(OPTS.openram_temp+"source.v", "w")
+        self.cosim = open(OPTS.openram_temp+"setup.init", "w")
+        self.make = open(OPTS.openram_temp+"Makefile", "w")
         
         (self.addr_bit, self.data_bit) = size
         (self.process, self.voltage, self.temperature) = corner
@@ -99,8 +99,8 @@ class functional_test():
         self.dut.write("\n ")
         #Don't trim the netlist for power calculations
         #if OPTS.trim_netlist:
-            #filename="{0}{1}".format(OPTS.AMC_temp, "{0}.sp".format(sram_name))
-            #reduced_file="{0}{1}".format(OPTS.AMC_temp, "reduced.sp")
+            #filename="{0}{1}".format(OPTS.openram_temp, "{0}.sp".format(sram_name))
+            #reduced_file="{0}{1}".format(OPTS.openram_temp, "reduced.sp")
             #trim_spice.trim_spice(filename, reduced_file, dbits, w_per_row, num_rows, "1"*abits, "0"*abits)
             #spice_name="reduced"
         
@@ -585,15 +585,15 @@ class functional_test():
 
        
         for myfile in ["setup.init", "test.sp", "test.v", "source.v", "dut.sp", "Makefile", self.name+".sp"]:
-            filename="{0}{1}".format(OPTS.AMC_temp, myfile)
+            filename="{0}{1}".format(OPTS.openram_temp, myfile)
             while not path.exists(filename):
                 time.sleep(1)
             else:
                 os.chmod(filename, 0o777)
         
-        os.chdir(OPTS.AMC_temp)
-        spice_stdout = open("{0}spice_stdout.log".format(OPTS.AMC_temp), 'w')
-        spice_stderr = open("{0}spice_stderr.log".format(OPTS.AMC_temp), 'w')
+        os.chdir(OPTS.openram_temp)
+        spice_stdout = open("{0}spice_stdout.log".format(OPTS.openram_temp), 'w')
+        spice_stderr = open("{0}spice_stderr.log".format(OPTS.openram_temp), 'w')
 
 
         retcode = subprocess.call("make", shell=True, stdout=spice_stdout, stderr=spice_stderr)
@@ -604,7 +604,7 @@ class functional_test():
             debug.error("Spice simulation error: ", -1)
 
 
-        filename="{0}{1}".format(OPTS.AMC_temp, "test.mt0")
+        filename="{0}{1}".format(OPTS.openram_temp, "test.mt0")
         while not path.exists(filename):
                 time.sleep(1)
         
@@ -636,7 +636,7 @@ class functional_test():
     def edit_netlist(self, myfile):
         """ Edit the SPICE netlist if transistor is a subckt and should start with letter X instead of M"""
         
-        filename="{0}{1}".format(OPTS.AMC_temp, myfile)
+        filename="{0}{1}".format(OPTS.openram_temp, myfile)
         edited_spfile=filename
 
         debug.info(1,"Editing transistor name to start with X instaed of M")

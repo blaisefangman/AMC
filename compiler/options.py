@@ -15,17 +15,19 @@ class options(optparse.Values):
         that is the sole required command-line positional argument for AMC.py. """
 
     # This is the technology directory.
-    AMC_tech = ""
+    openram_tech = ""
     
     # This is the name of the technology.
     tech_name = "scn3me_subm"
     
     # This is the temp directory where all intermediate results are stored.
-    #AMC_temp = "/SAY/standard/rm2267-654001-SEAS/users/fa292/AMC/compiler/tmp/"
-    AMC_temp = os.path.abspath(os.environ.get("AMC_HOME")) + "/tmp/"
+    openram_temp = os.path.abspath(os.environ.get("AMC_HOME")) + "/tmp/"
     
-    # This is the verbosity level to control debug information. 0 is none, 1 is minimal, etc.
-    debug_level = 0
+    # This is the verbosity level to control debug information. 0 is none, 1
+    # is minimal, etc.
+    verbose_level = 0
+    # Drop to pdb on failure?
+    debug = False
     
     # This determines whether  LVS and DRC is checked for each submodule.
     check_lvsdrc = True
@@ -55,7 +57,7 @@ class options(optparse.Values):
     output_name = ""
     
     # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
-    purge_temp = True
+    keep_temp = False
     
     #run the characterizer
     analytical_delay = True
@@ -68,6 +70,11 @@ class options(optparse.Values):
 
     # When enabled, layout is not generated (and no DRC or LVS are performed)
     netlist_only = False
+
+    # Number of threads to use
+    num_threads = 1
+    # Number of threads to use in ngspice/hspice
+    num_sim_threads = 3
 
     # Generate Synchronous ("sync") or Asynchronous ("async") memory
     mode = "sync"

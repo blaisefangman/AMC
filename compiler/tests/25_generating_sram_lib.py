@@ -33,7 +33,7 @@ import debug
 class lib_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
 
         # This is a hack to reload the characterizer __init__ with the spice version
         import characterizer
@@ -47,13 +47,13 @@ class lib_test(AMC_test):
         s = async_sram.sram(word_size=4, words_per_row=1, num_rows=32, num_subanks=1, 
                       branch_factors=(1,1), bank_orientations=("H", "H"), name="sram")
                       
-        tempspice = OPTS.AMC_temp + "sram.sp"
+        tempspice = OPTS.openram_temp + "sram.sp"
         s.sp_write(tempspice)
         
         
-        lib.lib(OPTS.AMC_temp, s)
+        lib.lib(OPTS.openram_temp, s)
 
-        globals.end_AMC()
+        globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test
 #if __name__ == "__main__":

@@ -99,19 +99,19 @@ def run_drc(cell_name, gds_name):
         'cmnCustomFileOverrideValues' : drc["custom_options"],
         'cmnUseCustomFile': 1,
         'drcRulesFile': drc["drc_rules"],
-        'drcRunDir': OPTS.AMC_temp,
+        'drcRunDir': OPTS.openram_temp,
         'drcLayoutPaths': gds_name,
         'drcExtraLayoutPaths': drc["drcExtraLayoutPaths"],
         'drcGoldenLayoutPaths': drc["drc_golden"],
         'drcLayoutPrimary': cell_name,
         'drcLayoutSystem': 'GDSII',
         'drcResultsformat': 'ASCII',
-        'drcResultsFile': OPTS.AMC_temp + cell_name + ".drc.results",
-        'drcSummaryFile': OPTS.AMC_temp + cell_name + ".drc.summary",
+        'drcResultsFile': OPTS.openram_temp + cell_name + ".drc.results",
+        'drcSummaryFile': OPTS.openram_temp + cell_name + ".drc.summary",
         'cmnFDILayerMapFile': drc["layer_map"],
         'drcLayoutGetFromViewer': 0,
         'cmnFDIUseLayerMap': 1,
-        'cmnTranscriptFile': OPTS.AMC_temp + cell_name + "calibredrc.log",
+        'cmnTranscriptFile': OPTS.openram_temp + cell_name + "calibredrc.log",
         'cmnDRCMaxVertexCount': 199,
         'drcCellName': 1,
         'cmnRunHyper': 1,
@@ -121,19 +121,19 @@ def run_drc(cell_name, gds_name):
         'drcUserRecipes': ''}
 
     # write the runset file
-    f = open(OPTS.AMC_temp + "drc_runset", "w")
+    f = open(OPTS.openram_temp + "drc_runset", "w")
     for k in sorted(drc_runset.keys()):
         f.write("*{0}: {1}\n".format(k, drc_runset[k]))
     f.close()
 
     # run drc
     cwd = os.getcwd()
-    os.chdir(OPTS.AMC_temp)
-    errfile = "{0}{1}.drc.err".format(OPTS.AMC_temp, cell_name)
-    outfile = "{0}{1}.drc.out".format(OPTS.AMC_temp, cell_name)
+    os.chdir(OPTS.openram_temp)
+    errfile = "{0}{1}.drc.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.drc.out".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0} -gui -drc {1}drc_runset -batch 2> {2} 1> {3}".format(OPTS.lvsdrc_exe[1],
-                                                                    OPTS.AMC_temp,
+                                                                    OPTS.openram_temp,
                                                                     errfile,
                                                                     outfile)
     debug.info(2, cmd)
@@ -180,21 +180,21 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
         'cmnCustomFileName':drc["lvs_custom_rules"],
         'cmnUseCustomFile': 1,
         'lvsRulesFile': lvs_rules,
-        'lvsRunDir': OPTS.AMC_temp,
+        'lvsRunDir': OPTS.openram_temp,
         'lvsLayoutPaths': gds_name,
         'lvsLayoutPrimary': cell_name,
         'lvsSourcePath': sp_name,
         'lvsSourcePrimary': cell_name,
         'lvsSourceSystem': 'SPICE',
-        'lvsSpiceFile': OPTS.AMC_temp + "extracted.sp",
+        'lvsSpiceFile': OPTS.openram_temp + "extracted.sp",
         'lvsPowerNames': 'vdd',
         'lvsGroundNames': 'gnd',
         'lvsIncludeSVRFCmds': 1,
         'lvsIgnorePorts': 1,
-        'lvsERCDatabase': OPTS.AMC_temp + cell_name + ".erc.results",
-        'lvsERCSummaryFile': OPTS.AMC_temp + cell_name + ".erc.summary",
-        'lvsReportFile': OPTS.AMC_temp + cell_name + ".lvs.report",
-        'lvsMaskDBFile': OPTS.AMC_temp + cell_name + ".maskdb",
+        'lvsERCDatabase': OPTS.openram_temp + cell_name + ".erc.results",
+        'lvsERCSummaryFile': OPTS.openram_temp + cell_name + ".erc.summary",
+        'lvsReportFile': OPTS.openram_temp + cell_name + ".lvs.report",
+        'lvsMaskDBFile': OPTS.openram_temp + cell_name + ".maskdb",
         'cmnFDILayerMapFile': drc["layer_map"],
         'cmnFDIUseLayerMap': 1,
         'lvsRecognizeGates': 'NONE'
@@ -209,19 +209,19 @@ def run_lvs(cell_name, gds_name, sp_name, final_verification=False):
 
 
     # write the runset file
-    f = open(OPTS.AMC_temp + "lvs_runset", "w")
+    f = open(OPTS.openram_temp + "lvs_runset", "w")
     for k in sorted(lvs_runset.keys()):
         f.write("*{0}: {1}\n".format(k, lvs_runset[k]))
     f.close()
 
     # run LVS
     cwd = os.getcwd()
-    os.chdir(OPTS.AMC_temp)
-    errfile = "{0}{1}.lvs.err".format(OPTS.AMC_temp, cell_name)
-    outfile = "{0}{1}.lvs.out".format(OPTS.AMC_temp, cell_name)
+    os.chdir(OPTS.openram_temp)
+    errfile = "{0}{1}.lvs.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.lvs.out".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0} -gui -lvs {1}lvs_runset -batch 2> {2} 1> {3}".format(OPTS.lvsdrc_exe[1],
-                                                                    OPTS.AMC_temp,
+                                                                    OPTS.openram_temp,
                                                                     errfile,
                                                                     outfile)
     
@@ -305,10 +305,10 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
     pex_rules = drc["xrc_rules"]
     pex_runset = {
         'pexRulesFile': pex_rules,
-        'pexRunDir': OPTS.AMC_temp,
+        'pexRunDir': OPTS.openram_temp,
         'pexLayoutPaths': gds_name,
         'pexLayoutPrimary': cell_name,
-        #'pexSourcePath' : OPTS.AMC_temp+"extracted.sp",
+        #'pexSourcePath' : OPTS.openram_temp+"extracted.sp",
         'pexSourcePath': sp_name,
         'pexSourcePrimary': cell_name,
         'pexReportFile': cell_name + ".lvs.report",
@@ -319,19 +319,19 @@ def run_pex(cell_name, gds_name, sp_name, output=None):
     }
 
     # write the runset file
-    f = open(OPTS.AMC_temp + "pex_runset", "w")
+    f = open(OPTS.openram_temp + "pex_runset", "w")
     for k in sorted(pex_runset.keys()):
         f.write("*{0}: {1}\n".format(k, pex_runset[k]))
     f.close()
 
     # run pex
     cwd = os.getcwd()
-    os.chdir(OPTS.AMC_temp)
-    errfile = "{0}{1}.pex.err".format(OPTS.AMC_temp, cell_name)
-    outfile = "{0}{1}.pex.out".format(OPTS.AMC_temp, cell_name)
+    os.chdir(OPTS.openram_temp)
+    errfile = "{0}{1}.pex.err".format(OPTS.openram_temp, cell_name)
+    outfile = "{0}{1}.pex.out".format(OPTS.openram_temp, cell_name)
 
     cmd = "{0} -gui -pex {1}pex_runset -batch 2> {2} 1> {3}".format(OPTS.lvsdrc_exe[1],
-                                                                    OPTS.AMC_temp,
+                                                                    OPTS.openram_temp,
                                                                     errfile,
                                                                     outfile)
     debug.info(2, cmd)

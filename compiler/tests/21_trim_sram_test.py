@@ -23,7 +23,7 @@ from os import path
 class sram_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         
         import async_sram
         from async_characterizer import async_trim_spice
@@ -34,10 +34,10 @@ class sram_test(AMC_test):
                       bank_orientations=("H", "H"), mask = True, 
                       power_gate = False, name="sram")
         
-        tempspice = OPTS.AMC_temp + "sram.sp"
+        tempspice = OPTS.openram_temp + "sram.sp"
         a.sp_write(tempspice)
 
-        filename="{0}{1}".format(OPTS.AMC_temp, "sram.sp")
+        filename="{0}{1}".format(OPTS.openram_temp, "sram.sp")
         while not path.exists(filename):
             time.sleep(1)
         else:
@@ -46,10 +46,10 @@ class sram_test(AMC_test):
         address1="1"*a.addr_size
         address2="0"*a.addr_size
         
-        reduced_file="{0}{1}".format(OPTS.AMC_temp, "reduced.sp")
+        reduced_file="{0}{1}".format(OPTS.openram_temp, "reduced.sp")
         async_trim_spice.trim_spice(filename, reduced_file, a.w_size, a.w_per_row, a.num_rows, 
                               address1, address2)
-        globals.end_AMC()
+        globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
 if __name__ == "__main__":

@@ -33,7 +33,7 @@ import debug
 class bank_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name), is_unit_test=False)
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name), is_unit_test=False)
         
         global calibre
         import calibre
@@ -59,7 +59,7 @@ class bank_test(AMC_test):
 
         OPTS.check_lvsdrc = True
         # return it back to it's normal state
-        globals.end_AMC()
+        globals.end_openram()
         
         
 # instantiate a copy of the class to actually run the test

@@ -33,7 +33,7 @@ import debug
 class verilog_test(AMC_test):
 
     def runTest(self):
-        globals.init_AMC("config_20_{0}".format(OPTS.tech_name))
+        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
         OPTS.check_lvsdrc = False
 
         import async_sram
@@ -52,10 +52,10 @@ class verilog_test(AMC_test):
         OPTS.check_lvsdrc = True
 
         vfile = s.name + ".v"
-        vname = OPTS.AMC_temp + vfile
+        vname = OPTS.openram_temp + vfile
         s.verilog_write(vname)
 
-        globals.end_AMC()
+        globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test
 if __name__ == "__main__":
