@@ -112,7 +112,9 @@ class pin_layout:
         (ll, ur) = self.rect
         (oll, our) = other.rect
 
-        if ll.x < oll.x and ll.y < oll.y:
+        if ll.x <= oll.x and ll.y < oll.y:
+            return True
+        if ll.x < oll.x and ll.y <= oll.y:
             return True
 
         return False

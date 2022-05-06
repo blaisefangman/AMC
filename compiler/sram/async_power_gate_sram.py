@@ -636,7 +636,7 @@ class power_gate_sram(design.design):
                 self.pmos_inst[i] = self.add_inst(name="pmos{}".format(i+num*self.size), mod=self.pg, offset=pos+vector(i*self.pg.width, 0))
                 self.connect_inst(["sleep{}".format(num), "vvdd", "vdd"])
 
-    def sp_write(self, sp_name):
+    def sp_write(self, sp_name, lvs=False, trim=False):
         """ Write the entire spice of the object to the file """
         sp = open(sp_name, 'w')
 
@@ -647,7 +647,7 @@ class power_gate_sram(design.design):
         sp.write("* Number of Banks: {}\n".format(self.num_inbanks*self.num_outbanks))
         sp.write("**************************************************\n")        
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS)
+        self.sp_write_file(sp, usedMODS, lvs, trim)
         del usedMODS
         sp.close()
 

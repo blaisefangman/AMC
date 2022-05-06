@@ -517,7 +517,7 @@ class bist(design.design):
                                 width=self.m1_width,
                                 height = self.m1_width)
 
-    def sp_write(self, sp_name):
+    def sp_write(self, sp_name, lvs=False, trim=False):
         """ Write the entire spice of the object to the file """
         sp = open(sp_name, 'w')
 
@@ -525,7 +525,7 @@ class bist(design.design):
         sp.write("* AMC generated BIST.\n")
         sp.write("**************************************************\n")        
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS)
+        self.sp_write_file(sp, usedMODS, lvs, trim)
         del usedMODS
         sp.close()
 

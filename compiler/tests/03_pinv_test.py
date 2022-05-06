@@ -12,20 +12,18 @@
 """ Run regression tests on a parameterized inverter. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class pinv_test(AMC_test):
+class pinv_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         import async_pinv
 
@@ -41,8 +39,6 @@ class pinv_test(AMC_test):
         tx = async_pinv.pinv(size=7)
         self.local_check(tx)
         
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()        
 
 # instantiate a copy of the class to actually run the test

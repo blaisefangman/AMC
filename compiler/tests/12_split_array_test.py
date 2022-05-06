@@ -23,22 +23,19 @@
 """ Run a regresion test on a split cell array. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class split_array_test(AMC_test):
+class split_array_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import async_split_array
 
         debug.info(2, "Testing split_array for word_size=8, words_per_row=1")
@@ -53,9 +50,6 @@ class split_array_test(AMC_test):
         a = async_split_array.split_array(word_size=8, words_per_row=4, mask= False, name="split_array4")
         self.local_check(a)
 
-        
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 # instantiate a copdsay of the class to actually run the test

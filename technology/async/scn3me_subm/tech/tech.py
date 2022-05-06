@@ -408,3 +408,10 @@ spice["channel"] = drc["minlength_channel"]
 ###################################################
 ##END Spice Simulation Parameters
 ###################################################
+
+###################################################
+# Technology Tool Preferences
+###################################################
+drc_name = "calibre"
+lvs_name = "calibre"
+pex_name = "calibre"

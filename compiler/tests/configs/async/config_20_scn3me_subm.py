@@ -19,6 +19,7 @@
 #
 ######################################################################
 
+check_lvsdrc = True
 
 word_size = 16
 words_per_row = 1
@@ -35,3 +36,6 @@ process_corners = ["TT"]
 supply_voltages = [5.0]
 temperatures = [25]
 
+detailed_lef = True
+
+spice_name = "finesim"

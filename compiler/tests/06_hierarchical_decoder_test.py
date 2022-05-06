@@ -12,22 +12,19 @@
 """ Run a regresion test on a hierarchical_decoder. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class hierarchical_decoder_test(AMC_test):
+class hierarchical_decoder_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import async_hierarchical_decoder
 
         # rows=4 and rows=8 Doesn't require hierarchical decoder, 
@@ -45,8 +42,6 @@ class hierarchical_decoder_test(AMC_test):
         a = async_hierarchical_decoder.hierarchical_decoder(rows=128, name="hierarchical_decoder_128")
         self.local_check(a)
 
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

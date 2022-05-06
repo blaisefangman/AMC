@@ -12,22 +12,19 @@
 """ Run a regresion test on a write driver array. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class write_driver_test(AMC_test):
+class write_driver_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import async_write_driver_array
 
         debug.info(2, "Testing write_driver_array for word_size=8, words_per_row=1")
@@ -42,9 +39,6 @@ class write_driver_test(AMC_test):
         a = async_write_driver_array.write_driver_array(word_size=8, words_per_row=4, mask=True, name="wd_array4")
         self.local_check(a)
 
-        
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
 
 # instantiate a copy of the class to actually run the test

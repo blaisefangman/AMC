@@ -23,18 +23,18 @@
 """ Generate the  .v file for an SRAM """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class verilog_test(AMC_test):
+class verilog_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
-        OPTS.check_lvsdrc = False
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
 
         import async_sram
 
@@ -48,8 +48,6 @@ class verilog_test(AMC_test):
                       mask=True,
                       power_gate=True,
                       name="sram")
-
-        OPTS.check_lvsdrc = True
 
         vfile = s.name + ".v"
         vname = OPTS.openram_temp + vfile

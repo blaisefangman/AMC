@@ -23,22 +23,19 @@
 """ Run a regresion test on a nor_tree module in bist. """
 
 import unittest
-from testutils import header, AMC_test
+from testutils import header, openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class bist_nor_tree_test(AMC_test):
+class bist_nor_tree_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import nor_tree
 
         debug.info(1, "Testing 2 input nor_tree")
@@ -53,8 +50,6 @@ class bist_nor_tree_test(AMC_test):
         a = nor_tree.nor_tree(size=8, name="nor_tree_7")
         self.local_check(a)
 
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

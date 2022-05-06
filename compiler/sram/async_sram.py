@@ -1361,7 +1361,7 @@ class sram(design.design, lef.lef, async_verilog.verilog):
         pos2=vector(sel_pos2.x, pos1.y)
         self.add_wire(self.m1_stack, [sel_pos1, pos1, pos2, sel_pos2], widen_short_wires=False)
     
-    def sp_write(self, sp_name):
+    def sp_write(self, sp_name, lvs=False, trim=False):
         """ Write the entire spice of the object to the file """
         sp = open(sp_name, 'w')
 
@@ -1372,7 +1372,7 @@ class sram(design.design, lef.lef, async_verilog.verilog):
         sp.write("* Number of Banks: {}\n".format(self.num_ibank*self.num_obank))
         sp.write("**************************************************\n")        
         usedMODS = list()
-        self.sp_write_file(sp, usedMODS)
+        self.sp_write_file(sp, usedMODS, lvs, trim)
         del usedMODS
         sp.close()
 

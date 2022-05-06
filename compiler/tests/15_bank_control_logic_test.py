@@ -23,22 +23,19 @@
 """ Run a regresion test on a bank_control_logic. """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class bank_control_logic_test(AMC_test):
+class bank_control_logic_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import async_bank_control_logic
         import tech
 
@@ -74,9 +71,6 @@ class bank_control_logic_test(AMC_test):
         a = async_bank_control_logic.bank_control_logic(num_rows=32, num_subanks=8, two_level_bank=False, power_gate= True, name="bank_ctrl8")
         self.local_check(a)
 
-
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copdsay of the class to actually run the test

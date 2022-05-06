@@ -13,7 +13,7 @@ check that these files are right.
 """
 
 import unittest
-from testutils import header,AMC_test
+from testutils import header,openram_test
 import sys,os,re,shutil
 import datetime
 sys.path.append(os.path.join(sys.path[0],".."))
@@ -23,15 +23,12 @@ from globals import *
 import importlib
 import debug
 
-class AMC_test(AMC_test):
+class openram_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         # Only print banner here so it's not in unit tests
         print_banner()
 
@@ -60,7 +57,6 @@ class AMC_test(AMC_test):
 
         # return it back to it's normal state
         self.local_check(s)
-        OPTS.check_lvsdrc = True
         print_time("End",datetime.datetime.now(), start_time)
 
         globals.end_openram()      

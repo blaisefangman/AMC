@@ -23,22 +23,19 @@
 """ Run a regresion test on a multi-bank_SRAM. """
 
 import unittest
-from testutils import header, AMC_test
+from testutils import header, openram_test
 import sys,os
 sys.path.append(os.path.join(sys.path[0],".."))
 import globals
 from globals import OPTS
 import debug
 
-class multi_bank_test(AMC_test):
+class multi_bank_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_20_{0}".format(OPTS.tech_name))
+        config_file = "{0}/tests/configs/async/config_20_{1}".format(os.getenv("AMC_HOME"), OPTS.tech_name)
+        globals.init_openram(config_file)
         
-        global calibre
-        import calibre
-        OPTS.check_lvsdrc = False
-
         import async_multi_bank
  
         debug.info(1, "Multi Bank SRAM Test")
@@ -58,8 +55,6 @@ class multi_bank_test(AMC_test):
                                   mask = True, power_gate = True, name="multi_bank")
         self.local_check(a)
         
-        # return it back to it's normal state
-        OPTS.check_lvsdrc = True
         globals.end_openram()
         
 # instantiate a copy of the class to actually run the test
